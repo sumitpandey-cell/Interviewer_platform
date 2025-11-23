@@ -67,6 +67,24 @@ export default function Auth() {
 
       <Card className="w-full max-w-md">
         <CardHeader>
+          <div className="mb-4 flex gap-2">
+            <Button
+              type="button"
+              variant={!isSignUp ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setIsSignUp(false)}
+            >
+              Sign In
+            </Button>
+            <Button
+              type="button"
+              variant={isSignUp ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setIsSignUp(true)}
+            >
+              Sign Up
+            </Button>
+          </div>
           <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
           <CardDescription>
             {isSignUp
@@ -158,29 +176,6 @@ export default function Auth() {
             </Form>
           )}
 
-          <div className="mt-4 text-center text-sm">
-            {isSignUp ? (
-              <>
-                Already have an account?{" "}
-                <button
-                  onClick={() => setIsSignUp(false)}
-                  className="text-primary hover:underline"
-                >
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setIsSignUp(true)}
-                  className="text-primary hover:underline"
-                >
-                  Sign up
-                </button>
-              </>
-            )}
-          </div>
 
           <div className="mt-6 text-center">
             <Link to="/" className="text-sm text-muted-foreground hover:underline">
