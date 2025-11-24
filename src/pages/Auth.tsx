@@ -24,6 +24,7 @@ const signInSchema = z.object({
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { signUp, signIn, user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -50,12 +51,28 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
+  // Reset forms when switching between sign in and sign up
+  useEffect(() => {
+    signUpForm.reset();
+    signInForm.reset();
+  }, [isSignUp]);
+
   const onSignUp = async (values: z.infer<typeof signUpSchema>) => {
-    await signUp(values.email, values.password, values.fullName);
+    setIsSubmitting(true);
+    try {
+      await signUp(values.email, values.password, values.fullName);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const onSignIn = async (values: z.infer<typeof signInSchema>) => {
-    await signIn(values.email, values.password);
+    setIsSubmitting(true);
+    try {
+      await signIn(values.email, values.password);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -135,8 +152,8 @@ export default function Auth() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  {loading ? "Creating Account..." : "Sign Up"}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating Account..." : "Sign Up"}
                 </Button>
               </form>
             </Form>
@@ -169,8 +186,8 @@ export default function Auth() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  {loading ? "Signing In..." : "Sign In"}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
             </Form>
