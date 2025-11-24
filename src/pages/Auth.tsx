@@ -88,7 +88,7 @@ export default function Auth() {
         <span className="text-2xl font-bold text-foreground">AI Interview Agents</span>
       </div>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative">
         <CardHeader>
           <div className="mb-4 flex gap-2">
             <Button
