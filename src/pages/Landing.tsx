@@ -71,54 +71,51 @@ export default function Landing() {
 
 
       {/* Navbar */}
-      <header className="bg-white py-4">
+      <header className="bg-white py-6">
         <div className="container mx-auto flex items-center justify-between px-6">
-          <div className="text-xl font-bold text-slate-900">
-            AI Interview Agent
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <Brain className="h-8 w-8 text-blue-600" />
+            InterviewAI
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
             <Link to="#" className="hover:text-slate-900">Features</Link>
-            <Link to="#" className="hover:text-slate-900">How It Works</Link>
-            <Link to="#" className="hover:text-slate-900">Testimonials</Link>
             <Link to="#" className="hover:text-slate-900">Pricing</Link>
+            <Link to="#" className="hover:text-slate-900">About Us</Link>
           </nav>
 
-          <Button className="bg-cyan-400 hover:bg-cyan-500 text-slate-900 font-medium rounded-full px-6">
-            Book Demo
+          <Button variant="outline" className="border-slate-200 text-slate-900 font-medium rounded-lg px-6 hover:bg-slate-50" asChild>
+            <Link to="/auth">Log In</Link>
           </Button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 lg:py-24">
+      <section className="relative overflow-hidden py-16 lg:py-24 bg-white">
         <div className="container mx-auto px-6">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             <div className="flex flex-col space-y-8 max-w-xl">
               <h1 className="text-5xl font-bold leading-tight text-slate-900 lg:text-6xl tracking-tight">
-                AI-Driven Interviews.<br />
-                Unbiased.<br />
-                Intelligent
+                Ace Your Next Job Interview with Our AI Agent
               </h1>
               <p className="text-lg text-slate-500 leading-relaxed">
-                Our advanced AI conducts, transcribes & analyzes with unparalleled accuracy, so you can focus on hiring top talent.
+                Practice in a low-stress environment, get instant, personalized feedback, and boost your confidence with real-time coaching from our advanced AI. Prepare for any role, anytime.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 h-12 text-base font-medium shadow-lg shadow-blue-200">
-                  <Link to="/auth">Get Started Free</Link>
-                </Button>
-                <Button size="lg" variant="outline" className="border-purple-300 text-slate-700 hover:bg-purple-50 rounded-md px-8 h-12 text-base font-medium">
-                  <Link to="/auth">Learn More</Link>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg font-medium shadow-lg shadow-blue-200/50" asChild>
+                  <Link to="/auth">Start Practicing for Free</Link>
                 </Button>
               </div>
+              <p className="text-sm text-slate-500 font-medium">
+                Trusted by job seekers worldwide. 95% success rate.
+              </p>
             </div>
             <div className="relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-lg aspect-square">
-                {/* Decorative circles/elements could go here */}
+              <div className="relative w-full max-w-lg">
                 <img
                   src={heroImage}
-                  alt="AI Interview Intelligence"
-                  className="w-full h-full object-contain drop-shadow-2xl"
+                  alt="AI Interview Practice"
+                  className="w-full h-auto object-contain drop-shadow-lg"
                 />
               </div>
             </div>

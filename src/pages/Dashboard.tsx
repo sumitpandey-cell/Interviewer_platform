@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ interface InterviewSession {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [showBanner, setShowBanner] = useState(true);
   const [stats, setStats] = useState({
@@ -206,7 +208,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm">
+                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate('/start-interview')}>
                     Start <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -254,7 +256,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm">
+                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate('/interview/mock-session-id/report')}>
                     Report <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -314,7 +316,7 @@ export default function Dashboard() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" className="h-8">
+                        <Button variant="outline" size="sm" className="h-8" onClick={() => navigate('/interview/mock-session-id/report')}>
                           Report <ExternalLink className="ml-2 h-3 w-3" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50">

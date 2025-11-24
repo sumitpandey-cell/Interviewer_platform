@@ -11,6 +11,11 @@ import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import Templates from "./pages/Templates";
 import Reports from "./pages/Reports";
+import StartInterview from "./pages/StartInterview";
+import InterviewSetup from "./pages/InterviewSetup";
+import InterviewRoom from "./pages/InterviewRoom";
+import InterviewReport from "./pages/InterviewReport";
+import InterviewComplete from "./pages/InterviewComplete";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +59,46 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/start-interview"
+              element={
+                <ProtectedRoute>
+                  <StartInterview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview/:sessionId/setup"
+              element={
+                <ProtectedRoute>
+                  <InterviewSetup />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview/:sessionId/active"
+              element={
+                <ProtectedRoute>
+                  <InterviewRoom />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview/:sessionId/report"
+              element={
+                <ProtectedRoute>
+                  <InterviewReport />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview/:sessionId/complete"
+              element={
+                <ProtectedRoute>
+                  <InterviewComplete />
                 </ProtectedRoute>
               }
             />
