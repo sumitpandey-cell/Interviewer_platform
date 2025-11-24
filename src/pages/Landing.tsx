@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, Search, List, Calendar, Settings, CheckCircle2, Leaf, Lock, Bell, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "/home/the-mishra-ji/.gemini/antigravity/brain/291d1c8e-a123-4314-b8d5-bc887657bbe1/ai_interview_hero_head_1763890894869.png";
+import heroImage from "@/assets/hero-interview.jpg";
 
 export default function Landing() {
   const features = [
@@ -144,15 +144,6 @@ export default function Landing() {
 
           {/* Dashboard Mockup */}
           <div className="relative mb-24 mx-auto max-w-6xl">
-            {/* Floating 3D Elements */}
-            <img
-              src="/home/the-mishra-ji/.gemini/antigravity/brain/291d1c8e-a123-4314-b8d5-bc887657bbe1/glossy_blue_torus_1763891207550.png"
-              alt="Floating Torus"
-              className="absolute -left-16 bottom-12 w-40 h-40 z-20 hidden lg:block animate-pulse"
-              style={{ animationDuration: '4s' }}
-            />
-
-
             {/* Main Window */}
             <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-2xl bg-white relative z-10">
               {/* Window Header */}
