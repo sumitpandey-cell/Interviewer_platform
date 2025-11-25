@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { User, Bell, Shield, Trash2, Save } from "lucide-react";
+import { User, Bell, Shield, Trash2, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import imageCompression from 'browser-image-compression';
 
 export default function Settings() {
     const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function Settings() {
     // Profile settings
     const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
     const [email, setEmail] = useState(user?.email || "");
+    const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || user?.user_metadata?.picture);
 
     // Notification settings
     const [emailNotifications, setEmailNotifications] = useState(true);
@@ -31,6 +34,49 @@ export default function Settings() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !user) return;
+
+        try {
+            setLoading(true);
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 500,
+                useWebWorker: true,
+            };
+            const compressedFile = await imageCompression(file, options);
+
+            const fileExt = compressedFile.name.split('.').pop();
+            const fileName = `avatar.${fileExt}`;
+            const filePath = `${user.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, compressedFile, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            });
+
+            if (updateError) throw updateError;
+
+            setAvatarUrl(publicUrl);
+            toast.success("Profile picture updated successfully!");
+        } catch (error: any) {
+            console.error("Error updating profile picture:", error);
+            toast.error(error.message || "Failed to update profile picture");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleUpdateProfile = async () => {
         try {
@@ -161,11 +207,27 @@ export default function Settings() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex items-center gap-6">
-                                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
-                                        <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                                            {user?.email?.charAt(0).toUpperCase() || "U"}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <div className="relative group">
+                                        <Label htmlFor="avatar-upload" className="cursor-pointer">
+                                            <Avatar className="h-20 w-20 border-4 border-white shadow-lg group-hover:opacity-90 transition-opacity">
+                                                <AvatarImage src={avatarUrl} />
+                                                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                                                    {user?.email?.charAt(0).toUpperCase() || "U"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Upload className="h-6 w-6 text-white" />
+                                            </div>
+                                        </Label>
+                                        <Input
+                                            id="avatar-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleImageChange}
+                                            disabled={loading}
+                                        />
+                                    </div>
                                     <div>
                                         <h3 className="font-semibold text-lg">{fullName || "User"}</h3>
                                         <p className="text-sm text-muted-foreground">{email}</p>

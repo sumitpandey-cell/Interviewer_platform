@@ -5,6 +5,7 @@ import { Brain, Mic, MicOff, Video, VideoOff, CheckCircle2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface SessionConfig {
     skills?: string[];
@@ -32,6 +33,7 @@ export default function InterviewSetup() {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const { allowed, loading: subscriptionLoading } = useSubscription();
 
     useEffect(() => {
         if (sessionId) {
@@ -59,7 +61,7 @@ export default function InterviewSetup() {
     };
 
     const toggleMic = () => setIsMicOn(!isMicOn);
-    
+
     const startCamera = async () => {
         try {
             setCameraError(null);
@@ -110,6 +112,11 @@ export default function InterviewSetup() {
     }, [stream]);
 
     const handleStart = async () => {
+        if (!allowed && !subscriptionLoading) {
+            toast.error("You have reached your daily interview limit.");
+            return;
+        }
+
         if (!isMicOn) {
             toast.error("Please turn on your microphone to continue");
             return;
@@ -224,9 +231,9 @@ export default function InterviewSetup() {
                                 size="lg"
                                 className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base font-medium rounded-full"
                                 onClick={handleStart}
-                                disabled={isLoading}
+                                disabled={isLoading || subscriptionLoading || !allowed}
                             >
-                                {isLoading ? "Connecting..." : "Start Now"}
+                                {isLoading ? "Connecting..." : !allowed ? "Daily Limit Reached" : "Start Now"}
                             </Button>
 
                             {!isMicOn && !isCameraOn && (

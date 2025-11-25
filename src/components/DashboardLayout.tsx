@@ -3,7 +3,7 @@ import { Brain, LayoutDashboard, Briefcase, FileText, BarChart3, Settings, LogOu
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useSubscription } from "@/hooks/use-subscription";
+
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -23,6 +31,77 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { remaining_minutes, type: subscriptionType, plan_name } = useSubscription();
+  const [streak, setStreak] = useState(0);
+  const [lastActivityDate, setLastActivityDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchStreak = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('streak_count, last_activity_date')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        // Calculate if streak is active
+        const lastActivity = data.last_activity_date ? new Date(data.last_activity_date) : null;
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // Reset hours to compare dates only
+        yesterday.setHours(0, 0, 0, 0);
+        if (lastActivity) {
+          lastActivity.setHours(0, 0, 0, 0);
+        }
+
+        // If last activity was before yesterday, streak is broken (visually)
+        // The DB trigger will handle the actual reset on next activity
+        if (lastActivity && lastActivity < yesterday) {
+          setStreak(0);
+        } else {
+          setStreak(data.streak_count || 0);
+        }
+        setLastActivityDate(data.last_activity_date ? new Date(data.last_activity_date) : null);
+      }
+    };
+
+    fetchStreak();
+  }, [user]);
+
+  // Calculate usage stats
+  const getUsageStats = () => {
+    let total = 30;
+    let label = "30 min FREE daily";
+
+    // Normalize plan name
+    const name = plan_name?.toLowerCase() || 'free';
+
+    if (name === 'basic') {
+      total = 300;
+      label = "Basic Plan";
+    } else if (name === 'pro') {
+      total = 1000;
+      label = "Pro Plan";
+    } else if (name === 'business') {
+      return { label: "Business Plan", percent: 0, text: "Unlimited access" };
+    }
+
+    const used = Math.max(0, total - remaining_minutes);
+    const percent = Math.min(100, (used / total) * 100);
+
+    return {
+      label,
+      percent,
+      text: `${remaining_minutes} min left`,
+      usedStr: `${used}/${total}`
+    };
+  };
+
+  const stats = getUsageStats();
 
   // Initialize sidebar state from localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -124,15 +203,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <>
               <div className="mb-4 rounded-xl border bg-card p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-green-600">30 min FREE daily</span>
-                  <span className="text-xs text-muted-foreground">0/30</span>
+                  <span className="text-xs font-semibold text-green-600">{stats.label}</span>
+                  {plan_name?.toLowerCase() !== 'business' && (
+                    <span className="text-xs text-muted-foreground">{stats.usedStr}</span>
+                  )}
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full w-0 bg-green-500 transition-all" />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">30 minutes left</p>
+                {plan_name?.toLowerCase() !== 'business' ? (
+                  <>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className={`h-full transition-all ${remaining_minutes < 5 ? 'bg-red-500' : 'bg-green-500'}`}
+                        style={{ width: `${stats.percent}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{stats.text}</p>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-green-600 mt-1">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-xs font-medium">Unlimited Access</span>
+                  </div>
+                )}
               </div>
-              <Button className="w-full bg-primary hover:bg-primary/90">
+              <Button className="w-full bg-primary hover:bg-primary/90" onClick={() => navigate('/pricing')}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Upgrade to Premium
               </Button>
@@ -142,6 +235,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Button
               className="w-full bg-primary hover:bg-primary/90 px-2"
               title="Upgrade to Premium"
+              onClick={() => navigate('/pricing')}
             >
               <Sparkles className="h-5 w-5" />
             </Button>
@@ -164,20 +258,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center gap-2 lg:gap-4 ml-auto">
             <NotificationBell />
 
-            <div className="hidden sm:flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-600 border border-orange-100">
-              <span>1</span>
-              <span role="img" aria-label="fire">🔥</span>
-            </div>
-
-            <div className="hidden sm:flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-sm font-medium text-white">
-              <span>#55</span>
-              <span role="img" aria-label="medal">🥇</span>
-            </div>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="hidden sm:flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-600 border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors">
+                  <span>{streak}</span>
+                  <span role="img" aria-label="fire">🔥</span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <div className="flex justify-between space-x-4">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">Daily Streak</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {streak > 0
+                        ? "Keep up the great work! Consistency is key to success."
+                        : "Start your streak today by completing an interview!"}
+                    </p>
+                    <div className="flex items-center pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        Last activity: {lastActivityDate ? lastActivityDate.toLocaleDateString() : "No activity yet"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                    <AvatarImage src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
@@ -187,7 +298,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">User</p>
+                    <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "User"}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
                     </p>
