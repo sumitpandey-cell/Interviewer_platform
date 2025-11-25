@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/hover-card";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useSubscription } from "@/hooks/use-subscription";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -288,9 +289,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
-                    <AvatarImage src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} />
+                    <AvatarImage src={getAvatarUrl(
+                      user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
+                      user?.id || user?.email || 'user'
+                    )} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user?.email?.charAt(0).toUpperCase() || "U"}
+                      {getInitials(user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

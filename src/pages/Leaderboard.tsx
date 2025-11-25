@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 interface LeaderboardUser {
     userId: string;
     fullName: string | null;
     avatarUrl: string | null;
+    oauthPicture?: string | null;
     interviewCount: number;
     averageScore: number;
     bayesianScore: number;
@@ -85,6 +87,7 @@ const Leaderboard = () => {
                             ...user,
                             fullName: profile?.full_name || "Anonymous",
                             avatarUrl: profile?.avatar_url,
+                            oauthPicture: null, // Will be populated from avatar_url if available
                         };
                     });
 
@@ -165,9 +168,12 @@ const Leaderboard = () => {
                                     <div className="flex flex-col items-center">
                                         <div className="relative mb-3">
                                             <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-slate-400 shadow-lg">
-                                                <AvatarImage src={users[1]?.avatarUrl || ""} />
+                                                <AvatarImage src={getAvatarUrl(
+                                                    users[1]?.avatarUrl || users[1]?.oauthPicture,
+                                                    users[1]?.userId || users[1]?.fullName || 'user2'
+                                                )} />
                                                 <AvatarFallback className="bg-slate-200 text-slate-700 text-xl font-bold">
-                                                    {users[1]?.fullName?.charAt(0) || "U"}
+                                                    {getInitials(users[1]?.fullName)}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-md">
@@ -194,9 +200,12 @@ const Leaderboard = () => {
                                                 <Trophy className="h-8 w-8 text-yellow-500 animate-pulse" />
                                             </div>
                                             <Avatar className="h-20 w-20 sm:h-28 sm:w-28 border-4 border-yellow-500 shadow-2xl ring-4 ring-yellow-500/20">
-                                                <AvatarImage src={users[0]?.avatarUrl || ""} />
+                                                <AvatarImage src={getAvatarUrl(
+                                                    users[0]?.avatarUrl || users[0]?.oauthPicture,
+                                                    users[0]?.userId || users[0]?.fullName || 'user1'
+                                                )} />
                                                 <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-2xl font-bold">
-                                                    {users[0]?.fullName?.charAt(0) || "U"}
+                                                    {getInitials(users[0]?.fullName)}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -220,9 +229,12 @@ const Leaderboard = () => {
                                     <div className="flex flex-col items-center">
                                         <div className="relative mb-3">
                                             <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-amber-700 shadow-lg">
-                                                <AvatarImage src={users[2]?.avatarUrl || ""} />
+                                                <AvatarImage src={getAvatarUrl(
+                                                    users[2]?.avatarUrl || users[2]?.oauthPicture,
+                                                    users[2]?.userId || users[2]?.fullName || 'user3'
+                                                )} />
                                                 <AvatarFallback className="bg-amber-200 text-amber-900 text-xl font-bold">
-                                                    {users[2]?.fullName?.charAt(0) || "U"}
+                                                    {getInitials(users[2]?.fullName)}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-700 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-md">
@@ -279,8 +291,11 @@ const Leaderboard = () => {
                                                     <TableCell>
                                                         <div className="flex items-center gap-2 sm:gap-3">
                                                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
-                                                                <AvatarImage src={user.avatarUrl || ""} />
-                                                                <AvatarFallback>{user.fullName?.charAt(0) || "U"}</AvatarFallback>
+                                                                <AvatarImage src={getAvatarUrl(
+                                                                    user.avatarUrl || user.oauthPicture,
+                                                                    user.userId || user.fullName || 'user'
+                                                                )} />
+                                                                <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
                                                             </Avatar>
                                                             <span className="font-medium text-sm sm:text-base truncate">
                                                                 {user.fullName}

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { User, Bell, Shield, Trash2, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 export default function Settings() {
     const { user } = useAuth();
@@ -210,9 +211,12 @@ export default function Settings() {
                                     <div className="relative group">
                                         <Label htmlFor="avatar-upload" className="cursor-pointer">
                                             <Avatar className="h-20 w-20 border-4 border-white shadow-lg group-hover:opacity-90 transition-opacity">
-                                                <AvatarImage src={avatarUrl} />
+                                                <AvatarImage src={getAvatarUrl(
+                                                    avatarUrl,
+                                                    user?.id || user?.email || 'user'
+                                                )} />
                                                 <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                                                    {user?.email?.charAt(0).toUpperCase() || "U"}
+                                                    {getInitials(user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
