@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Loader2 } from "lucide-react";
+import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface LeaderboardUser {
     userId: string;
@@ -20,6 +22,7 @@ interface LeaderboardUser {
 const Leaderboard = () => {
     const [users, setUsers] = useState<LeaderboardUser[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
     const { toast } = useToast();
 
     useEffect(() => {
@@ -33,7 +36,7 @@ const Leaderboard = () => {
                     .eq("status", "completed");
 
                 if (sessionsError) throw sessionsError;
-                console.log(sessions)
+
                 // 2. Aggregate scores by user
                 const userStats: Record<string, { totalScore: number; count: number }> = {};
 
@@ -46,7 +49,6 @@ const Leaderboard = () => {
                 });
 
                 // 3. Calculate Bayesian Weighted Average
-                // Formula: (avg_score * total_interviews + 70 * 20) / (total_interviews + 20)
                 const PRIOR_MEAN = 70;
                 const M = 20;
 
@@ -63,14 +65,12 @@ const Leaderboard = () => {
                     };
                 });
 
-                // 4. Sort by Bayesian Score and take Top 10
-                const top10 = rankedUsers
-                    .sort((a, b) => b.bayesianScore - a.bayesianScore)
-                    .slice(0, 10);
+                // 4. Sort by Bayesian Score
+                const sortedUsers = rankedUsers.sort((a, b) => b.bayesianScore - a.bayesianScore);
 
-                // 5. Fetch profiles for the Top 10
-                if (top10.length > 0) {
-                    const userIds = top10.map((u) => u.userId);
+                // 5. Fetch profiles for all ranked users
+                if (sortedUsers.length > 0) {
+                    const userIds = sortedUsers.map((u) => u.userId);
                     const { data: profiles, error: profilesError } = await supabase
                         .from("profiles")
                         .select("id, full_name, avatar_url")
@@ -79,7 +79,7 @@ const Leaderboard = () => {
                     if (profilesError) throw profilesError;
 
                     // Merge profile data
-                    const finalLeaderboard = top10.map((user) => {
+                    const finalLeaderboard = sortedUsers.map((user) => {
                         const profile = profiles?.find((p) => p.id === user.userId);
                         return {
                             ...user,
@@ -107,39 +107,110 @@ const Leaderboard = () => {
         fetchLeaderboard();
     }, [toast]);
 
-    const getRankIcon = (index: number) => {
-        switch (index) {
-            case 0:
-                return <Trophy className="h-6 w-6 text-yellow-500" />;
-            case 1:
-                return <Medal className="h-6 w-6 text-gray-400" />;
-            case 2:
-                return <Medal className="h-6 w-6 text-amber-600" />;
-            default:
-                return <span className="text-lg font-bold text-muted-foreground w-6 text-center">{index + 1}</span>;
-        }
-    };
+    const filteredUsers = users.filter(user =>
+        user.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    const getRowStyle = (index: number) => {
-        switch (index) {
-            case 0: return "bg-yellow-500/10 hover:bg-yellow-500/20";
-            case 1: return "bg-gray-400/10 hover:bg-gray-400/20";
-            case 2: return "bg-amber-600/10 hover:bg-amber-600/20";
-            default: return "";
+    const TopPlayerCard = ({ user, rank }: { user: LeaderboardUser; rank: number }) => {
+        const isFirst = rank === 1;
+        const isSecond = rank === 2;
+        const isThird = rank === 3;
+
+        let borderColor = "border-border";
+        let glowColor = "";
+        let icon = null;
+
+        if (isFirst) {
+            borderColor = "border-yellow-500";
+            glowColor = "shadow-yellow-500/20";
+            icon = <Trophy className="h-6 w-6 text-yellow-500 fill-yellow-500" />;
+        } else if (isSecond) {
+            borderColor = "border-slate-400";
+            glowColor = "shadow-slate-400/20";
+            icon = <Medal className="h-6 w-6 text-slate-400" />;
+        } else if (isThird) {
+            borderColor = "border-amber-700";
+            glowColor = "shadow-amber-700/20";
+            icon = <Medal className="h-6 w-6 text-amber-700" />;
         }
-    }
+
+        return (
+            <Card className={cn(
+                "relative overflow-hidden transition-all duration-300 hover:shadow-lg",
+                isFirst ? "h-[320px] w-full md:w-[300px] z-10 scale-105 border-2" : "h-[280px] w-full md:w-[280px] mt-0 md:mt-8 border",
+                borderColor,
+                glowColor
+            )}>
+                <div className={cn(
+                    "absolute inset-0 opacity-10 bg-gradient-to-b",
+                    isFirst ? "from-yellow-500 to-transparent" :
+                        isSecond ? "from-slate-400 to-transparent" :
+                            "from-amber-700 to-transparent"
+                )} />
+
+                <CardContent className="flex flex-col items-center justify-center h-full p-6 space-y-4">
+                    <div className="relative">
+                        <Avatar className={cn(
+                            "border-4",
+                            isFirst ? "h-24 w-24 border-yellow-500" : "h-20 w-20 border-muted",
+                            borderColor
+                        )}>
+                            <AvatarImage src={user.avatarUrl || ""} />
+                            <AvatarFallback className="text-xl font-bold">
+                                {user.fullName?.charAt(0) || "U"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className={cn(
+                            "absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full font-bold text-white shadow-md",
+                            isFirst ? "bg-yellow-500" : isSecond ? "bg-slate-400" : "bg-amber-700"
+                        )}>
+                            {rank}
+                        </div>
+                    </div>
+
+                    <div className="text-center space-y-1">
+                        <h3 className="font-bold text-lg truncate max-w-[200px] mx-auto">
+                            {user.fullName}
+                        </h3>
+                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                            {icon}
+                            <span>Rank {rank}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full pt-4 border-t">
+                        <div className="text-center">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Score</p>
+                            <p className="text-lg font-bold text-primary">{user.bayesianScore.toFixed(1)}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Interviews</p>
+                            <p className="text-lg font-bold">{user.interviewCount}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
 
     return (
         <DashboardLayout>
-            <div className="container mx-auto py-6 sm:py-10 px-4 max-w-6xl">
-                {/* Header */}
-                <div className="text-center mb-8 sm:mb-12 space-y-2">
-                    <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-primary uppercase">
-                        Leaderboard
-                    </h1>
-                    <p className="text-muted-foreground text-sm sm:text-base">
-                        Compete with others to reach the top! Rankings updated in real-time.
-                    </p>
+            <div className="space-y-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+                        <p className="text-muted-foreground">Top performers based on interview scores</p>
+                    </div>
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search users..."
+                            className="pl-9"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 {loading ? (
@@ -147,7 +218,7 @@ const Leaderboard = () => {
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     </div>
                 ) : users.length === 0 ? (
-                    <Card className="border-none shadow-xl">
+                    <Card className="border-dashed">
                         <CardContent className="py-20 text-center">
                             <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                             <p className="text-lg text-muted-foreground">
@@ -157,154 +228,102 @@ const Leaderboard = () => {
                     </Card>
                 ) : (
                     <>
-                        {/* Top 3 Podium */}
-                        {users.length >= 3 && (
-                            <div className="mb-12">
-                                <div className="flex items-end justify-center gap-4 sm:gap-8 mb-8">
-                                    {/* 2nd Place */}
-                                    <div className="flex flex-col items-center">
-                                        <div className="relative mb-3">
-                                            <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-slate-400 shadow-lg">
-                                                <AvatarImage src={users[1]?.avatarUrl || ""} />
-                                                <AvatarFallback className="bg-slate-200 text-slate-700 text-xl font-bold">
-                                                    {users[1]?.fullName?.charAt(0) || "U"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-md">
-                                                2
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-semibold text-sm sm:text-base truncate max-w-[120px]">
-                                                {users[1]?.fullName}
-                                            </p>
-                                            <p className="text-primary font-bold text-lg sm:text-xl">
-                                                {users[1]?.bayesianScore.toFixed(1)}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {users[1]?.interviewCount} interviews
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* 1st Place */}
-                                    <div className="flex flex-col items-center -mt-8">
-                                        <div className="relative mb-3">
-                                            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                                                <Trophy className="h-8 w-8 text-yellow-500 animate-pulse" />
-                                            </div>
-                                            <Avatar className="h-20 w-20 sm:h-28 sm:w-28 border-4 border-yellow-500 shadow-2xl ring-4 ring-yellow-500/20">
-                                                <AvatarImage src={users[0]?.avatarUrl || ""} />
-                                                <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-2xl font-bold">
-                                                    {users[0]?.fullName?.charAt(0) || "U"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg shadow-lg">
-                                                1
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-bold text-base sm:text-lg truncate max-w-[140px]">
-                                                {users[0]?.fullName}
-                                            </p>
-                                            <p className="text-primary font-bold text-2xl sm:text-3xl">
-                                                {users[0]?.bayesianScore.toFixed(1)}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {users[0]?.interviewCount} interviews
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* 3rd Place */}
-                                    <div className="flex flex-col items-center">
-                                        <div className="relative mb-3">
-                                            <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-amber-700 shadow-lg">
-                                                <AvatarImage src={users[2]?.avatarUrl || ""} />
-                                                <AvatarFallback className="bg-amber-200 text-amber-900 text-xl font-bold">
-                                                    {users[2]?.fullName?.charAt(0) || "U"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-700 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-md">
-                                                3
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-semibold text-sm sm:text-base truncate max-w-[120px]">
-                                                {users[2]?.fullName}
-                                            </p>
-                                            <p className="text-primary font-bold text-lg sm:text-xl">
-                                                {users[2]?.bayesianScore.toFixed(1)}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {users[2]?.interviewCount} interviews
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                        {/* Top 3 Podium Section */}
+                        {users.length > 0 && !searchQuery && (
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-6 py-8">
+                                {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
+                                <TopPlayerCard user={users[0]} rank={1} />
+                                {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
                             </div>
                         )}
 
                         {/* Full Rankings Table */}
-                        <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm">
-                            <CardHeader className="p-4 sm:p-6">
-                                <CardTitle className="text-lg sm:text-xl">All Rankings</CardTitle>
+                        <Card className="border-none shadow-md bg-card">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-lg font-medium">
+                                    {searchQuery ? "Search Results" : "All Rankings"}
+                                </CardTitle>
+                                <div className="flex gap-2 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1"><TrendingUp className="h-4 w-4" /> Score</span>
+                                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> Interviews</span>
+                                </div>
                             </CardHeader>
-                            <CardContent className="p-0 sm:p-6 sm:pt-0">
-                                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="hover:bg-transparent">
-                                                <TableHead className="w-[60px] sm:w-[80px] text-center font-semibold">Rank</TableHead>
-                                                <TableHead className="font-semibold">Player</TableHead>
-                                                <TableHead className="text-right font-semibold">Score</TableHead>
-                                                <TableHead className="text-right font-semibold hidden sm:table-cell">Interviews</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {users.map((user, index) => (
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="hover:bg-transparent border-b border-border/50">
+                                            <TableHead className="w-[80px] text-center">Rank</TableHead>
+                                            <TableHead>User</TableHead>
+                                            <TableHead className="text-right">Score</TableHead>
+                                            <TableHead className="text-right">Interviews</TableHead>
+                                            <TableHead className="text-right">Badge</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredUsers.map((user, index) => {
+                                            // Calculate actual rank based on original list
+                                            const actualRank = users.findIndex(u => u.userId === user.userId) + 1;
+
+                                            return (
                                                 <TableRow
                                                     key={user.userId}
-                                                    className={`${getRowStyle(index)} hover:bg-accent/50 transition-colors`}
+                                                    className="hover:bg-muted/50 transition-colors"
                                                 >
-                                                    <TableCell className="font-bold text-center">
-                                                        {index < 3 ? (
-                                                            <div className="flex justify-center">
-                                                                {getRankIcon(index)}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">#{index + 1}</span>
-                                                        )}
+                                                    <TableCell className="text-center font-medium text-muted-foreground">
+                                                        #{actualRank}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="flex items-center gap-2 sm:gap-3">
-                                                            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9 border border-border">
                                                                 <AvatarImage src={user.avatarUrl || ""} />
                                                                 <AvatarFallback>{user.fullName?.charAt(0) || "U"}</AvatarFallback>
                                                             </Avatar>
-                                                            <span className="font-medium text-sm sm:text-base truncate">
-                                                                {user.fullName}
-                                                            </span>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-semibold text-sm">{user.fullName}</span>
+                                                                <span className="text-xs text-muted-foreground">ID: {user.userId.slice(0, 8)}...</span>
+                                                            </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right font-bold text-base sm:text-lg text-primary">
+                                                    <TableCell className="text-right font-bold text-primary">
                                                         {user.bayesianScore.toFixed(1)}
                                                     </TableCell>
-                                                    <TableCell className="text-right text-muted-foreground hidden sm:table-cell">
+                                                    <TableCell className="text-right text-muted-foreground">
                                                         {user.interviewCount}
                                                     </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {actualRank <= 3 ? (
+                                                            <Badge variant="secondary" className={cn(
+                                                                "ml-auto w-fit",
+                                                                actualRank === 1 ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
+                                                                    actualRank === 2 ? "bg-slate-100 text-slate-700 hover:bg-slate-100" :
+                                                                        "bg-orange-100 text-orange-800 hover:bg-orange-100"
+                                                            )}>
+                                                                Top {actualRank}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="ml-auto w-fit text-muted-foreground font-normal">
+                                                                Member
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                            );
+                                        })}
+                                        {filteredUsers.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                                    No users found matching "{searchQuery}"
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
                             </CardContent>
                         </Card>
                     </>
                 )}
             </div>
         </DashboardLayout>
-
     );
 };
 

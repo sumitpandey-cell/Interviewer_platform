@@ -5,13 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink, MessageSquare, Copy } from "lucide-react";
+import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink, MessageSquare, Copy, Trash2 } from "lucide-react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { useAuth } from "@/contexts/AuthContext";
 import { useInterviewStore } from "@/stores/use-interview-store";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface InterviewSession {
     id: string;
@@ -31,7 +42,7 @@ export default function InterviewReport() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const { feedback: instantFeedback, transcript: instantTranscript, isSaving, saveError } = useInterviewStore();
-    const { fetchSessionDetail, isCached } = useOptimizedQueries();
+    const { fetchSessionDetail, isCached, deleteInterviewSession } = useOptimizedQueries();
     const [session, setSession] = useState<InterviewSession | null>(null);
 
     useEffect(() => {
@@ -58,12 +69,24 @@ export default function InterviewReport() {
             const transcriptText = reportData.transcript
                 .map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`)
                 .join('\n\n');
-            
+
             await navigator.clipboard.writeText(transcriptText);
             toast.success("Transcript copied to clipboard!");
         } catch (error) {
             toast.error("Failed to copy transcript");
             console.error("Copy error:", error);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!sessionId) return;
+        try {
+            await deleteInterviewSession(sessionId);
+            toast.success("Report deleted successfully");
+            navigate("/reports");
+        } catch (error) {
+            console.error("Error deleting session:", error);
+            toast.error("Failed to delete report");
         }
     };
 
@@ -115,10 +138,10 @@ export default function InterviewReport() {
     };
 
     const feedbackData = mergeFeedback(session?.feedback, instantFeedback);
-    
+
     // Use instant transcript if available (more up-to-date), fallback to DB transcript
     const transcriptData = instantTranscript.length > 0 ? instantTranscript : (session?.transcript || []);
-    
+
     // Debug transcript data
     console.log('Instant transcript from Zustand:', instantTranscript);
     console.log('DB transcript from session:', session?.transcript);
@@ -127,7 +150,7 @@ export default function InterviewReport() {
     const reportData = {
         candidateName: user?.user_metadata?.full_name || "Candidate",
         position: session.position,
-    overallScore: session.score || (feedbackData && feedbackData.skills ? Math.round((feedbackData.skills.reduce((acc: any, s: any) => acc + (s.score || 0), 0) / (feedbackData.skills.length || 1))) : 0),
+        overallScore: session.score || (feedbackData && feedbackData.skills ? Math.round((feedbackData.skills.reduce((acc: any, s: any) => acc + (s.score || 0), 0) / (feedbackData.skills.length || 1))) : 0),
         date: new Date(session.created_at).toLocaleString(),
         executiveSummary: feedbackData.executiveSummary || "The interview session has been recorded. Detailed AI analysis is pending.",
         strengths: feedbackData.strengths || ["Pending analysis..."],
@@ -205,10 +228,37 @@ export default function InterviewReport() {
                                 <div className="text-sm font-medium text-slate-500">Overall Match</div>
                             </div>
 
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Full Report
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download Full Report
+                                </Button>
+
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="icon">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Interview Report</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Are you sure you want to delete this interview report? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleDelete}
+                                                className="bg-red-600 hover:bg-red-700"
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -542,9 +592,9 @@ export default function InterviewReport() {
                                                     {reportData.transcript.length} messages
                                                 </span>
                                             </CardTitle>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={copyTranscriptToClipboard}
                                                 className="flex items-center gap-2"
                                             >
