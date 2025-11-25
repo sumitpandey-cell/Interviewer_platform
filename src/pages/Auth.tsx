@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Brain, Mail, Lock, User, Eye, EyeOff, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Brain, Mail, Lock, User, Eye, EyeOff, CheckCircle2, Sparkles, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
@@ -10,6 +11,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
+import imageCompression from 'browser-image-compression';
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -29,12 +33,13 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
 
   const signUpForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
-    mode: "onBlur",
     defaultValues: {
       fullName: "",
       email: "",
@@ -44,7 +49,6 @@ export default function Auth() {
 
   const signInForm = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
-    mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
@@ -90,11 +94,59 @@ export default function Auth() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignUp]);
 
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 500,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      setAvatarFile(compressedFile);
+      setAvatarPreview(URL.createObjectURL(compressedFile));
+    } catch (error) {
+      console.error("Error compressing image:", error);
+    }
+  };
+
   const handleSignUp = async (values: SignUpForm) => {
     try {
       await signUp(values.email, values.password, values.fullName);
-      console.log(values)
+
+      // Note: We can't immediately upload the avatar here because the user might not be logged in yet
+      // (depending on email verification settings). 
+      // However, if auto-confirm is on or we get a session, we could try.
+      // For now, we'll rely on the user updating it in settings if the initial upload isn't possible,
+      // OR we could try to upload if we have a session immediately.
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session && avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `avatar.${fileExt}`;
+        const filePath = `${session.user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+          await supabase.auth.updateUser({
+            data: { avatar_url: publicUrl }
+          });
+        }
+      }
+
       signUpForm.reset();
+      setAvatarFile(null);
+      setAvatarPreview(null);
     } catch (error) {
       // Error is handled in the context
     }
@@ -134,34 +186,27 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="mb-8 flex items-center gap-3 relative z-10">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="mb-8 flex items-center gap-3">
         <div className="relative">
           <Brain className="h-14 w-14 text-indigo-600" />
-          <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+          <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-slate-900">
             Aura
           </h1>
           <p className="text-xs text-muted-foreground">AI Interview Practice</p>
         </div>
       </div>
 
-      <Card className="w-full max-w-md relative z-10 shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white">
         <CardHeader className="space-y-4">
-          <div className="flex gap-2 p-1 bg-muted/50 rounded-lg">
+          <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
             <Button
               type="button"
               variant={!isSignUp ? "default" : "ghost"}
-              className={`flex-1 transition-all ${!isSignUp ? "shadow-md" : ""}`}
+              className={`flex-1 transition-all ${!isSignUp ? "shadow-sm bg-white text-slate-900 hover:bg-white/90" : "hover:bg-slate-200"}`}
               onClick={() => switchMode(false)}
             >
               Sign In
@@ -169,7 +214,7 @@ export default function Auth() {
             <Button
               type="button"
               variant={isSignUp ? "default" : "ghost"}
-              className={`flex-1 transition-all ${isSignUp ? "shadow-md" : ""}`}
+              className={`flex-1 transition-all ${isSignUp ? "shadow-sm bg-white text-slate-900 hover:bg-white/90" : "hover:bg-slate-200"}`}
               onClick={() => switchMode(true)}
             >
               Sign Up
@@ -188,8 +233,30 @@ export default function Auth() {
         </CardHeader>
         <CardContent className="space-y-6">
           {isSignUp ? (
-            <Form {...signUpForm}>
+            <Form {...signUpForm} key="signup-form">
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                <div className="flex flex-col items-center space-y-4 mb-4">
+                  <Label htmlFor="avatar-upload" className="cursor-pointer group relative">
+                    <Avatar className="h-24 w-24 border-4 border-slate-100 group-hover:border-indigo-100 transition-colors">
+                      <AvatarImage src={avatarPreview || ""} />
+                      <AvatarFallback className="bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-400 transition-colors">
+                        <Upload className="h-8 w-8" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0 bg-indigo-600 rounded-full p-1.5 text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Upload className="h-3 w-3" />
+                    </div>
+                  </Label>
+                  <Input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <p className="text-xs text-muted-foreground">Upload profile picture (optional)</p>
+                </div>
+
                 <FormField
                   control={signUpForm.control}
                   name="fullName"
@@ -203,7 +270,7 @@ export default function Auth() {
                             placeholder="John Doe"
                             autoComplete="name"
                             disabled={signUpForm.formState.isSubmitting}
-                            className="pl-10 h-11 border-2 focus:border-primary transition-colors"
+                            className="pl-10 h-11"
                             {...field}
                           />
                         </div>
@@ -226,7 +293,7 @@ export default function Auth() {
                             placeholder="john@example.com"
                             autoComplete="email"
                             disabled={signUpForm.formState.isSubmitting}
-                            className="pl-10 h-11 border-2 focus:border-primary transition-colors"
+                            className="pl-10 h-11"
                             {...field}
                           />
                         </div>
@@ -249,7 +316,7 @@ export default function Auth() {
                             placeholder="••••••••"
                             autoComplete="new-password"
                             disabled={signUpForm.formState.isSubmitting}
-                            className="pl-10 pr-10 h-11 border-2 focus:border-primary transition-colors"
+                            className="pl-10 pr-10 h-11"
                             {...field}
                           />
                           <button
@@ -281,7 +348,7 @@ export default function Auth() {
                 />
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-medium bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                  className="w-full h-11 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
                   disabled={signUpForm.formState.isSubmitting}
                 >
                   {signUpForm.formState.isSubmitting ? (
@@ -299,7 +366,7 @@ export default function Auth() {
               </form>
             </Form>
           ) : (
-            <Form {...signInForm}>
+            <Form {...signInForm} key="signin-form">
               <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                 <FormField
                   control={signInForm.control}
@@ -315,7 +382,7 @@ export default function Auth() {
                             placeholder="john@example.com"
                             autoComplete="email"
                             disabled={signInForm.formState.isSubmitting}
-                            className="pl-10 h-11 border-2 focus:border-primary transition-colors"
+                            className="pl-10 h-11"
                             {...field}
                           />
                         </div>
@@ -338,7 +405,7 @@ export default function Auth() {
                             placeholder="••••••••"
                             autoComplete="current-password"
                             disabled={signInForm.formState.isSubmitting}
-                            className="pl-10 pr-10 h-11 border-2 focus:border-primary transition-colors"
+                            className="pl-10 pr-10 h-11"
                             {...field}
                           />
                           <button
@@ -356,7 +423,7 @@ export default function Auth() {
                 />
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-medium bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                  className="w-full h-11 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
                   disabled={signInForm.formState.isSubmitting}
                 >
                   {signInForm.formState.isSubmitting ? (
@@ -386,7 +453,7 @@ export default function Auth() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 mb-6 border-2 hover:bg-gray-50 transition-colors"
+            className="w-full h-11 mb-6 border hover:bg-gray-50 transition-colors"
             onClick={handleGoogleSignIn}
           >
             <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -437,32 +504,6 @@ export default function Auth() {
           </div>
         </CardContent>
       </Card>
-
-      <style>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </div>
   );
 }

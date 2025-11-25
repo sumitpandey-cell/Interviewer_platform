@@ -58,12 +58,171 @@ export default function InterviewReport() {
             const transcriptText = reportData.transcript
                 .map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`)
                 .join('\n\n');
-            
+
             await navigator.clipboard.writeText(transcriptText);
             toast.success("Transcript copied to clipboard!");
         } catch (error) {
             toast.error("Failed to copy transcript");
             console.error("Copy error:", error);
+        }
+    };
+
+    const downloadReport = () => {
+        try {
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Report - ${reportData.candidateName}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 40px 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header { border-bottom: 3px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 32px; color: #0f172a; margin-bottom: 8px; }
+        .header .position { font-size: 20px; color: #64748b; margin-bottom: 12px; }
+        .header .date { font-size: 14px; color: #94a3b8; }
+        .score-section { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; }
+        .score-section .score { font-size: 64px; font-weight: bold; margin-bottom: 8px; }
+        .score-section .label { font-size: 18px; opacity: 0.9; }
+        .section { margin: 30px 0; }
+        .section h2 { font-size: 24px; color: #0f172a; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+        .section h3 { font-size: 18px; color: #334155; margin: 20px 0 12px; }
+        .summary { background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        .list { list-style: none; }
+        .list li { padding: 12px 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start; }
+        .list li:last-child { border-bottom: none; }
+        .list li::before { content: "•"; color: #3b82f6; font-weight: bold; font-size: 20px; margin-right: 12px; }
+        .strength::before { content: "✓"; color: #10b981 !important; }
+        .improvement::before { content: "⚠"; color: #f59e0b !important; }
+        .skill-item { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        .skill-header { display: flex; justify-between; align-items: center; margin-bottom: 8px; }
+        .skill-name { font-weight: 600; color: #0f172a; }
+        .skill-score { font-weight: bold; color: #3b82f6; font-size: 18px; }
+        .skill-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .skill-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 4px; }
+        .skill-feedback { font-size: 14px; color: #64748b; }
+        .transcript { background: #f8fafc; padding: 20px; border-radius: 8px; max-height: 600px; overflow-y: auto; }
+        .message { margin-bottom: 16px; padding: 12px; border-radius: 8px; }
+        .message.ai { background: #dbeafe; border-left: 3px solid #3b82f6; }
+        .message.user { background: #d1fae5; border-left: 3px solid #10b981; }
+        .message-sender { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+        .message-text { color: #1e293b; }
+        .recommendation { background: #dcfce7; border: 2px solid #10b981; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .recommendation.negative { background: #fee2e2; border-color: #ef4444; }
+        .recommendation h3 { color: #166534; margin-bottom: 8px; }
+        .recommendation.negative h3 { color: #991b1b; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 14px; }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${reportData.candidateName}</h1>
+            <div class="position">${reportData.position}</div>
+            <div class="date">Interview Date: ${reportData.date}</div>
+        </div>
+
+        <div class="score-section">
+            <div class="score">${reportData.overallScore}%</div>
+            <div class="label">Overall Match Score</div>
+        </div>
+
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <div class="summary">${reportData.executiveSummary}</div>
+        </div>
+
+        <div class="section">
+            <h2>Key Strengths</h2>
+            <ul class="list">
+                ${reportData.strengths.map(item => `<li class="strength">${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Areas for Improvement</h2>
+            <ul class="list">
+                ${reportData.improvements.map(item => `<li class="improvement">${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Skills Assessment</h2>
+            ${reportData.skills.map(skill => `
+                <div class="skill-item">
+                    <div class="skill-header">
+                        <span class="skill-name">${skill.name}</span>
+                        <span class="skill-score">${skill.score}%</span>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-bar-fill" style="width: ${skill.score}%"></div>
+                    </div>
+                    <div class="skill-feedback">${skill.feedback}</div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="section">
+            <h2>Recommended Action Plan</h2>
+            <ul class="list">
+                ${reportData.actionPlan.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Interview Transcript</h2>
+            <div class="transcript">
+                ${reportData.transcript.map(msg => `
+                    <div class="message ${msg.sender}">
+                        <div class="message-sender">${msg.sender === 'ai' ? 'AI Interviewer' : 'Candidate'}</div>
+                        <div class="message-text">${msg.text}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="recommendation ${reportData.overallScore >= 70 ? '' : 'negative'}">
+            <h3>AI Recommendation: ${reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}</h3>
+            <p>Based on the overall match score of ${reportData.overallScore}%, this candidate is ${reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the ${reportData.position} role at this time.</p>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Aura AI Interview Platform</p>
+            <p>© ${new Date().getFullYear()} All rights reserved</p>
+        </div>
+    </div>
+</body>
+</html>
+            `;
+
+            // Create blob and download
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Interview_Report_${reportData.candidateName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success("Report downloaded successfully!");
+        } catch (error) {
+            toast.error("Failed to download report");
+            console.error("Download error:", error);
         }
     };
 
@@ -115,10 +274,10 @@ export default function InterviewReport() {
     };
 
     const feedbackData = mergeFeedback(session?.feedback, instantFeedback);
-    
+
     // Use instant transcript if available (more up-to-date), fallback to DB transcript
     const transcriptData = instantTranscript.length > 0 ? instantTranscript : (session?.transcript || []);
-    
+
     // Debug transcript data
     console.log('Instant transcript from Zustand:', instantTranscript);
     console.log('DB transcript from session:', session?.transcript);
@@ -127,7 +286,7 @@ export default function InterviewReport() {
     const reportData = {
         candidateName: user?.user_metadata?.full_name || "Candidate",
         position: session.position,
-    overallScore: session.score || (feedbackData && feedbackData.skills ? Math.round((feedbackData.skills.reduce((acc: any, s: any) => acc + (s.score || 0), 0) / (feedbackData.skills.length || 1))) : 0),
+        overallScore: session.score || (feedbackData && feedbackData.skills ? Math.round((feedbackData.skills.reduce((acc: any, s: any) => acc + (s.score || 0), 0) / (feedbackData.skills.length || 1))) : 0),
         date: new Date(session.created_at).toLocaleString(),
         executiveSummary: feedbackData.executiveSummary || "The interview session has been recorded. Detailed AI analysis is pending.",
         strengths: feedbackData.strengths || ["Pending analysis..."],
@@ -205,7 +364,7 @@ export default function InterviewReport() {
                                 <div className="text-sm font-medium text-slate-500">Overall Match</div>
                             </div>
 
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <Button onClick={downloadReport} className="bg-blue-600 hover:bg-blue-700 text-white">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Full Report
                             </Button>
@@ -462,7 +621,7 @@ export default function InterviewReport() {
                             {/* Right Column (Sidebar) - Duplicated for now as per design request to show same sidebar */}
                             <div className="space-y-6">
                                 {/* Download Report Button (Sidebar version if needed, though header has one) */}
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
+                                <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>
@@ -542,9 +701,9 @@ export default function InterviewReport() {
                                                     {reportData.transcript.length} messages
                                                 </span>
                                             </CardTitle>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={copyTranscriptToClipboard}
                                                 className="flex items-center gap-2"
                                             >
@@ -588,7 +747,7 @@ export default function InterviewReport() {
 
                             {/* Right Column (Sidebar) - Duplicated for consistency */}
                             <div className="space-y-6">
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
+                                <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>

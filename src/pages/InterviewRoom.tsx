@@ -11,6 +11,7 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { generateFeedback } from "@/lib/gemini-feedback";
 import { useInterviewStore } from "@/stores/use-interview-store";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 
@@ -20,7 +21,7 @@ interface SessionData {
     position: string;
 }
 
-const generateSystemInstruction = (session: SessionData | null) => {
+const generateSystemInstruction = (session: SessionData | null, timeLeftMinutes?: number) => {
     if (!session) {
         return `You are a Senior Technical Interviewer. Conduct a professional interview.`;
     }
@@ -41,6 +42,8 @@ Your goal is to assess the candidate's abilities based on the following principl
 Conduct the interview in a professional but encouraging tone. Start by introducing yourself and asking the candidate to introduce themselves. Then proceed to ask ${interview_type.toLowerCase()} questions relevant to the ${position} position.
 
 IMPORTANT: Your text output must be an exact transcript of your audio output. Do not output internal thoughts, reasoning, or system logs in the text channel. Only output what you speak.
+
+${timeLeftMinutes ? `You have approximately ${timeLeftMinutes} minutes remaining for this interview. Manage your time accordingly.` : ''}
 `.trim();
 };
 
@@ -69,14 +72,32 @@ export default function InterviewRoom() {
     const [sessionLoaded, setSessionLoaded] = useState(false);
     const startTimeRef = useRef<number | null>(null);
     const messageIdRef = useRef(0);
+    const { remaining_minutes, recordUsage, type: subscriptionType } = useSubscription();
+    const [timeLeft, setTimeLeft] = useState(remaining_minutes * 60);
+
+    // Update timeLeft when remaining_minutes changes
+    useEffect(() => {
+        setTimeLeft(remaining_minutes * 60);
+    }, [remaining_minutes]);
 
     // Timer logic
     useEffect(() => {
         const timer = setInterval(() => {
             setElapsedTime((prev) => prev + 1);
+
+            if (subscriptionType !== 'paid' || remaining_minutes < 999999) { // Don't count down for unlimited
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        handleEndCall();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [subscriptionType, remaining_minutes]);
 
     // AI speaking animation based on volume
     useEffect(() => {
@@ -195,7 +216,7 @@ export default function InterviewRoom() {
         console.log('Starting connection initialization...');
         const initConnection = async () => {
             try {
-                const systemInstruction = generateSystemInstruction(session);
+                const systemInstruction = generateSystemInstruction(session, Math.floor(timeLeft / 60));
 
                 await connect({
                     model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
@@ -237,11 +258,21 @@ export default function InterviewRoom() {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const getTimerColor = () => {
+        if (subscriptionType === 'paid' && remaining_minutes > 999999) return 'text-white'; // Unlimited
+        if (timeLeft < 60) return 'text-red-500 animate-pulse';
+        if (timeLeft < 300) return 'text-yellow-500';
+        return 'text-white';
+    };
+
     const handleEndCall = async () => {
         disconnect();
 
         if (sessionId && startTimeRef.current && session) {
             const durationMinutes = Math.ceil((Date.now() - startTimeRef.current) / 60000);
+
+            // Record usage
+            await recordUsage(durationMinutes);
 
             // Immediately redirect to dashboard with progress notification
             toast.success("Interview completed! Your report is being generated...", {
@@ -367,9 +398,9 @@ export default function InterviewRoom() {
 
             {/* Timer - Top Left */}
             <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-20">
-                <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white px-3 sm:px-4 py-2 rounded-full font-mono text-xs sm:text-sm font-medium tracking-wider flex items-center gap-2 shadow-lg">
-                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                    {formatTime(elapsedTime)}
+                <div className={`bg-black/60 backdrop-blur-md border border-white/10 px-3 sm:px-4 py-2 rounded-full font-mono text-xs sm:text-sm font-medium tracking-wider flex items-center gap-2 shadow-lg ${getTimerColor()}`}>
+                    <div className={`h-2 w-2 rounded-full animate-pulse ${timeLeft < 60 ? 'bg-red-500' : 'bg-green-500'}`} />
+                    {subscriptionType === 'paid' && remaining_minutes > 999999 ? formatTime(elapsedTime) : formatTime(timeLeft)}
                 </div>
             </div>
 
