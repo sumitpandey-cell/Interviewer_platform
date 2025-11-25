@@ -76,7 +76,11 @@ export default function StartInterview() {
                 position: values.position,
                 duration_minutes: parseInt(values.duration),
                 status: "pending",
-                // Note: skills and jobDescription are not currently saved to DB as per schema
+                config: {
+                    skills: skillsList,
+                    jobDescription: values.jobDescription || null,
+                    duration: parseInt(values.duration)
+                }
             }).select();
 
             if (error) throw error;

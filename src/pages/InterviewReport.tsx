@@ -1,52 +1,152 @@
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink } from "lucide-react";
+import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink, MessageSquare, Copy } from "lucide-react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
+import { useAuth } from "@/contexts/AuthContext";
+import { useInterviewStore } from "@/stores/use-interview-store";
+import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+interface InterviewSession {
+    id: string;
+    interview_type: string;
+    position: string;
+    score: number | null;
+    status: string;
+    created_at: string;
+    duration_minutes: number | null;
+    feedback: any;
+    transcript: any;
+}
 
 export default function InterviewReport() {
     const { sessionId } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const { feedback: instantFeedback, transcript: instantTranscript, isSaving, saveError } = useInterviewStore();
+    const { fetchSessionDetail, isCached } = useOptimizedQueries();
+    const [session, setSession] = useState<InterviewSession | null>(null);
 
-    // Mock data - in a real app, fetch based on sessionId
+    useEffect(() => {
+        if (sessionId) {
+            fetchSession();
+        }
+    }, [sessionId]);
+
+    const fetchSession = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchSessionDetail(sessionId!);
+            setSession(data as InterviewSession);
+        } catch (error) {
+            console.error("Error fetching session:", error);
+            // navigate("/dashboard"); // Optional: redirect on error
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copyTranscriptToClipboard = async () => {
+        try {
+            const transcriptText = reportData.transcript
+                .map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`)
+                .join('\n\n');
+            
+            await navigator.clipboard.writeText(transcriptText);
+            toast.success("Transcript copied to clipboard!");
+        } catch (error) {
+            toast.error("Failed to copy transcript");
+            console.error("Copy error:", error);
+        }
+    };
+
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (!session) {
+        return (
+            <DashboardLayout>
+                <div className="text-center py-12">
+                    <h2 className="text-2xl font-bold text-slate-900">Session not found</h2>
+                    <Button onClick={() => navigate("/dashboard")} className="mt-4">
+                        Back to Dashboard
+                    </Button>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // Merge DB feedback and in-memory (instant) feedback using generatedAt timestamps.
+    // If instant feedback is newer, prefer its fields; otherwise use DB feedback.
+    const mergeFeedback = (dbFeedback: any, instant: any) => {
+        if (!dbFeedback && !instant) return {};
+        if (!dbFeedback) return instant;
+        if (!instant) return dbFeedback;
+
+        const dbTs = dbFeedback.generatedAt ? Date.parse(dbFeedback.generatedAt) : 0;
+        const instTs = instant.generatedAt ? Date.parse(instant.generatedAt) : 0;
+
+        if (instTs >= dbTs) {
+            // Instant is newer: shallow-merge, preferring instant fields when present
+            return {
+                ...dbFeedback,
+                ...instant,
+                // ensure generatedAt is set to the latest
+                generatedAt: instant.generatedAt || dbFeedback.generatedAt,
+            };
+        }
+
+        // DB is newer or same: return DB feedback
+        return dbFeedback;
+    };
+
+    const feedbackData = mergeFeedback(session?.feedback, instantFeedback);
+    
+    // Use instant transcript if available (more up-to-date), fallback to DB transcript
+    const transcriptData = instantTranscript.length > 0 ? instantTranscript : (session?.transcript || []);
+    
+    // Debug transcript data
+    console.log('Instant transcript from Zustand:', instantTranscript);
+    console.log('DB transcript from session:', session?.transcript);
+    console.log('Final transcript data used:', transcriptData);
+
     const reportData = {
-        candidateName: "Ujjawal Mishra",
-        position: "Frontend Intern",
-        overallScore: 20,
-        date: "2025-11-20, 18:31:00",
-        executiveSummary: "The candidate, currently a B.Sc. Computer Science student, showed basic awareness of core frontend, but struggled to articulate detailed concepts such as the CSS box model and semantic HTML. Past questions, for most clarity, responses partial explanation the box model and inability to recall media queries for responsive design. At times off-topic, suggesting was broken and presenting and knowledge coherently. Motivation development was not clearly demonstrated, and cultural fit remains uncertain due to diverted attention to unrelated subjects.",
-        strengths: [
-            "The candidate is pursuing a technical degree in Computer Science, showing foundational background.",
-            "They recognize basic concepts like the CSS box model and the use of margin and padding.",
-            "The candidate is aware of the distinction between 'id' and 'class'."
+        candidateName: user?.user_metadata?.full_name || "Candidate",
+        position: session.position,
+    overallScore: session.score || (feedbackData && feedbackData.skills ? Math.round((feedbackData.skills.reduce((acc: any, s: any) => acc + (s.score || 0), 0) / (feedbackData.skills.length || 1))) : 0),
+        date: new Date(session.created_at).toLocaleString(),
+        executiveSummary: feedbackData.executiveSummary || "The interview session has been recorded. Detailed AI analysis is pending.",
+        strengths: feedbackData.strengths || ["Pending analysis..."],
+        improvements: feedbackData.improvements || ["Pending analysis..."],
+        skills: feedbackData.skills || [
+            { name: "Technical Expertise", score: 0, feedback: "Pending..." },
+            { name: "Problem Solving", score: 0, feedback: "Pending..." },
+            { name: "Communication", score: 0, feedback: "Pending..." },
+            { name: "Cultural Fit", score: 0, feedback: "Pending..." }
         ],
-        improvements: [
-            "Explanations lacked depth and structure, with minimal detail provided for most technical questions.",
-            "The candidate were unable to recall or explain key design and media queries.",
-            "Communication was inconsistent and at times or incorrect."
-        ],
-        skills: [
-            { name: "Technical Expertise", score: 30, feedback: "Demonstrated limited technical knowledge; answers were basic and lacked depth." },
-            { name: "Problem Solving", score: 20, feedback: "Rarely structured problem-solving; struggled to explain frontend solving approaches." },
-            { name: "Decision & Judgment", score: 20, feedback: "Did not show evidence of making logical or data-driven decisions." },
-            { name: "Debugging Mindset", score: 10, feedback: "No evidence of debugging skills or troubleshooting approaches." }
-        ],
-        actionPlan: [
-            "Practice answering common frontend interview questions.",
-            "Study and implement core responsive design techniques.",
-            "Prepare and rehearse answers to common technical questions.",
-            "Improve communication skills and reviewing yourself.",
-            "Reflect on your interest in frontend development and projects."
-        ],
-        transcript: [
-            { id: 1, sender: "ai", text: "Hello! I'm your AI interviewer today. I've reviewed your application for the Senior Frontend Developer role. To start, could you tell me a bit about your experience with React and modern state management libraries?", timestamp: "18:31:05" },
-            { id: 2, sender: "user", text: "Hi! Sure. I've been working with React for about 5 years now. In my last role, I led the migration from a legacy Redux codebase to using React Query and Context API for server and client state respectively. I found this significantly reduced boilerplate and improved performance.", timestamp: "18:31:45" },
-            { id: 3, sender: "ai", text: "That sounds like a significant improvement. Can you elaborate on how you handled complex dependent queries with React Query? specifically in scenarios where one piece of data relied on another?", timestamp: "18:32:15" },
-            { id: 4, sender: "user", text: "Yes, for dependent queries, we utilized the `enabled` option in `useQuery`. Basically, we would pass a boolean that checks if the required data from the first query is available. If it's not, the second query doesn't run. This ensures a waterfall effect where data is fetched in the correct order without errors.", timestamp: "18:33:00" },
-            { id: 5, sender: "ai", text: "Good approach. Now, let's shift gears to CSS. Can you explain the Box Model and how `box-sizing: border-box` affects it?", timestamp: "18:33:30" },
-            { id: 6, sender: "user", text: "The Box Model consists of margins, borders, padding, and the actual content. By default, the width of an element only includes the content. If you add padding or borders, the element grows bigger than the specified width. `box-sizing: border-box` changes this so that padding and borders are included in the element's total width and height, making layout calculations much easier.", timestamp: "18:34:10" },
+        actionPlan: feedbackData.actionPlan || ["Wait for full AI report generation."],
+        // Ensure transcript format is consistent
+        transcript: transcriptData.length > 0 ? transcriptData.map((msg: any, index: number) => ({
+            id: msg.id || index,
+            sender: msg.sender,
+            text: msg.text,
+            timestamp: msg.timestamp || "Just now"
+        })) : [
+            { id: 1, sender: "ai", text: "No transcript available. The interview may not have contained any recorded conversation.", timestamp: "-" },
         ]
     };
 
@@ -56,9 +156,25 @@ export default function InterviewReport() {
                 {/* Header Section */}
                 <Card className="border-none shadow-sm bg-white">
                     <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div>
+                                <h1 className="text-3xl font-bold text-slate-900">{reportData.candidateName}</h1>
+                                <p className="text-slate-500 text-lg">{reportData.position}</p>
+                            </div>
+                            {sessionId && isCached.sessionDetail(sessionId) && (
+                                <Badge variant="outline" className="text-xs px-1">📦 Cached</Badge>
+                            )}
+                        </div>
+
+                        {/* Saving status badge (from zustand) */}
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-900">{reportData.candidateName}</h1>
-                            <p className="text-slate-500 text-lg">{reportData.position}</p>
+                            {isSaving ? (
+                                <div className="text-sm px-3 py-1 rounded-full bg-yellow-50 text-yellow-800 font-medium">Saving…</div>
+                            ) : saveError ? (
+                                <div className="text-sm px-3 py-1 rounded-full bg-red-50 text-red-800 font-medium">Save failed</div>
+                            ) : (
+                                <div className="text-sm px-3 py-1 rounded-full bg-green-50 text-green-800 font-medium">Saved</div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-8">
@@ -267,11 +383,11 @@ export default function InterviewReport() {
                                         <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="bg-red-50 text-red-700 px-4 py-2 rounded-md text-sm font-bold">
-                                            Verdict: Do Not Proceed
+                                        <div className={`px-4 py-2 rounded-md text-sm font-bold ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
                                         </div>
                                         <p className="text-sm text-slate-600 leading-relaxed">
-                                            Based on the low overall match score and critical skill gaps, this candidate is not recommended for the {reportData.position} role at this time.
+                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -311,7 +427,7 @@ export default function InterviewReport() {
                                                 <div className="text-sm text-slate-500">Overall Skill Score</div>
                                             </div>
                                             <p className="text-sm text-slate-600 leading-relaxed">
-                                                The candidate is having a technical degree in Computer Science, and lacked depth. For most clarity, responses partial explanation for the box model backgrounds.
+                                                Detailed skill analysis is pending.
                                             </p>
                                         </div>
                                     </CardContent>
@@ -323,7 +439,7 @@ export default function InterviewReport() {
                                         <Card key={i} className="border-none shadow-sm">
                                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                                 <CardTitle className="text-base font-bold text-slate-900">{skill.name}</CardTitle>
-                                                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">
+                                                <span className={`text-xs font-bold px-2 py-1 rounded ${skill.score >= 70 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                     {skill.score}%
                                                 </span>
                                             </CardHeader>
@@ -394,12 +510,12 @@ export default function InterviewReport() {
                                         <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="bg-red-50 text-red-700 px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between">
-                                            Verdict: Do Not Proceed
-                                            <XCircle className="h-4 w-4" />
+                                        <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
+                                            {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                                         </div>
                                         <p className="text-sm text-slate-600 leading-relaxed">
-                                            Based on the low overall match score and critical skill gaps, this candidate is not recommended for the {reportData.position} role at this time.
+                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -419,27 +535,53 @@ export default function InterviewReport() {
                             <div className="lg:col-span-2">
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Interview Transcript</CardTitle>
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                Interview Transcript
+                                                <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600">
+                                                    {reportData.transcript.length} messages
+                                                </span>
+                                            </CardTitle>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={copyTranscriptToClipboard}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <Copy className="h-4 w-4" />
+                                                Copy Transcript
+                                            </Button>
+                                        </div>
                                     </CardHeader>
-                                    <CardContent className="space-y-6">
-                                        {reportData.transcript.map((msg) => (
-                                            <div key={msg.id} className={`flex gap-4 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                                                <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${msg.sender === 'ai' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
-                                                    {msg.sender === 'ai' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
-                                                </div>
-                                                <div className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                                                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'ai'
-                                                        ? 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
-                                                        : 'bg-blue-600 text-white rounded-tr-none'
-                                                        }`}>
-                                                        {msg.text}
-                                                    </div>
-                                                    <span className="text-[10px] text-slate-400 mt-1 px-1">
-                                                        {msg.timestamp}
-                                                    </span>
-                                                </div>
+                                    <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+                                        {reportData.transcript.length === 1 && reportData.transcript[0].text.includes("No transcript available") ? (
+                                            // Empty state
+                                            <div className="text-center py-12 text-slate-500">
+                                                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+                                                <p className="text-lg font-medium">No conversation recorded</p>
+                                                <p className="text-sm">The interview transcript is not available or the session may have been too short.</p>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            // Actual transcript messages
+                                            reportData.transcript.map((msg) => (
+                                                <div key={msg.id} className={`flex gap-4 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${msg.sender === 'ai' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                        {msg.sender === 'ai' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                                                    </div>
+                                                    <div className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                                                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'ai'
+                                                            ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'
+                                                            : 'bg-emerald-600 text-white rounded-tr-none'
+                                                            }`}>
+                                                            {msg.text}
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400 mt-1 px-1">
+                                                            {msg.timestamp}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                     </CardContent>
                                 </Card>
                             </div>
@@ -492,12 +634,12 @@ export default function InterviewReport() {
                                         <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="bg-red-50 text-red-700 px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between">
-                                            Verdict: Do Not Proceed
-                                            <XCircle className="h-4 w-4" />
+                                        <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
+                                            {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                                         </div>
                                         <p className="text-sm text-slate-600 leading-relaxed">
-                                            Based on the low overall match score and critical skill gaps, this candidate is not recommended for the {reportData.position} role at this time.
+                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
                                 </Card>

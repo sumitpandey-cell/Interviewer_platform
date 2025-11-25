@@ -11,11 +11,14 @@ import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import Templates from "./pages/Templates";
 import Reports from "./pages/Reports";
+import AdminNotifications from "./pages/AdminNotifications";
 import StartInterview from "./pages/StartInterview";
 import InterviewSetup from "./pages/InterviewSetup";
 import InterviewRoom from "./pages/InterviewRoom";
 import InterviewReport from "./pages/InterviewReport";
 import InterviewComplete from "./pages/InterviewComplete";
+import Leaderboard from "./pages/Leaderboard";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +38,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
                 </ProtectedRoute>
               }
             />
@@ -59,6 +70,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/notifications"
+              element={
+                <ProtectedRoute>
+                  <AdminNotifications />
                 </ProtectedRoute>
               }
             />
@@ -99,6 +118,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <InterviewComplete />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview/:sessionId"
+              element={
+                <ProtectedRoute>
+                  <InterviewSetup />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />
