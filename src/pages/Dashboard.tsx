@@ -15,8 +15,7 @@ import {
   X,
   Gift,
   Play,
-  ExternalLink,
-  Trash2
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -179,31 +178,6 @@ export default function Dashboard() {
       toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleDelete = async (id: string) => {
-    // Add confirmation dialog
-    const confirmed = window.confirm("Are you sure you want to delete this interview session? This action cannot be undone.");
-    if (!confirmed) return;
-
-    try {
-      setDeletingId(id);
-      console.log('Attempting to delete session:', id);
-      await deleteInterviewSession(id);
-      console.log('Session deleted successfully');
-      toast.success("Session deleted");
-
-      // The optimized hook will automatically invalidate cache
-      // Refresh data to update UI
-      await loadDashboardData();
-    } catch (error: any) {
-      console.error("Error deleting session:", error);
-      toast.error(error.message || "Failed to delete session");
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -529,24 +503,9 @@ export default function Dashboard() {
                           </Badge>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
-                              Report <ExternalLink className="ml-2 h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => handleDelete(session.id)}
-                              disabled={deletingId === session.id}
-                            >
-                              {deletingId === session.id ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
+                          <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
+                            Report <ExternalLink className="ml-2 h-3 w-3" />
+                          </Button>
                         </td>
                       </tr>
                     ))
