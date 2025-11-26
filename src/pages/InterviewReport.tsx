@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink, MessageSquare, Copy, Trash2 } from "lucide-react";
+import { Download, CheckCircle2, XCircle, Calendar, User, Briefcase, Bot, ArrowRight, ExternalLink, MessageSquare, Copy, Trash2, Clock, Play } from "lucide-react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { useAuth } from "@/contexts/AuthContext";
 import { useInterviewStore } from "@/stores/use-interview-store";
@@ -90,6 +90,166 @@ export default function InterviewReport() {
         }
     };
 
+    const downloadReport = () => {
+        try {
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Report - ${reportData.candidateName}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 40px 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header { border-bottom: 3px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 32px; color: #0f172a; margin-bottom: 8px; }
+        .header .position { font-size: 20px; color: #64748b; margin-bottom: 12px; }
+        .header .date { font-size: 14px; color: #94a3b8; }
+        .score-section { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; }
+        .score-section .score { font-size: 64px; font-weight: bold; margin-bottom: 8px; }
+        .score-section .label { font-size: 18px; opacity: 0.9; }
+        .section { margin: 30px 0; }
+        .section h2 { font-size: 24px; color: #0f172a; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+        .section h3 { font-size: 18px; color: #334155; margin: 20px 0 12px; }
+        .summary { background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        .list { list-style: none; }
+        .list li { padding: 12px 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start; }
+        .list li:last-child { border-bottom: none; }
+        .list li::before { content: "•"; color: #3b82f6; font-weight: bold; font-size: 20px; margin-right: 12px; }
+        .strength::before { content: "✓"; color: #10b981 !important; }
+        .improvement::before { content: "⚠"; color: #f59e0b !important; }
+        .skill-item { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        .skill-header { display: flex; justify-between; align-items: center; margin-bottom: 8px; }
+        .skill-name { font-weight: 600; color: #0f172a; }
+        .skill-score { font-weight: bold; color: #3b82f6; font-size: 18px; }
+        .skill-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .skill-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 4px; }
+        .skill-feedback { font-size: 14px; color: #64748b; }
+        .transcript { background: #f8fafc; padding: 20px; border-radius: 8px; max-height: 600px; overflow-y: auto; }
+        .message { margin-bottom: 16px; padding: 12px; border-radius: 8px; }
+        .message.ai { background: #dbeafe; border-left: 3px solid #3b82f6; }
+        .message.user { background: #d1fae5; border-left: 3px solid #10b981; }
+        .message-sender { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+        .message-text { color: #1e293b; }
+        .recommendation { background: #dcfce7; border: 2px solid #10b981; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .recommendation.negative { background: #fee2e2; border-color: #ef4444; }
+        .recommendation h3 { color: #166534; margin-bottom: 8px; }
+        .recommendation.negative h3 { color: #991b1b; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 14px; }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${reportData.candidateName}</h1>
+            <div class="position">${reportData.position}</div>
+            <div class="date">Interview Date: ${reportData.date}</div>
+        </div>
+
+        <div class="score-section">
+            <div class="score">${reportData.overallScore}%</div>
+            <div class="label">Overall Match Score</div>
+        </div>
+
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <div class="summary">${reportData.executiveSummary}</div>
+        </div>
+
+        <div class="section">
+            <h2>Key Strengths</h2>
+            <ul class="list">
+                ${reportData.strengths.map(item => `<li class="strength">${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Areas for Improvement</h2>
+            <ul class="list">
+                ${reportData.improvements.map(item => `<li class="improvement">${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Skills Assessment</h2>
+            ${reportData.skills.map(skill => `
+                <div class="skill-item">
+                    <div class="skill-header">
+                        <span class="skill-name">${skill.name}</span>
+                        <span class="skill-score">${skill.score}%</span>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-bar-fill" style="width: ${skill.score}%"></div>
+                    </div>
+                    <div class="skill-feedback">${skill.feedback}</div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="section">
+            <h2>Recommended Action Plan</h2>
+            <ul class="list">
+                ${reportData.actionPlan.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Interview Transcript</h2>
+            <div class="transcript">
+                ${reportData.transcript.map(msg => `
+                    <div class="message ${msg.sender}">
+                        <div class="message-sender">${msg.sender === 'ai' ? 'AI Interviewer' : 'Candidate'}</div>
+                        <div class="message-text">${msg.text}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="recommendation ${reportData.overallScore >= 70 ? '' : 'negative'}">
+            <h3>AI Recommendation: ${reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}</h3>
+            <p>Based on the overall match score of ${reportData.overallScore}%, this candidate is ${reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the ${reportData.position} role at this time.</p>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Aura AI Interview Platform</p>
+            <p>© ${new Date().getFullYear()} All rights reserved</p>
+        </div>
+    </div>
+</body>
+</html>
+            `;
+
+            // Create blob and download
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Interview_Report_${reportData.candidateName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success("Report downloaded successfully!");
+        } catch (error) {
+            toast.error("Failed to download report");
+            console.error("Download error:", error);
+        }
+    };
+
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -108,6 +268,109 @@ export default function InterviewReport() {
                     <Button onClick={() => navigate("/dashboard")} className="mt-4">
                         Back to Dashboard
                     </Button>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // Check if interview is in progress (not completed or no score)
+    const isInProgress = session.status !== 'completed' || session.score === null;
+
+    // If interview is in progress, show continue interview UI
+    if (isInProgress) {
+        return (
+            <DashboardLayout>
+                <div className="space-y-6 overflow-x-hidden max-w-full">
+                    {/* Header Section */}
+                    <Card className="border-none shadow-sm bg-white">
+                        <CardContent className="p-4 md:p-6 flex flex-col gap-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+                                <div className="flex items-center gap-4 min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1">
+                                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 truncate">{user?.user_metadata?.full_name || "Candidate"}</h1>
+                                        <p className="text-slate-500 text-base md:text-lg truncate">{session.position}</p>
+                                    </div>
+                                    {sessionId && isCached.sessionDetail(sessionId) && (
+                                        <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
+                                    )}
+                                </div>
+
+                                {/* Status badge */}
+                                <div className="flex-shrink-0">
+                                    <div className="text-sm px-3 py-1 rounded-full bg-yellow-50 text-yellow-800 font-medium whitespace-nowrap">In Progress</div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Interview Incomplete Message */}
+                    <Card className="border-yellow-200 bg-yellow-50">
+                        <CardContent className="p-8 text-center">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="h-16 w-16 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <Clock className="h-8 w-8 text-yellow-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Interview In Progress</h2>
+                                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                                        This interview hasn't been completed yet. Continue your interview to receive detailed feedback and analysis.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Button
+                                        onClick={() => navigate(`/interview/${sessionId}/active`)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    >
+                                        <Play className="mr-2 h-4 w-4" />
+                                        Continue Interview
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate('/dashboard')}
+                                    >
+                                        Back to Dashboard
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Interview Details */}
+                    <Card className="border-none shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                    <User className="h-4 w-4" />
+                                    Candidate:
+                                </div>
+                                <span className="font-medium text-slate-900 truncate">{user?.user_metadata?.full_name || "Candidate"}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                    <Calendar className="h-4 w-4" />
+                                    Started:
+                                </div>
+                                <span className="font-medium text-slate-900 text-right break-words">{new Date(session.created_at).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                    <Briefcase className="h-4 w-4" />
+                                    Position:
+                                </div>
+                                <span className="font-medium text-slate-900 truncate">{session.position}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                    <Bot className="h-4 w-4" />
+                                    Type:
+                                </div>
+                                <span className="font-medium text-slate-900 capitalize">{session.interview_type.replace('_', ' ')}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </DashboardLayout>
         );
@@ -175,34 +438,36 @@ export default function InterviewReport() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-x-hidden max-w-full">
                 {/* Header Section */}
                 <Card className="border-none shadow-sm bg-white">
-                    <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-900">{reportData.candidateName}</h1>
-                                <p className="text-slate-500 text-lg">{reportData.position}</p>
+                    <CardContent className="p-4 md:p-6 flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <div className="min-w-0 flex-1">
+                                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 truncate">{reportData.candidateName}</h1>
+                                    <p className="text-slate-500 text-base md:text-lg truncate">{reportData.position}</p>
+                                </div>
+                                {sessionId && isCached.sessionDetail(sessionId) && (
+                                    <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
+                                )}
                             </div>
-                            {sessionId && isCached.sessionDetail(sessionId) && (
-                                <Badge variant="outline" className="text-xs px-1">📦 Cached</Badge>
-                            )}
+
+                            {/* Saving status badge (from zustand) */}
+                            <div className="flex-shrink-0">
+                                {isSaving ? (
+                                    <div className="text-sm px-3 py-1 rounded-full bg-yellow-50 text-yellow-800 font-medium whitespace-nowrap">Saving…</div>
+                                ) : saveError ? (
+                                    <div className="text-sm px-3 py-1 rounded-full bg-red-50 text-red-800 font-medium whitespace-nowrap">Save failed</div>
+                                ) : (
+                                    <div className="text-sm px-3 py-1 rounded-full bg-green-50 text-green-800 font-medium whitespace-nowrap">Saved</div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Saving status badge (from zustand) */}
-                        <div>
-                            {isSaving ? (
-                                <div className="text-sm px-3 py-1 rounded-full bg-yellow-50 text-yellow-800 font-medium">Saving…</div>
-                            ) : saveError ? (
-                                <div className="text-sm px-3 py-1 rounded-full bg-red-50 text-red-800 font-medium">Save failed</div>
-                            ) : (
-                                <div className="text-sm px-3 py-1 rounded-full bg-green-50 text-green-800 font-medium">Saved</div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-8">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                             <div className="flex items-center gap-4">
-                                <div className="relative h-20 w-20">
+                                <div className="relative h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
                                     {/* Simple Circular Progress Placeholder */}
                                     <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
                                         <path
@@ -222,14 +487,14 @@ export default function InterviewReport() {
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-xl font-bold text-slate-900">{reportData.overallScore}%</span>
+                                        <span className="text-lg md:text-xl font-bold text-slate-900">{reportData.overallScore}%</span>
                                     </div>
                                 </div>
                                 <div className="text-sm font-medium text-slate-500">Overall Match</div>
                             </div>
 
                             <div className="flex gap-2">
-                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <Button onClick={downloadReport} className="bg-blue-600 hover:bg-blue-700 text-white">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>
@@ -265,28 +530,28 @@ export default function InterviewReport() {
 
                 {/* Tabs Navigation */}
                 <Tabs defaultValue="summary" className="w-full">
-                    <TabsList className="bg-transparent p-0 gap-2 mb-6">
+                    <TabsList className="bg-transparent p-0 gap-2 mb-6 overflow-x-auto scrollbar-hide flex-nowrap w-full justify-start">
                         <TabsTrigger
                             value="summary"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6"
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Summary
                         </TabsTrigger>
                         <TabsTrigger
                             value="skills"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6"
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Skills Analysis
                         </TabsTrigger>
                         <TabsTrigger
                             value="video"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6"
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Video Playback
                         </TabsTrigger>
                         <TabsTrigger
                             value="transcript"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6"
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Full Transcript
                         </TabsTrigger>
@@ -303,7 +568,7 @@ export default function InterviewReport() {
                                         <CardTitle className="text-lg font-bold text-slate-900">Executive Summary</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-slate-600 leading-relaxed">
+                                        <p className="text-slate-600 leading-relaxed break-words">
                                             {reportData.executiveSummary}
                                         </p>
                                     </CardContent>
@@ -320,9 +585,9 @@ export default function InterviewReport() {
                                         <CardContent>
                                             <ul className="space-y-3">
                                                 {reportData.strengths.map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 break-words">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                                        {item}
+                                                        <span className="break-words">{item}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -338,9 +603,9 @@ export default function InterviewReport() {
                                         <CardContent>
                                             <ul className="space-y-3">
                                                 {reportData.improvements.map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 break-words">
                                                         <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                                        {item}
+                                                        <span className="break-words">{item}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -357,12 +622,12 @@ export default function InterviewReport() {
                                         <CardContent className="space-y-6">
                                             {reportData.skills.map((skill, i) => (
                                                 <div key={i} className="space-y-2">
-                                                    <div className="flex justify-between text-sm font-semibold text-slate-900">
-                                                        <span>{skill.name}</span>
-                                                        <span className="text-orange-500">{skill.score}%</span>
+                                                    <div className="flex justify-between text-sm font-semibold text-slate-900 gap-2">
+                                                        <span className="break-words flex-1">{skill.name}</span>
+                                                        <span className="text-orange-500 flex-shrink-0">{skill.score}%</span>
                                                     </div>
                                                     <Progress value={skill.score} className="h-2 bg-slate-100" indicatorClassName="bg-orange-400" />
-                                                    <p className="text-xs text-slate-500">{skill.feedback}</p>
+                                                    <p className="text-xs text-slate-500 break-words">{skill.feedback}</p>
                                                 </div>
                                             ))}
                                         </CardContent>
@@ -379,7 +644,7 @@ export default function InterviewReport() {
                                                         <div className="h-5 w-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0 mt-0.5">
                                                             <ArrowRight className="h-3 w-3 text-slate-400" />
                                                         </div>
-                                                        {item}
+                                                        <span className="break-words">{item}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -396,19 +661,19 @@ export default function InterviewReport() {
                                         <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                        <div className="flex items-center justify-between text-sm gap-2">
+                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
                                                 <User className="h-4 w-4" />
                                                 Candidate:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.candidateName}</span>
+                                            <span className="font-medium text-slate-900 truncate">{reportData.candidateName}</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                        <div className="flex items-center justify-between text-sm gap-2">
+                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
                                                 <Calendar className="h-4 w-4" />
                                                 Date & Time:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.date}</span>
+                                            <span className="font-medium text-slate-900 text-right break-words">{reportData.date}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-2 text-slate-500">
@@ -417,12 +682,12 @@ export default function InterviewReport() {
                                             </div>
                                             <span className="font-medium text-slate-900">AI Agent</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                        <div className="flex items-center justify-between text-sm gap-2">
+                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
                                                 <Briefcase className="h-4 w-4" />
                                                 Position:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.position}</span>
+                                            <span className="font-medium text-slate-900 truncate">{reportData.position}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -436,7 +701,7 @@ export default function InterviewReport() {
                                         <div className={`px-4 py-2 rounded-md text-sm font-bold ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                             Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
                                         </div>
-                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                        <p className="text-sm text-slate-600 leading-relaxed break-words">
                                             Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
@@ -512,7 +777,7 @@ export default function InterviewReport() {
                             {/* Right Column (Sidebar) - Duplicated for now as per design request to show same sidebar */}
                             <div className="space-y-6">
                                 {/* Download Report Button (Sidebar version if needed, though header has one) */}
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
+                                <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>
@@ -599,7 +864,7 @@ export default function InterviewReport() {
                                                 className="flex items-center gap-2"
                                             >
                                                 <Copy className="h-4 w-4" />
-                                                Copy Transcript
+                                                <span className="hidden md:inline">Copy Transcript</span>
                                             </Button>
                                         </div>
                                     </CardHeader>
@@ -619,7 +884,7 @@ export default function InterviewReport() {
                                                         {msg.sender === 'ai' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
                                                     </div>
                                                     <div className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                                                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'ai'
+                                                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.sender === 'ai'
                                                             ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'
                                                             : 'bg-emerald-600 text-white rounded-tr-none'
                                                             }`}>
@@ -638,7 +903,7 @@ export default function InterviewReport() {
 
                             {/* Right Column (Sidebar) - Duplicated for consistency */}
                             <div className="space-y-6">
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
+                                <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>

@@ -19,16 +19,20 @@ export function useOptimizedQueries() {
   const {
     sessions,
     stats,
+    profile,
     sessionDetails,
     setSessions,
     setStats,
+    setProfile,
     setSessionDetail,
     isSessionsCacheValid,
     isStatsCacheValid,
+    isProfileCacheValid,
     isSessionDetailCacheValid,
     onInterviewCreated,
     onInterviewCompleted,
     onInterviewUpdated,
+    onProfileUpdated,
   } = useCacheStore();
 
   // Optimized sessions fetch
@@ -106,6 +110,47 @@ export function useOptimizedQueries() {
     }
   }, [user?.id, stats, isStatsCacheValid, setStats, fetchSessions]);
 
+  // Optimized profile fetch
+  const fetchProfile = useCallback(async (forceRefresh = false) => {
+    if (!user?.id) return null;
+
+    // Return cached profile if valid and not forcing refresh
+    if (!forceRefresh && isProfileCacheValid() && profile) {
+      console.log('📦 Using cached profile data');
+      return profile;
+    }
+
+    console.log('🔄 Fetching profile from database');
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Return cached data on error if available
+        return profile;
+      }
+
+      if (data) {
+        // If avatar_url is null, try to get it from user metadata (OAuth picture)
+        const profileData = {
+          full_name: data.full_name,
+          avatar_url: data.avatar_url || user.user_metadata?.picture || null
+        };
+        setProfile(profileData);
+        return profileData;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      return profile;
+    }
+  }, [user?.id, user?.user_metadata?.picture, profile, isProfileCacheValid, setProfile]);
+
   // Optimized single session fetch
   const fetchSessionDetail = useCallback(async (sessionId: string, forceRefresh = false) => {
     if (!sessionId) return null;
@@ -165,7 +210,7 @@ export function useOptimizedQueries() {
 
       // Invalidate cache since we added a new interview
       onInterviewCreated();
-      
+
       console.log('✅ Interview session created, cache invalidated');
       return data;
     } catch (error) {
@@ -176,7 +221,7 @@ export function useOptimizedQueries() {
 
   // Complete interview session with cache invalidation
   const completeInterviewSession = useCallback(async (
-    sessionId: string, 
+    sessionId: string,
     updateData: {
       status?: string;
       completed_at?: string;
@@ -200,7 +245,7 @@ export function useOptimizedQueries() {
 
       // Invalidate cache since we updated an interview
       onInterviewCompleted(sessionId);
-      
+
       console.log(`✅ Interview ${sessionId} completed, cache invalidated`);
       return true;
     } catch (error) {
@@ -224,7 +269,7 @@ export function useOptimizedQueries() {
 
       // Invalidate cache since we updated an interview
       onInterviewUpdated(sessionId);
-      
+
       console.log(`✅ Interview ${sessionId} updated, cache invalidated`);
       return true;
     } catch (error) {
@@ -241,7 +286,7 @@ export function useOptimizedQueries() {
 
     try {
       console.log(`🗑️ Attempting to delete session ${sessionId} for user ${user.id}`);
-      
+
       // First, verify the session exists and belongs to the user
       const { data: existingSession, error: fetchError } = await supabase
         .from('interview_sessions')
@@ -260,7 +305,7 @@ export function useOptimizedQueries() {
       }
 
       console.log('Session verified, proceeding with delete...');
-      
+
       const { error, count } = await supabase
         .from('interview_sessions')
         .delete({ count: 'exact' })
@@ -271,16 +316,16 @@ export function useOptimizedQueries() {
         console.error('Supabase delete error:', error);
         throw error;
       }
-      
+
       console.log(`Delete result: ${count} rows affected`);
-      
+
       if (count === 0) {
         throw new Error('Session not found or you do not have permission to delete it');
       }
 
       // Invalidate cache since we deleted an interview
       onInterviewUpdated(sessionId);
-      
+
       console.log(`✅ Interview ${sessionId} deleted successfully, cache invalidated`);
       return true;
     } catch (error) {
@@ -293,23 +338,26 @@ export function useOptimizedQueries() {
     // Data
     sessions,
     stats,
+    profile,
     sessionDetails,
-    
+
     // Optimized fetch functions
     fetchSessions,
     fetchStats,
+    fetchProfile,
     fetchSessionDetail,
-    
+
     // CRUD operations with cache invalidation
     createInterviewSession,
     completeInterviewSession,
     updateInterviewSession,
     deleteInterviewSession,
-    
+
     // Cache status
     isCached: {
       sessions: isSessionsCacheValid(),
       stats: isStatsCacheValid(),
+      profile: isProfileCacheValid(),
       sessionDetail: (sessionId: string) => isSessionDetailCacheValid(sessionId),
     }
   };

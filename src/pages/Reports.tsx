@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FileText, Download, ExternalLink, Calendar, Clock, TrendingUp, Filter, Trash2, MoreHorizontal, Search, CheckCircle2, XCircle, BarChart3 } from "lucide-react";
-import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FileText, Download, ExternalLink, Calendar, Clock, TrendingUp, Filter, Trash2, MoreHorizontal, Search, CheckCircle2, XCircle, BarChart3, MessageSquare, SortAsc, SortDesc, Play } from "lucide-react";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +26,12 @@ import {
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+
+interface UserProfile {
+  full_name: string | null;
+  avatar_url: string | null;
+}
 
 interface InterviewSession {
   id: string;
@@ -42,6 +49,7 @@ export default function Reports() {
   const { sessions: cachedSessions, fetchSessions, isCached, deleteInterviewSession } = useOptimizedQueries();
   const { profile: userProfile, loading: profileLoading } = useUserProfile();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -72,6 +80,7 @@ export default function Reports() {
 
         setSessions(sessionsData);
         setHasLoaded(true);
+        setHasLoaded(true);
       } catch (err) {
         console.error('Error loading reports data:', err);
         setError('Failed to load reports data');
@@ -83,12 +92,19 @@ export default function Reports() {
     loadData();
   }, [user?.id, hasLoaded, cachedSessions, isCached.sessions]);
 
-  // Sync cached sessions with local state
+  // Sync cached data with local state
   useEffect(() => {
     if (cachedSessions.length > 0 && sessions.length === 0) {
       setSessions(cachedSessions);
     }
   }, [cachedSessions, sessions.length]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setProfile(userProfile);
+    }
+  }, [userProfile]);
+
 
   // Filtered and sorted sessions - optimized to reduce re-calculations
   const filteredAndSortedSessions = useMemo(() => {
@@ -209,7 +225,7 @@ export default function Reports() {
     }
   };
 
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">

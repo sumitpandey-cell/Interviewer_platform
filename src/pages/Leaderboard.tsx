@@ -9,11 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 interface LeaderboardUser {
     userId: string;
     fullName: string | null;
     avatarUrl: string | null;
+    oauthPicture?: string | null;
     interviewCount: number;
     averageScore: number;
     bayesianScore: number;
@@ -71,6 +73,8 @@ const Leaderboard = () => {
                 // 5. Fetch profiles for all ranked users
                 if (sortedUsers.length > 0) {
                     const userIds = sortedUsers.map((u) => u.userId);
+
+                    // Fetch from profiles table
                     const { data: profiles, error: profilesError } = await supabase
                         .from("profiles")
                         .select("id, full_name, avatar_url")
@@ -78,13 +82,21 @@ const Leaderboard = () => {
 
                     if (profilesError) throw profilesError;
 
+                    // Get current user's OAuth picture if they're in the leaderboard
+                    const { data: { user: currentUser } } = await supabase.auth.getUser();
+                    const currentUserOAuthPicture = currentUser?.user_metadata?.picture || currentUser?.user_metadata?.avatar_url;
+
                     // Merge profile data
                     const finalLeaderboard = sortedUsers.map((user) => {
                         const profile = profiles?.find((p) => p.id === user.userId);
+                        // Use OAuth picture only for current user (we can't access other users' auth metadata from client)
+                        const oauthPicture = user.userId === currentUser?.id ? currentUserOAuthPicture : null;
+
                         return {
                             ...user,
                             fullName: profile?.full_name || "Anonymous",
                             avatarUrl: profile?.avatar_url,
+                            oauthPicture: oauthPicture,
                         };
                     });
 
@@ -275,8 +287,13 @@ const Leaderboard = () => {
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
                                                             <Avatar className="h-9 w-9 border border-border">
-                                                                <AvatarImage src={user.avatarUrl || ""} />
-                                                                <AvatarFallback>{user.fullName?.charAt(0) || "U"}</AvatarFallback>
+                                                                <AvatarImage src={getAvatarUrl(
+                                                                    user.avatarUrl,
+                                                                    user.userId || user.fullName || 'user',
+                                                                    'avataaars',
+                                                                    user.oauthPicture
+                                                                )} />
+                                                                <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex flex-col">
                                                                 <span className="font-semibold text-sm">{user.fullName}</span>
