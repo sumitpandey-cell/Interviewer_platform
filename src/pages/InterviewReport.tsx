@@ -109,34 +109,34 @@ export default function InterviewReport() {
             padding: 40px 20px;
         }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .header { border-bottom: 3px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+        .header { border-bottom: 3px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
         .header h1 { font-size: 32px; color: #0f172a; margin-bottom: 8px; }
         .header .position { font-size: 20px; color: #64748b; margin-bottom: 12px; }
         .header .date { font-size: 14px; color: #94a3b8; }
-        .score-section { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; }
+        .score-section { background: #0f172a; color: white; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; }
         .score-section .score { font-size: 64px; font-weight: bold; margin-bottom: 8px; }
         .score-section .label { font-size: 18px; opacity: 0.9; }
         .section { margin: 30px 0; }
         .section h2 { font-size: 24px; color: #0f172a; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
         .section h3 { font-size: 18px; color: #334155; margin: 20px 0 12px; }
-        .summary { background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        .summary { background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 4px solid #0f172a; }
         .list { list-style: none; }
         .list li { padding: 12px 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start; }
         .list li:last-child { border-bottom: none; }
-        .list li::before { content: "•"; color: #3b82f6; font-weight: bold; font-size: 20px; margin-right: 12px; }
+        .list li::before { content: "•"; color: #0f172a; font-weight: bold; font-size: 20px; margin-right: 12px; }
         .strength::before { content: "✓"; color: #10b981 !important; }
         .improvement::before { content: "⚠"; color: #f59e0b !important; }
         .skill-item { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
         .skill-header { display: flex; justify-between; align-items: center; margin-bottom: 8px; }
         .skill-name { font-weight: 600; color: #0f172a; }
-        .skill-score { font-weight: bold; color: #3b82f6; font-size: 18px; }
+        .skill-score { font-weight: bold; color: #0f172a; font-size: 18px; }
         .skill-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-        .skill-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 4px; }
+        .skill-bar-fill { height: 100%; background: #0f172a; border-radius: 4px; }
         .skill-feedback { font-size: 14px; color: #64748b; }
         .transcript { background: #f8fafc; padding: 20px; border-radius: 8px; max-height: 600px; overflow-y: auto; }
         .message { margin-bottom: 16px; padding: 12px; border-radius: 8px; }
-        .message.ai { background: #dbeafe; border-left: 3px solid #3b82f6; }
-        .message.user { background: #d1fae5; border-left: 3px solid #10b981; }
+        .message.ai { background: #f1f5f9; border-left: 3px solid #0f172a; }
+        .message.user { background: #f0fdf4; border-left: 3px solid #10b981; }
         .message-sender { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
         .message-text { color: #1e293b; }
         .recommendation { background: #dcfce7; border: 2px solid #10b981; padding: 20px; border-radius: 8px; margin: 30px 0; }
@@ -254,7 +254,7 @@ export default function InterviewReport() {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
             </DashboardLayout>
         );
@@ -319,7 +319,7 @@ export default function InterviewReport() {
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <Button
                                         onClick={() => navigate(`/interview/${sessionId}/active`)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                     >
                                         <Play className="mr-2 h-4 w-4" />
                                         Continue Interview
@@ -478,7 +478,7 @@ export default function InterviewReport() {
                                             strokeWidth="3"
                                         />
                                         <path
-                                            className="text-orange-500"
+                                            className="text-primary"
                                             strokeDasharray={`${reportData.overallScore}, 100`}
                                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                             fill="none"
@@ -494,7 +494,7 @@ export default function InterviewReport() {
                             </div>
 
                             <div className="flex gap-2">
-                                <Button onClick={downloadReport} className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <Button onClick={downloadReport} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>
@@ -533,25 +533,25 @@ export default function InterviewReport() {
                     <TabsList className="bg-transparent p-0 gap-2 mb-6 overflow-x-auto scrollbar-hide flex-nowrap w-full justify-start">
                         <TabsTrigger
                             value="summary"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Summary
                         </TabsTrigger>
                         <TabsTrigger
                             value="skills"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Skills Analysis
                         </TabsTrigger>
                         <TabsTrigger
                             value="video"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Video Playback
                         </TabsTrigger>
                         <TabsTrigger
                             value="transcript"
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Full Transcript
                         </TabsTrigger>
@@ -626,7 +626,7 @@ export default function InterviewReport() {
                                                         <span className="break-words flex-1">{skill.name}</span>
                                                         <span className="text-orange-500 flex-shrink-0">{skill.score}%</span>
                                                     </div>
-                                                    <Progress value={skill.score} className="h-2 bg-slate-100" indicatorClassName="bg-orange-400" />
+                                                    <Progress value={skill.score} className="h-2 bg-slate-100" indicatorClassName="bg-primary" />
                                                     <p className="text-xs text-slate-500 break-words">{skill.feedback}</p>
                                                 </div>
                                             ))}
@@ -729,8 +729,8 @@ export default function InterviewReport() {
                                                     <Radar
                                                         name="Skills"
                                                         dataKey="score"
-                                                        stroke="#ef4444"
-                                                        fill="#ef4444"
+                                                        stroke="#0f172a"
+                                                        fill="#0f172a"
                                                         fillOpacity={0.2}
                                                     />
                                                 </RadarChart>
@@ -763,7 +763,7 @@ export default function InterviewReport() {
                                                     {skill.feedback}
                                                 </p>
                                                 <div className="pt-4 border-t border-slate-100">
-                                                    <a href="#" className="flex items-center justify-between text-sm text-slate-500 hover:text-blue-600 transition-colors">
+                                                    <a href="#" className="flex items-center justify-between text-sm text-slate-500 hover:text-primary transition-colors">
                                                         Recommended Resources
                                                         <ExternalLink className="h-3 w-3" />
                                                     </a>
@@ -777,7 +777,7 @@ export default function InterviewReport() {
                             {/* Right Column (Sidebar) - Duplicated for now as per design request to show same sidebar */}
                             <div className="space-y-6">
                                 {/* Download Report Button (Sidebar version if needed, though header has one) */}
-                                <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base shadow-lg shadow-blue-200">
+                                <Button onClick={downloadReport} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base shadow-lg shadow-gray-200">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>

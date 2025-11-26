@@ -102,7 +102,6 @@ export default {
 			},
 			fontFamily: {
 				sans: [
-					'Outfit',
 					'Inter',
 					'ui-sans-serif',
 					'system-ui',

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { toast } from "sonner";
@@ -22,8 +23,21 @@ import {
   Feather,
   BarChart,
   Users,
-  Loader2
+  Loader2,
+  Settings as SettingsIcon,
+  LogOut
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 const templates = [
   {
@@ -151,12 +165,40 @@ const templates = [
 export default function Templates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState("All");
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { createInterviewSession } = useOptimizedQueries();
+  const { user, signOut } = useAuth();
+  const { createInterviewSession, profile } = useOptimizedQueries();
 
-  // Filter templates based on search term
-  const filteredTemplates = templates.filter(template =>
+  // Categories for filtering
+  const categories = ["All", "Popular", "Engineer", "Marketing"];
+
+  // Popular templates (you can customize this list)
+  const popularTemplateIds = ["frontend-developer", "backend-developer", "fullstack-developer", "ai-ml-engineer"];
+
+  // Filter templates based on category
+  const getCategoryTemplates = () => {
+    switch (activeCategory) {
+      case "Popular":
+        return templates.filter(t => popularTemplateIds.includes(t.id));
+      case "Engineer":
+        return templates.filter(t =>
+          t.title.toLowerCase().includes("developer") ||
+          t.title.toLowerCase().includes("engineer") ||
+          t.title.toLowerCase().includes("devops")
+        );
+      case "Marketing":
+        return templates.filter(t =>
+          t.title.toLowerCase().includes("marketing") ||
+          t.title.toLowerCase().includes("content")
+        );
+      default:
+        return templates;
+    }
+  };
+
+  // Filter templates based on search term and category
+  const filteredTemplates = getCategoryTemplates().filter(template =>
     template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -183,7 +225,7 @@ export default function Templates() {
       }
 
       toast.success(`Starting ${template.title} interview...`);
-      
+
       // Navigate to interview setup page with the session ID
       navigate(`/interview/${session.id}/setup`);
 
@@ -207,21 +249,84 @@ export default function Templates() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="mb-2 text-3xl font-bold text-foreground">Templates</h2>
-          <p className="text-muted-foreground">
-            Unlock Efficiency with Ready-Made Automation.
-          </p>
+        {/* Header Section with Controls */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h2 className="mb-2 text-3xl font-bold text-foreground">Templates</h2>
+            <p className="text-muted-foreground text-sm">
+              Unlock Efficiency with Ready-Made Automation.
+            </p>
+          </div>
+
+          {/* Header Controls */}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-gray-200">
+                    <AvatarImage src={getAvatarUrl(
+                      profile?.avatar_url || user?.user_metadata?.avatar_url,
+                      user?.id || 'user',
+                      'avataaars'
+                    )} />
+                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                    {profile?.full_name?.split(' ')[0] || "User"}
+                  </span>
+                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <SettingsIcon className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <ThemeToggle />
+          </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by title, skills, or description..."
-            className="pl-10 max-w-md bg-background"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Category Tabs and Search Bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Category Tabs */}
+          <div className="flex gap-2 items-center overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`px-6 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${activeCategory === category
+                  ? "bg-black text-white shadow-md"
+                  : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full md:w-auto">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by title, skills, or description..."
+              className="pl-10 w-full md:w-80 bg-background"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         {searchTerm && (
@@ -232,64 +337,61 @@ export default function Templates() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="flex flex-col hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <div className="space-y-1">
-                  <CardTitle className="text-base font-semibold">
-                    {template.title}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {template.interviewType}
-                    </Badge>
-                    <Badge className={`text-xs ${getDifficultyColor(template.difficulty)}`}>
-                      {template.difficulty}
-                    </Badge>
+            <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white border border-gray-100 rounded-2xl overflow-hidden">
+              <CardContent className="p-6 flex flex-col h-full">
+                {/* Icon and Title */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <template.icon className={`h-6 w-6 ${template.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {template.title}
+                    </h3>
+                    <div className="flex gap-2 items-center">
+                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 whitespace-nowrap">
+                        {template.interviewType}
+                      </Badge>
+                      <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
+                        {template.difficulty}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-                <template.icon className={`h-5 w-5 ${template.color}`} />
-              </CardHeader>
-              <CardContent className="flex-1 space-y-3">
-                <p className="text-xs text-muted-foreground line-clamp-3">
-                  {template.description}
-                </p>
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-slate-700">Key Skills:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {template.skills.slice(0, 3).map((skill) => (
-                      <Badge key={skill} variant="secondary" className="text-xs px-2 py-0.5">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {template.skills.length > 3 && (
-                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                        +{template.skills.length - 3} more
-                      </Badge>
-                    )}
+
+                {/* Skill and Description Labels */}
+                <div className="space-y-2 text-sm mb-4 flex-1">
+                  <div className="flex gap-2">
+                    <span className="text-gray-500 font-normal">Skill</span>
+                    <span className="text-gray-900 font-medium">{template.skills[0]}</span>
                   </div>
+                  <div className="flex gap-2">
+                    <span className="text-gray-500 font-normal">Desc</span>
+                    <span className="text-gray-900 font-medium">
+                      {template.description}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Duration and Button */}
+                <div className="flex items-center gap-3 pt-2 mt-auto">
+                  <span className="text-2xl font-bold text-gray-900">30m</span>
+                  <Button
+                    className="flex-1 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                    onClick={() => startInterviewWithTemplate(template)}
+                    disabled={loadingTemplate === template.id}
+                  >
+                    {loadingTemplate === template.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Starting...
+                      </>
+                    ) : (
+                      "Use Template"
+                    )}
+                  </Button>
                 </div>
               </CardContent>
-              <CardFooter className="flex items-center justify-between pt-0">
-                <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-green-600" />
-                  Ready to use
-                </div>
-                <Button 
-                  size="sm" 
-                  className="bg-primary/90 hover:bg-primary"
-                  onClick={() => startInterviewWithTemplate(template)}
-                  disabled={loadingTemplate === template.id}
-                >
-                  {loadingTemplate === template.id ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                      Starting...
-                    </>
-                  ) : (
-                    "Start →"
-                  )}
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </div>
@@ -300,7 +402,7 @@ export default function Templates() {
             <h3 className="text-lg font-semibold text-foreground mb-2">No templates found</h3>
             <p className="text-muted-foreground">
               Try adjusting your search term or{" "}
-              <button 
+              <button
                 onClick={() => setSearchTerm("")}
                 className="text-primary hover:underline"
               >

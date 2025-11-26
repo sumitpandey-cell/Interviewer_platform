@@ -1,15 +1,28 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award } from "lucide-react";
+import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface LeaderboardUser {
     userId: string;
@@ -26,6 +39,9 @@ const Leaderboard = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const { toast } = useToast();
+    const navigate = useNavigate();
+    const { user, signOut } = useAuth();
+    const { profile } = useOptimizedQueries();
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -225,14 +241,54 @@ const Leaderboard = () => {
 
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-8 lg:gap-12 max-w-7xl mx-auto w-full">
-                {/* Header Section */}
-                <div className="flex flex-col items-center gap-4 pt-4 text-center">
-                    <div>
-                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-blue-600 uppercase mb-2">Leaderboard</h1>
-                        <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-                            Compete with others to reach the top! Rankings updated in real-time.
-                        </p>
+            <div className="space-y-8">
+                {/* Header Section with Controls */}
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                            Leaderboard
+                        </h1>
+                        <p className="text-gray-500 text-sm">Compete with others to reach the top!</p>
+                    </div>
+
+                    {/* Header Controls */}
+                    <div className="flex items-center gap-2">
+                        <NotificationBell />
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
+                                    <Avatar className="h-8 w-8 border border-gray-200">
+                                        <AvatarImage src={getAvatarUrl(
+                                            profile?.avatar_url || user?.user_metadata?.avatar_url,
+                                            user?.id || 'user',
+                                            'avataaars'
+                                        )} />
+                                        <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                                        {profile?.full_name?.split(' ')[0] || "User"}
+                                    </span>
+                                    <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                                    <SettingsIcon className="mr-2 h-4 w-4" />
+                                    Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    Log out
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <ThemeToggle />
                     </div>
                 </div>
 
@@ -253,7 +309,7 @@ const Leaderboard = () => {
                     <>
                         {/* Top 3 Podium Section */}
                         {users.length > 0 && !searchQuery && (
-                            <div className="flex flex-row items-end justify-center gap-3 sm:gap-6 py-4 mt-12 sm:mt-0">
+                            <div className="flex flex-row items-end justify-center gap-2 sm:gap-6 py-4 mt-12 sm:mt-0 overflow-x-auto pb-8 no-scrollbar px-4">
                                 {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
                                 <TopPlayerCard user={users[0]} rank={1} />
                                 {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
@@ -261,103 +317,99 @@ const Leaderboard = () => {
                         )}
 
                         {/* Full Rankings Table */}
-                        <div className="pb-6">
-                            <Card className="border-none shadow-md bg-card">
-                                <CardHeader className="flex flex-col sm:flex-row items-center justify-between pb-2 gap-4">
-                                    <CardTitle className="text-lg font-medium">
-                                        {searchQuery ? "Search Results" : "All Rankings"}
-                                    </CardTitle>
+                        <div className="bg-white rounded-3xl p-6 shadow-sm">
+                            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                                <h3 className="text-lg font-bold text-gray-900">
+                                    {searchQuery ? "Search Results" : "All Rankings"}
+                                </h3>
 
-                                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                                        <div className="relative w-full sm:w-64">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                placeholder="Search users..."
-                                                className="pl-9"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                </CardHeader>
+                                <div className="relative w-full sm:w-64">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        placeholder="Search users..."
+                                        className="pl-9 bg-gray-50 border-gray-200"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
-                                <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="hover:bg-transparent border-b border-border/50">
-                                                <TableHead className="w-[80px] text-center">Rank</TableHead>
-                                                <TableHead>User</TableHead>
-                                                <TableHead className="text-right">Score</TableHead>
-                                                <TableHead className="text-right">Interviews</TableHead>
-                                                <TableHead className="text-right">Badge</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredUsers.map((user, index) => {
-                                                // Calculate actual rank based on original list
-                                                const actualRank = users.findIndex(u => u.userId === user.userId) + 1;
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-b border-gray-100 hover:bg-transparent">
+                                            <TableHead className="w-[80px] text-center font-medium text-gray-500 text-sm">Rank</TableHead>
+                                            <TableHead className="font-medium text-gray-500 text-sm">User</TableHead>
+                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Score</TableHead>
+                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Interviews</TableHead>
+                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Badge</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y divide-gray-50">
+                                        {filteredUsers.map((user, index) => {
+                                            // Calculate actual rank based on original list
+                                            const actualRank = users.findIndex(u => u.userId === user.userId) + 1;
 
-                                                return (
-                                                    <TableRow
-                                                        key={user.userId}
-                                                        className="hover:bg-muted/50 transition-colors"
-                                                    >
-                                                        <TableCell className="text-center font-medium text-muted-foreground">
-                                                            #{actualRank}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar className="h-9 w-9 border border-border">
-                                                                    <AvatarImage src={getAvatarUrl(
-                                                                        user.avatarUrl,
-                                                                        user.userId || user.fullName || 'user',
-                                                                        'avataaars',
-                                                                        user.oauthPicture
-                                                                    )} />
-                                                                    <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-semibold text-sm">{user.fullName}</span>
-                                                                    <span className="text-xs text-muted-foreground">ID: {user.userId.slice(0, 8)}...</span>
-                                                                </div>
+                                            return (
+                                                <TableRow
+                                                    key={user.userId}
+                                                    className="group hover:bg-gray-50/50 transition-colors"
+                                                >
+                                                    <TableCell className="text-center font-medium text-gray-500 py-4">
+                                                        #{actualRank}
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-10 w-10 border border-gray-100">
+                                                                <AvatarImage src={getAvatarUrl(
+                                                                    user.avatarUrl,
+                                                                    user.userId || user.fullName || 'user',
+                                                                    'avataaars',
+                                                                    user.oauthPicture
+                                                                )} />
+                                                                <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium text-gray-900">{user.fullName}</span>
+                                                                <span className="text-xs text-gray-400">ID: {user.userId.slice(0, 8)}...</span>
                                                             </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right font-bold text-primary">
-                                                            {user.bayesianScore.toFixed(1)}
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-muted-foreground">
-                                                            {user.interviewCount}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {actualRank <= 3 ? (
-                                                                <Badge variant="secondary" className={cn(
-                                                                    "ml-auto w-fit",
-                                                                    actualRank === 1 ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
-                                                                        actualRank === 2 ? "bg-slate-100 text-slate-700 hover:bg-slate-100" :
-                                                                            "bg-orange-100 text-orange-800 hover:bg-orange-100"
-                                                                )}>
-                                                                    Top {actualRank}
-                                                                </Badge>
-                                                            ) : (
-                                                                <Badge variant="outline" className="ml-auto w-fit text-muted-foreground font-normal">
-                                                                    Member
-                                                                </Badge>
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                            {filteredUsers.length === 0 && (
-                                                <TableRow>
-                                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                                        No users found matching "{searchQuery}"
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-bold text-gray-900 py-4">
+                                                        {user.bayesianScore.toFixed(1)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-gray-500 py-4">
+                                                        {user.interviewCount}
+                                                    </TableCell>
+                                                    <TableCell className="text-right py-4">
+                                                        {actualRank <= 3 ? (
+                                                            <Badge variant="secondary" className={cn(
+                                                                "ml-auto w-fit",
+                                                                actualRank === 1 ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
+                                                                    actualRank === 2 ? "bg-slate-100 text-slate-700 hover:bg-slate-100" :
+                                                                        "bg-orange-100 text-orange-800 hover:bg-orange-100"
+                                                            )}>
+                                                                Top {actualRank}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="ml-auto w-fit text-gray-500 font-normal border-gray-200">
+                                                                Member
+                                                            </Badge>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
+                                            );
+                                        })}
+                                        {filteredUsers.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                                    No users found matching "{searchQuery}"
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     </>
                 )}

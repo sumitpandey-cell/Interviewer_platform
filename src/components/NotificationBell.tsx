@@ -53,8 +53,8 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
-          <Bell className="h-5 w-5 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="relative h-10 w-10 bg-white rounded-full border border-grey-300 hover:bg-accent hover:text-accent-foreground transition-colors">
+          <Bell className="h-5 w-5 text-black" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
