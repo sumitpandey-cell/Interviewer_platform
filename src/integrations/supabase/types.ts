@@ -94,6 +94,8 @@ export type Database = {
           full_name: string | null
           id: string
           updated_at: string
+          streak_count: number
+          last_activity_date: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -102,6 +104,8 @@ export type Database = {
           full_name?: string | null
           id: string
           updated_at?: string
+          streak_count?: number
+          last_activity_date?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -110,6 +114,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+          streak_count?: number
+          last_activity_date?: string | null
         }
         Relationships: []
       }

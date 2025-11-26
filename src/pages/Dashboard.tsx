@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,13 +15,13 @@ import {
   X,
   Gift,
   Play,
-  ExternalLink,
-  Trash2
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface InterviewSession {
   id: string;
@@ -52,18 +52,31 @@ export default function Dashboard() {
     isCached
   } = useOptimizedQueries();
 
+  const { remaining_minutes, allowed, type: subscriptionType, loading: subscriptionLoading } = useSubscription();
+
   useEffect(() => {
     if (user) {
       fetchSessions();
     }
   }, [user]);
 
+  const pollingRef = useRef<string | null>(null);
+
   // Handle progress message from interview completion
   useEffect(() => {
     const state = location.state as any;
     if (state?.showReportProgress) {
+      // Prevent duplicate execution for the same session
+      if (state.sessionId && pollingRef.current === state.sessionId) {
+        return;
+      }
+
+      if (state.sessionId) {
+        pollingRef.current = state.sessionId;
+      }
+
       setShowReportProgress(true);
-      toast.info(state.message || "Your interview report is being generated. This may take a few moments.", {
+      const loadingToastId = toast.info(state.message || "Your interview report is being generated. This may take a few moments.", {
         duration: 10000
       });
 
@@ -80,12 +93,14 @@ export default function Dashboard() {
             if (!sessionData) {
               console.error('Session not found');
               setShowReportProgress(false);
+              toast.dismiss(loadingToastId);
               return;
             }
 
             // If feedback exists or status is completed, report is ready
             if ((sessionData as any).feedback || sessionData.status === 'completed') {
               setShowReportProgress(false);
+              toast.dismiss(loadingToastId);
 
               // Refresh the sessions list to show the completed interview
               await loadDashboardData();
@@ -106,6 +121,7 @@ export default function Dashboard() {
             } else {
               // Max checks reached, show message to check back later
               setShowReportProgress(false);
+              toast.dismiss(loadingToastId);
               toast.info("Report generation is taking longer than expected. Please check back in a few minutes.", {
                 duration: 10000,
                 action: {
@@ -117,6 +133,7 @@ export default function Dashboard() {
           } catch (error) {
             console.error('Error checking report status:', error);
             setShowReportProgress(false);
+            toast.dismiss(loadingToastId);
             toast.error("Unable to check report status. Please refresh the page.");
           }
         };
@@ -164,31 +181,6 @@ export default function Dashboard() {
     }
   };
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleDelete = async (id: string) => {
-    // Add confirmation dialog
-    const confirmed = window.confirm("Are you sure you want to delete this interview session? This action cannot be undone.");
-    if (!confirmed) return;
-
-    try {
-      setDeletingId(id);
-      console.log('Attempting to delete session:', id);
-      await deleteInterviewSession(id);
-      console.log('Session deleted successfully');
-      toast.success("Session deleted");
-
-      // The optimized hook will automatically invalidate cache
-      // Refresh data to update UI
-      await loadDashboardData();
-    } catch (error: any) {
-      console.error("Error deleting session:", error);
-      toast.error(error.message || "Failed to delete session");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const startInterview = () => {
     navigate('/start-interview');
   };
@@ -209,10 +201,10 @@ export default function Dashboard() {
           <Button
             className="bg-green-500 hover:bg-green-600 text-white font-medium px-6 w-full sm:w-auto"
             onClick={() => startInterview()}
-            disabled={loading}
+            disabled={loading || subscriptionLoading || !allowed}
           >
             <Play className="mr-2 h-4 w-4 fill-current" />
-            {loading ? "Starting..." : "Start Interview"}
+            {loading || subscriptionLoading ? "Loading..." : !allowed ? "Daily Limit Reached" : "Start Interview"}
           </Button>
         </div>
 
@@ -243,42 +235,40 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Daily Free Offer Banner */}
-        {showBanner && (
-          <div className="relative overflow-hidden rounded-xl bg-[#10B981] p-4 sm:p-6 text-white shadow-lg">
-            <button
-              onClick={() => setShowBanner(false)}
-              className="absolute right-2 top-2 sm:right-4 sm:top-4 text-white/80 hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <div className="rounded-full bg-white/20 p-3">
-                <Gift className="h-6 w-6 text-white" />
+        {/* Time Remaining Banner */}
+        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-6 text-white shadow-lg mb-6 ${!allowed ? 'bg-red-500' : 'bg-indigo-600'
+          }`}>
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="rounded-full bg-white/20 p-3">
+              <Clock className="h-6 w-6 text-white" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-yellow-300">
+                  {subscriptionType === 'free' ? 'Free Plan' : 'Premium Plan'}
+                </span>
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-yellow-300">
-                    ✨ Daily Free Offer
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold">
-                  Get 30 Minutes FREE Interview Practice Daily!
-                </h3>
-                <p className="text-sm text-white/90">
-                  Perfect your skills with our AI-powered mock interviews - completely free, every single day
-                </p>
-              </div>
-              <div className="sm:absolute sm:right-12 sm:top-1/2 sm:-translate-y-1/2">
-                <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-                  <Clock className="h-4 w-4" />
-                  30 min daily
-                </div>
+              <h3 className="text-lg sm:text-xl font-bold">
+                {!allowed
+                  ? "You've used your daily interview time!"
+                  : `You have ${remaining_minutes} minutes remaining ${subscriptionType === 'free' ? 'today' : 'this month'}`
+                }
+              </h3>
+              <p className="text-sm text-white/90">
+                {subscriptionType === 'free'
+                  ? "Free users get 30 minutes of interview practice every day. Resets at midnight IST."
+                  : "Upgrade to Business for unlimited minutes!"
+                }
+              </p>
+            </div>
+            <div className="sm:absolute sm:right-12 sm:top-1/2 sm:-translate-y-1/2">
+              <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+                <Clock className="h-4 w-4" />
+                {remaining_minutes} min left
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -432,9 +422,16 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mt-6 flex justify-end">
-                    <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
-                      Report <ArrowUpRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {sessions[0]?.status === 'completed' && sessions[0]?.score !== null ? (
+                      <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
+                        Report <ArrowUpRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/active`)}>
+                        <Play className="mr-2 h-4 w-4" />
+                        Continue
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -513,24 +510,16 @@ export default function Dashboard() {
                           </Badge>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          {session.status === 'completed' && session.score !== null ? (
                             <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
                               Report <ExternalLink className="ml-2 h-3 w-3" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => handleDelete(session.id)}
-                              disabled={deletingId === session.id}
-                            >
-                              {deletingId === session.id ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                          ) : (
+                            <Button variant="outline" size="sm" className="h-8 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" onClick={() => navigate(`/interview/${session.id}/active`)}>
+                              <Play className="mr-2 h-3 w-3" />
+                              Continue
                             </Button>
-                          </div>
+                          )}
                         </td>
                       </tr>
                     ))
