@@ -15,7 +15,11 @@ import {
   X,
   Gift,
   Play,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Zap,
+  Calendar,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -187,45 +191,45 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-8 pb-8">
         {/* Welcome Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-indigo-600">
-              Welcome {user?.user_metadata?.full_name?.split(' ')[0] || "User"}!
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Welcome back, {user?.user_metadata?.full_name?.split(' ')[0] || "User"}!
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Practice, earn streaks & boost your rank!
+            <p className="mt-2 text-muted-foreground text-lg">
+              Ready to ace your next interview? Let's get practicing.
             </p>
           </div>
           <Button
-            className="bg-green-500 hover:bg-green-600 text-white font-medium px-6 w-full sm:w-auto"
+            className="bg-primary hover:bg-primary/90 text-white font-medium px-8 py-6 rounded-2xl shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-primary/40"
             onClick={() => startInterview()}
             disabled={loading || subscriptionLoading || !allowed}
           >
-            <Play className="mr-2 h-4 w-4 fill-current" />
-            {loading || subscriptionLoading ? "Loading..." : !allowed ? "Daily Limit Reached" : "Start Interview"}
+            <Play className="mr-2 h-5 w-5 fill-current" />
+            <span className="text-lg">{loading || subscriptionLoading ? "Loading..." : !allowed ? "Daily Limit Reached" : "Start Interview"}</span>
           </Button>
         </div>
 
         {/* Report Generation Progress Banner */}
         {showReportProgress && (
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-primary/20 bg-primary/5 animate-in fade-in zoom-in-95 duration-300">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900">Report Generation in Progress</h3>
-                  <p className="text-sm text-blue-700">
+                  <h3 className="font-semibold text-primary">Report Generation in Progress</h3>
+                  <p className="text-sm text-muted-foreground">
                     Your interview report is being generated. You'll be notified when it's ready to view.
                   </p>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  className="text-primary hover:bg-primary/10"
                   onClick={() => setShowReportProgress(false)}
                 >
                   Dismiss
@@ -235,199 +239,192 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Time Remaining Banner */}
-        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-6 text-white shadow-lg mb-6 ${!allowed ? 'bg-red-500' : 'bg-indigo-600'
-          }`}>
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="rounded-full bg-white/20 p-3">
-              <Clock className="h-6 w-6 text-white" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-yellow-300">
-                  {subscriptionType === 'free' ? 'Free Plan' : 'Premium Plan'}
-                </span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold">
-                {!allowed
-                  ? "You've used your daily interview time!"
-                  : `You have ${remaining_minutes} minutes remaining ${subscriptionType === 'free' ? 'today' : 'this month'}`
-                }
-              </h3>
-              <p className="text-sm text-white/90">
-                {subscriptionType === 'free'
-                  ? "Free users get 30 minutes of interview practice every day. Resets at midnight IST."
-                  : "Upgrade to Business for unlimited minutes!"
-                }
-              </p>
-            </div>
-            <div className="sm:absolute sm:right-12 sm:top-1/2 sm:-translate-y-1/2">
-              <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-                <Clock className="h-4 w-4" />
-                {remaining_minutes} min left
-              </div>
-            </div>
+
+
+        {/* Stats Cards - Moved Up for Better Visibility */}
+        <div>
+          <h3 className="mb-6 text-xl font-bold text-foreground flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Your Performance
+          </h3>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Total Interviews */}
+            <Card className="group border-2 border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total Interviews</span>
+                  <div className="rounded-xl bg-blue-500/15 p-2.5 group-hover:bg-blue-500/25 transition-colors shadow-lg">
+                    <Target className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {loading ? (
+                    <Skeleton className="h-10 w-20" />
+                  ) : (
+                    <h3 className="text-4xl font-black text-foreground tracking-tight">{stats?.totalInterviews || 0}</h3>
+                  )}
+                  <p className="text-xs font-medium text-muted-foreground">Completed sessions</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Average Score */}
+            <Card className="group border-2 border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Average Score</span>
+                  <div className="rounded-xl bg-yellow-500/15 p-2.5 group-hover:bg-yellow-500/25 transition-colors shadow-lg">
+                    <TrendingUp className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {loading ? (
+                    <Skeleton className="h-10 w-20" />
+                  ) : (
+                    <h3 className="text-4xl font-black text-foreground tracking-tight">{stats?.averageScore || 0}%</h3>
+                  )}
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {(stats?.averageScore || 0) > 80 ? "Excellent performance!" : "Keep practicing to improve"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Time Practiced */}
+            <Card className="group border-2 border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Time Practiced</span>
+                  <div className="rounded-xl bg-green-500/15 p-2.5 group-hover:bg-green-500/25 transition-colors shadow-lg">
+                    <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {loading ? (
+                    <Skeleton className="h-10 w-20" />
+                  ) : (
+                    <h3 className="text-4xl font-black text-foreground tracking-tight">{stats?.timePracticed || 0} <span className="text-xl font-semibold text-muted-foreground">min</span></h3>
+                  )}
+                  <p className="text-xs font-medium text-muted-foreground">Total practice time</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Leaderboard */}
+            <Card className="group border-2 border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden cursor-pointer" onClick={() => navigate('/leaderboard')}>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                    Global Rank <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+                  </span>
+                  <div className="rounded-xl bg-purple-500/15 p-2.5 group-hover:bg-purple-500/25 transition-colors shadow-lg">
+                    <Trophy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {loading ? (
+                    <Skeleton className="h-10 w-24" />
+                  ) : (
+                    <h3 className="text-4xl font-black text-foreground tracking-tight">#{stats?.rank || '-'}</h3>
+                  )}
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {(stats?.rank || 0) > 0 ? `Top ${Math.min(stats?.rank || 0, 100)}% of users` : 'Start practicing to rank up'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Total Interviews */}
-          <Card className="border-none shadow-sm bg-blue-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Total Interviews</span>
-                <div className="rounded-full bg-white p-1">
-                  <Target className="h-4 w-4 text-blue-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.totalInterviews || 0} <span className="text-lg font-normal text-blue-600">Interviews</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Total Interviews completed</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Average Score */}
-          <Card className="border-none shadow-sm bg-yellow-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Average Score</span>
-                <div className="rounded-full bg-white p-1">
-                  <TrendingUp className="h-4 w-4 text-yellow-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.averageScore || 0}% <span className="text-lg font-normal text-yellow-600">Average</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Consistently scoring above {(stats?.averageScore || 0) > 0 ? (stats?.averageScore || 0) - 5 : 0}%</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Time Practiced */}
-          <Card className="border-none shadow-sm bg-green-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Time Practiced</span>
-                <div className="rounded-full bg-white p-1">
-                  <Clock className="h-4 w-4 text-green-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.timePracticed || 0} <span className="text-lg font-normal text-green-600">mins</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Keep practicing!</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Leaderboard */}
-          <Card className="border-none shadow-sm bg-purple-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                  Leaderboard <ArrowUpRight className="h-3 w-3" />
-                </span>
-                <div className="flex items-center gap-1 text-sm font-bold text-purple-600">
-                  <Trophy className="h-4 w-4 fill-current" />
-                  #{stats?.rank || '-'}
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-24" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{(stats?.rank || 0) > 0 ? `Top ${Math.min(stats?.rank || 0, 100)}%` : 'NO'} <span className="text-lg font-normal text-purple-600">Global</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Compete with others!</p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Interview Type Section */}
         <div>
-          <h3 className="mb-4 text-lg font-bold text-foreground">Interview Type</h3>
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <h3 className="mb-6 text-xl font-bold text-foreground flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Start New Interview
+          </h3>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {/* Test Yourself */}
-            <Card className="border-none shadow-sm bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
-              <CardContent className="p-6 flex flex-col h-full justify-between">
+            <Card className="group border-none shadow-lg bg-gradient-to-br from-blue-500/5 to-blue-600/5 hover:from-blue-500/10 hover:to-blue-600/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer relative overflow-hidden" onClick={() => startInterview()}>
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                <Code className="h-32 w-32" />
+              </div>
+              <CardContent className="p-8 flex flex-col h-full justify-between relative z-10">
                 <div>
-                  <div className="mb-4 inline-flex rounded-lg bg-blue-100 p-2">
-                    <Code className="h-5 w-5 text-blue-600" />
+                  <div className="mb-6 inline-flex rounded-2xl bg-blue-500/10 p-3 group-hover:bg-blue-500/20 transition-colors">
+                    <Code className="h-8 w-8 text-blue-600" />
                   </div>
-                  <h4 className="mb-2 text-lg font-bold text-foreground">Test Yourself</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Realistic interview, get scored, no hints during.
+                  <h4 className="mb-3 text-2xl font-bold text-foreground">Test Yourself</h4>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Realistic interview simulation. Get scored on your performance with no hints during the session.
                   </p>
                 </div>
-                <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => startInterview()}>
-                    Start <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
+                <div className="mt-8 flex items-center text-blue-600 font-semibold group-hover:translate-x-2 transition-transform">
+                  Start Session <ArrowUpRight className="ml-2 h-4 w-4" />
                 </div>
               </CardContent>
             </Card>
 
             {/* Practice with Help */}
-            <Card className="border-none shadow-sm bg-purple-50/30 hover:bg-purple-50/50 transition-colors">
-              <CardContent className="p-6 flex flex-col h-full justify-between">
+            <Card className="group border-none shadow-lg bg-gradient-to-br from-purple-500/5 to-purple-600/5 hover:from-purple-500/10 hover:to-purple-600/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer relative overflow-hidden" onClick={() => startInterview()}>
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                <Users className="h-32 w-32" />
+              </div>
+              <CardContent className="p-8 flex flex-col h-full justify-between relative z-10">
                 <div>
-                  <div className="mb-4 inline-flex rounded-lg bg-purple-100 p-2">
-                    <Users className="h-5 w-5 text-purple-600" />
+                  <div className="mb-6 inline-flex rounded-2xl bg-purple-500/10 p-3 group-hover:bg-purple-500/20 transition-colors">
+                    <Users className="h-8 w-8 text-purple-600" />
                   </div>
-                  <h4 className="mb-2 text-lg font-bold text-foreground">Practice with Help</h4>
-                  <p className="text-sm text-muted-foreground">
-                    AI guides you through answers, corrects mistakes in real-time.
+                  <h4 className="mb-3 text-2xl font-bold text-foreground">Practice with Help</h4>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Guided practice session. AI provides real-time feedback and corrections to help you improve.
                   </p>
                 </div>
-                <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => startInterview()}>
-                    Start <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
+                <div className="mt-8 flex items-center text-purple-600 font-semibold group-hover:translate-x-2 transition-transform">
+                  Start Practice <ArrowUpRight className="ml-2 h-4 w-4" />
                 </div>
               </CardContent>
             </Card>
 
             {/* Last Interview Summary */}
             {sessions && sessions.length > 0 && (
-              <Card className="border-none shadow-sm bg-green-50/30">
-                <CardContent className="p-6 flex flex-col h-full justify-between">
+              <Card className="group border-none shadow-lg bg-gradient-to-br from-green-500/5 to-green-600/5 hover:from-green-500/10 hover:to-green-600/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative overflow-hidden">
+                <CardContent className="p-8 flex flex-col h-full justify-between relative z-10">
                   <div>
-                    <div className="mb-4 inline-flex rounded-lg bg-green-100 p-2">
-                      <Code className="h-5 w-5 text-green-600" />
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="inline-flex rounded-2xl bg-green-500/10 p-3">
+                        <Calendar className="h-8 w-8 text-green-600" />
+                      </div>
+                      <Badge variant="secondary" className={`${sessions[0]?.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {sessions[0]?.status === 'completed' ? 'Completed' : 'In Progress'}
+                      </Badge>
                     </div>
-                    <h4 className="mb-2 text-lg font-bold text-foreground">Last Interview Summary</h4>
-                    <div className="space-y-1 text-sm mt-4">
-                      <p className="text-muted-foreground">
-                        Interview Type: <span className="font-semibold text-foreground">{sessions[0]?.interview_type}</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        Position: <span className="font-semibold text-foreground">{sessions[0]?.position}</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        Overall Score: <span className="font-semibold text-foreground">{sessions[0]?.score !== null ? `${sessions[0]?.score}%` : 'N/A'}</span>
-                      </p>
+                    <h4 className="mb-4 text-xl font-bold text-foreground">Last Session</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center border-b border-border/50 pb-2">
+                        <span className="text-sm text-muted-foreground">Type</span>
+                        <span className="font-medium">{sessions[0]?.interview_type}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-border/50 pb-2">
+                        <span className="text-sm text-muted-foreground">Role</span>
+                        <span className="font-medium truncate max-w-[120px]">{sessions[0]?.position}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Score</span>
+                        <span className="font-bold text-lg text-primary">{sessions[0]?.score !== null ? `${sessions[0]?.score}%` : 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-6">
                     {sessions[0]?.status === 'completed' && sessions[0]?.score !== null ? (
-                      <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
-                        Report <ArrowUpRight className="ml-2 h-4 w-4" />
+                      <Button className="w-full bg-white text-foreground hover:bg-gray-50 shadow-sm border border-border/50" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
+                        View Report <ExternalLink className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/active`)}>
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20" onClick={() => navigate(`/interview/${sessions[0]?.id}/active`)}>
                         <Play className="mr-2 h-4 w-4" />
                         Continue
                       </Button>
@@ -441,81 +438,97 @@ export default function Dashboard() {
 
         {/* Recent Practice Sessions */}
         <div>
-          <h3 className="mb-4 text-lg font-bold text-foreground">
-            Recent Practice Sessions
+          <h3 className="mb-6 text-xl font-bold text-foreground flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Recent History
           </h3>
-          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
-                <thead className="bg-muted/30">
+                <thead className="bg-muted/30 border-b border-border/50">
                   <tr>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Interview Type
                     </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Position
                     </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Score
                     </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="p-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <th className="p-6 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border/50">
                   {loading ? (
                     [...Array(3)].map((_, i) => (
                       <tr key={i}>
-                        <td className="p-4"><Skeleton className="h-4 w-24" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-20" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-12" /></td>
-                        <td className="p-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                        <td className="p-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
+                        <td className="p-6"><Skeleton className="h-4 w-24" /></td>
+                        <td className="p-6"><Skeleton className="h-4 w-20" /></td>
+                        <td className="p-6"><Skeleton className="h-4 w-32" /></td>
+                        <td className="p-6"><Skeleton className="h-4 w-12" /></td>
+                        <td className="p-6"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                        <td className="p-6"><Skeleton className="h-8 w-20 ml-auto" /></td>
                       </tr>
                     ))
                   ) : sessions?.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No interviews yet. Start one today!
+                      <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-lg font-medium">No interviews yet</p>
+                          <p className="text-sm">Start your first interview to see your history here.</p>
+                          <Button variant="outline" className="mt-2" onClick={() => startInterview()}>Start Interview</Button>
+                        </div>
                       </td>
                     </tr>
                   ) : (
                     sessions?.slice(0, 5).map((session) => (
-                      <tr key={session.id} className="bg-white hover:bg-muted/50 transition-colors">
-                        <td className="p-4 text-sm font-medium text-foreground">
+                      <tr key={session.id} className="group hover:bg-muted/30 transition-colors">
+                        <td className="p-6 text-sm font-semibold text-foreground">
                           {session.interview_type}
                         </td>
-                        <td className="p-4 text-sm text-muted-foreground">
-                          {new Date(session.created_at).toLocaleDateString()}
+                        <td className="p-6 text-sm text-muted-foreground">
+                          {new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
-                        <td className="p-4 text-sm text-muted-foreground">
+                        <td className="p-6 text-sm text-muted-foreground">
                           {session.position}
                         </td>
-                        <td className="p-4 text-sm text-foreground font-medium">
-                          {session.score !== null ? `${session.score}%` : '-'}
+                        <td className="p-6">
+                          {session.score !== null ? (
+                            <span className={`font-bold ${session.score >= 80 ? 'text-green-600' : session.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                              {session.score}%
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </td>
-                        <td className="p-4">
+                        <td className="p-6">
                           <Badge variant="secondary" className={`
-                            ${session.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}
+                            ${session.status === 'completed'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}
                           `}>
                             {session.status === 'completed' ? 'Completed' : 'In Progress'}
                           </Badge>
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="p-6 text-right">
                           {session.status === 'completed' && session.score !== null ? (
-                            <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
+                            <Button variant="ghost" size="sm" className="h-8 hover:bg-primary/10 hover:text-primary" onClick={() => navigate(`/interview/${session.id}/report`)}>
                               Report <ExternalLink className="ml-2 h-3 w-3" />
                             </Button>
                           ) : (
-                            <Button variant="outline" size="sm" className="h-8 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" onClick={() => navigate(`/interview/${session.id}/active`)}>
+                            <Button variant="ghost" size="sm" className="h-8 text-primary hover:bg-primary/10" onClick={() => navigate(`/interview/${session.id}/active`)}>
                               <Play className="mr-2 h-3 w-3" />
                               Continue
                             </Button>

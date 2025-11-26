@@ -83,15 +83,26 @@ export default {
 				'scroll-vertical': {
 					'0%': { transform: 'translateY(0)' },
 					'100%': { transform: 'translateY(-50%)' }
+				},
+				'shine': {
+					'0%': { backgroundPosition: '200% center' },
+					'100%': { backgroundPosition: '-200% center' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'scroll-vertical': 'scroll-vertical 20s linear infinite'
+				'scroll-vertical': 'scroll-vertical 20s linear infinite',
+				'shine': 'shine 8s ease-in-out infinite',
+				'float': 'float 6s ease-in-out infinite'
 			},
 			fontFamily: {
 				sans: [
+					'Outfit',
 					'Inter',
 					'ui-sans-serif',
 					'system-ui',
@@ -124,6 +135,17 @@ export default {
 					'Courier New',
 					'monospace'
 				]
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'hero-gradient': 'linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--accent) / 0.1) 100%)',
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+				'shiny-gradient': 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+			},
+			boxShadow: {
+				'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+				'neon': '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary))',
+				'glow': '0 0 20px -5px hsl(var(--primary) / 0.5)',
 			}
 		}
 	},
@@ -140,6 +162,18 @@ export default {
 						display: 'none',
 					},
 				},
+				'.glass': {
+					'background': 'rgba(255, 255, 255, 0.05)',
+					'backdrop-filter': 'blur(10px)',
+					'-webkit-backdrop-filter': 'blur(10px)',
+					'border': '1px solid rgba(255, 255, 255, 0.1)',
+				},
+				'.text-gradient': {
+					'background-clip': 'text',
+					'-webkit-background-clip': 'text',
+					'color': 'transparent',
+					'background-image': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)))',
+				}
 			});
 		},
 	],

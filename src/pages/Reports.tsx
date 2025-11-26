@@ -172,33 +172,33 @@ export default function Reports() {
   };
 
   const getScoreColor = (score: number | null) => {
-    if (!score) return 'bg-gray-100 text-gray-700';
-    if (score >= 80) return 'bg-green-100 text-green-700';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-red-100 text-red-700';
+    if (!score) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    if (score >= 80) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
   };
 
   const getStatusBadge = (status: string, score: number | null) => {
     switch (status) {
       case 'completed':
         return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700">
+          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
             Completed
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
             In Progress
           </Badge>
         );
       case 'in_progress':
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
             In Progress
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             {status}
           </Badge>
         );
@@ -209,7 +209,7 @@ export default function Reports() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </DashboardLayout>
     );
@@ -219,7 +219,7 @@ export default function Reports() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Error Loading Reports</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Error Loading Reports</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>
             Try Again
@@ -241,8 +241,8 @@ export default function Reports() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-6 pb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
             <p className="text-muted-foreground">
@@ -250,14 +250,14 @@ export default function Reports() {
             </p>
           </div>
 
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
             <Link to="/start-interview">Start New Interview</Link>
           </Button>
         </div>
 
         {/* Statistics Card */}
         {completedSessions.length > 0 && (
-          <Card className="border-none shadow-lg">
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             <CardContent className="p-6">
               <Tabs defaultValue="overall" className="w-full">
                 <div className="flex items-center justify-between mb-6">
@@ -278,10 +278,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Total Interviews</p>
-                            <p className="text-3xl font-bold text-blue-600">{sessions.length}</p>
+                            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{sessions.length}</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <FileText className="h-6 w-6 text-blue-600" />
+                            <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -292,10 +292,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                            <p className="text-3xl font-bold text-green-600">{completedSessions.length}</p>
+                            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{completedSessions.length}</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-green-600" />
+                            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -306,10 +306,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
-                            <p className="text-3xl font-bold text-purple-600">{averageScore}%</p>
+                            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{averageScore}%</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                            <Target className="h-6 w-6 text-purple-600" />
+                            <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -320,13 +320,13 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
-                            <p className="text-3xl font-bold text-orange-600">
+                            <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                               {sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
                             </p>
                             <p className="text-xs text-muted-foreground">minutes</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
-                            <Timer className="h-6 w-6 text-orange-600" />
+                            <Timer className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -341,10 +341,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Showing</p>
-                            <p className="text-3xl font-bold text-cyan-600">{filteredAndSortedSessions.length}</p>
+                            <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">{filteredAndSortedSessions.length}</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                            <FileText className="h-6 w-6 text-cyan-600" />
+                            <FileText className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -355,10 +355,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                            <p className="text-3xl font-bold text-emerald-600">{filteredCompletedSessions.length}</p>
+                            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{filteredCompletedSessions.length}</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -369,10 +369,10 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
-                            <p className="text-3xl font-bold text-violet-600">{filteredAverageScore}%</p>
+                            <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">{filteredAverageScore}%</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center">
-                            <Target className="h-6 w-6 text-violet-600" />
+                            <Target className="h-6 w-6 text-violet-600 dark:text-violet-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -383,13 +383,13 @@ export default function Reports() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
-                            <p className="text-3xl font-bold text-amber-600">
+                            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
                               {filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
                             </p>
                             <p className="text-xs text-muted-foreground">minutes</p>
                           </div>
                           <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                            <Timer className="h-6 w-6 text-amber-600" />
+                            <Timer className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                           </div>
                         </div>
                       </CardContent>
@@ -402,7 +402,7 @@ export default function Reports() {
         )}
 
         {sessions.length === 0 ? (
-          <Card>
+          <Card className="border-none shadow-md">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Interview Reports Yet</h3>
@@ -415,7 +415,7 @@ export default function Reports() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             {/* Filters Section */}
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -500,15 +500,15 @@ export default function Reports() {
             <CardContent className="p-4">
               <div className="flex flex-col gap-3">
                 {filteredAndSortedSessions.map((session) => (
-                  <div key={session.id} className="p-4 flex flex-col sm:flex-row items-center gap-4 border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all bg-card">
+                  <div key={session.id} className="p-4 flex flex-col sm:flex-row items-center gap-4 border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all bg-card group">
                     {/* Left: Avatar & Main Info */}
                     <div className="flex items-center gap-4 w-full sm:flex-1">
-                      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
+                      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center group-hover:bg-primary/20 transition-colors">
                         {session.position.substring(0, 2).toUpperCase()}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-base truncate text-foreground">
+                        <h3 className="font-semibold text-base truncate text-foreground group-hover:text-primary transition-colors">
                           {session.position}
                         </h3>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
@@ -540,8 +540,8 @@ export default function Reports() {
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                       {session.score !== null && (
                         <div className="flex flex-col items-end mr-2">
-                          <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600' :
-                            session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
+                            session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                             }`}>
                             {session.score}%
                           </span>
