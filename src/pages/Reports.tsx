@@ -357,75 +357,86 @@ export default function Reports() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-3">
             {filteredAndSortedSessions.map((session) => (
-              <Card key={session.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={getAvatarUrl(
-                          profile?.avatar_url,
-                          user?.id || user?.email || 'user',
-                          'avataaars',
-                          user?.user_metadata?.picture
-                        )} />
-                        <AvatarFallback className="bg-muted text-muted-foreground text-lg">
-                          {getInitials(profile?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-lg capitalize">
-                          {profile?.full_name || "User"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{session.position}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {getStatusBadge(session.status, session.score)}
-                        </div>
+              <Card key={session.id} className="overflow-hidden hover:shadow-md transition-all group border-l-4" style={{ borderLeftColor: session.score && session.score >= 80 ? '#22c55e' : session.score && session.score >= 60 ? '#eab308' : session.score ? '#ef4444' : '#3b82f6' }}>
+                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
+                  {/* Left: Avatar & Main Info */}
+                  <div className="flex items-center gap-4 w-full sm:w-1/3">
+                    <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                      <AvatarImage src={getAvatarUrl(
+                        profile?.avatar_url,
+                        user?.id || user?.email || 'user',
+                        'avataaars',
+                        user?.user_metadata?.picture
+                      )} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                        {getInitials(profile?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-base truncate text-foreground">
+                        {session.position}
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                        <span className="capitalize font-medium text-foreground/80">{session.interview_type.replace('_', ' ')}</span>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(session.created_at)}
+                        </span>
                       </div>
                     </div>
-                    {session.score !== null && (
-                      <div className={`px-3 py-1 rounded-full text-sm font-bold ${getScoreColor(session.score)}`}>
-                        {session.score}%
-                      </div>
-                    )}
                   </div>
 
-                  <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                  {/* Middle: Status & Metrics */}
+                  <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1 justify-between sm:justify-center border-t sm:border-t-0 sm:border-l sm:border-r border-border/50 py-3 sm:py-0 sm:px-6 my-2 sm:my-0 bg-muted/20 sm:bg-transparent rounded-lg sm:rounded-none">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(session.created_at)}
+                      {getStatusBadge(session.status, session.score)}
                     </div>
+
                     {session.duration_minutes && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        {session.duration_minutes} minutes
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                        <Clock className="h-4 w-4 text-muted-foreground/70" />
+                        <span>{session.duration_minutes}m</span>
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground capitalize">
-                      Type: {session.interview_type.replace('_', ' ')}
-                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3">
+                  {/* Right: Score & Action */}
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end min-w-[140px]">
+                    {session.score !== null && (
+                      <div className="flex flex-col items-end mr-2">
+                        <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600' :
+                            session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                          {session.score}%
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Score</span>
+                      </div>
+                    )}
+
                     {session.status === 'completed' && session.score !== null ? (
                       <Button
                         asChild
-                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
                       >
                         <Link to={`/interview/${session.id}/report`}>
-                          <ExternalLink className="h-4 w-4" />
-                          View Report
+                          View
+                          <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
                     ) : (
                       <Button
                         asChild
-                        className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                       >
                         <Link to={`/interview/${session.id}/active`}>
-                          <Play className="h-4 w-4" />
-                          Continue Interview
+                          <Play className="h-3.5 w-3.5" />
+                          Resume
                         </Link>
                       </Button>
                     )}
