@@ -53,19 +53,19 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors">
           <Bell className="h-5 w-5 text-muted-foreground" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs animate-pulse shadow-sm"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 border-white/10 shadow-xl bg-card/95 backdrop-blur-xl">
         <div className="flex items-center justify-between p-4">
           <h3 className="font-semibold">Notifications</h3>
           {unreadCount > 0 && (
@@ -73,14 +73,14 @@ export function NotificationBell() {
               variant="ghost"
               size="sm"
               onClick={handleMarkAllAsRead}
-              className="text-xs"
+              className="text-xs hover:bg-primary/10 hover:text-primary"
             >
               <Check className="h-3 w-3 mr-1" />
               Mark all read
             </Button>
           )}
         </div>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-border/50" />
 
         <ScrollArea className="max-h-96">
           {isLoading ? (
@@ -95,16 +95,15 @@ export function NotificationBell() {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 border-b last:border-b-0 ${
-                  !notification.is_read ? 'bg-blue-50/50' : ''
-                }`}
+                className={`p-4 border-b border-border/50 last:border-b-0 transition-colors ${!notification.is_read ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-muted/50'
+                  }`}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-lg">
                     {getNotificationIcon(notification.type)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm leading-tight">
+                    <h4 className={`font-medium text-sm leading-tight ${!notification.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {notification.title}
                     </h4>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -119,7 +118,7 @@ export function NotificationBell() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
                         onClick={() => handleMarkAsRead(notification.id)}
                       >
                         <Check className="h-3 w-3" />
@@ -128,7 +127,7 @@ export function NotificationBell() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-red-500 hover:text-red-600"
+                      className="h-6 w-6 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={() => handleDelete(notification.id)}
                     >
                       <Trash2 className="h-3 w-3" />
