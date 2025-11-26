@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, ExternalLink, Calendar, Clock, TrendingUp, Filter, Trash2, MoreHorizontal, Search, CheckCircle2, XCircle, BarChart3, MessageSquare, SortAsc, SortDesc, Play } from "lucide-react";
-import { useUserProfile } from "@/hooks/use-user-profile";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer } from "lucide-react";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -272,52 +272,178 @@ export default function Reports() {
           </Button>
         </div>
 
-        {/* Stats Overview */}
-        {sessions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Interviews</p>
-                  <h3 className="text-2xl font-bold">{sessions.length}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-green-100 text-green-600">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <h3 className="text-2xl font-bold">{completedSessions.length}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Average Score</p>
-                  <h3 className="text-2xl font-bold">{averageScore}%</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-                  <Clock className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Practice Time</p>
-                  <h3 className="text-2xl font-bold">
-                    {Math.round(sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0))}m
+          <Button asChild className="bg-blue-600 hover:bg-blue-700">
+            <Link to="/start-interview">Start New Interview</Link>
+          </Button>
+        </div>
+
+        {/* Statistics Card */}
+        {completedSessions.length > 0 && (
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-6">
+              <Tabs defaultValue="overall" className="w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Statistics
                   </h3>
+                  <TabsList className="grid w-[280px] grid-cols-2">
+                    <TabsTrigger value="overall">Overall</TabsTrigger>
+                    <TabsTrigger value="filtered">Filtered</TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="overall" className="mt-0">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card className="border-none shadow-md bg-gradient-to-br from-blue-500/10 to-blue-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Total Interviews</p>
+                            <p className="text-3xl font-bold text-blue-600">{sessions.length}</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-blue-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-green-500/10 to-green-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
+                            <p className="text-3xl font-bold text-green-600">{completedSessions.length}</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="h-6 w-6 text-green-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
+                            <p className="text-3xl font-bold text-purple-600">{averageScore}%</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                            <Target className="h-6 w-6 text-purple-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-orange-500/10 to-orange-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
+                            <p className="text-3xl font-bold text-orange-600">
+                              {sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">minutes</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                            <Timer className="h-6 w-6 text-orange-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="filtered" className="mt-0">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card className="border-none shadow-md bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Showing</p>
+                            <p className="text-3xl font-bold text-cyan-600">{filteredAndSortedSessions.length}</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-cyan-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
+                            <p className="text-3xl font-bold text-emerald-600">{filteredCompletedSessions.length}</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-violet-500/10 to-violet-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
+                            <p className="text-3xl font-bold text-violet-600">{filteredAverageScore}%</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center">
+                            <Target className="h-6 w-6 text-violet-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-md bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
+                            <p className="text-3xl font-bold text-amber-600">
+                              {filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">minutes</p>
+                          </div>
+                          <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                            <Timer className="h-6 w-6 text-amber-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
+        {sessions.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Interview Reports Yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Complete your first interview to see detailed reports and analytics here.
+              </p>
+              <Button asChild>
+                <Link to="/start-interview">Start Your First Interview</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            {/* Filters Section */}
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filters:</span>
                 </div>
               </CardContent>
             </Card>
@@ -402,111 +528,101 @@ export default function Reports() {
                   Clear all filters
                 </Button>
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-b border-border/50">
-                    <TableHead className="w-[300px]">Interview Details</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Score</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedSessions.map((session) => (
-                    <TableRow
-                      key={session.id}
-                      className="hover:bg-muted/50 transition-colors group cursor-pointer"
-                      onClick={() => navigate(`/interview/${session.id}/report`)}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9 border border-border">
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {session.position.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-foreground">{session.position}</p>
-                            <p className="text-xs text-muted-foreground capitalize">
-                              {session.interview_type.replace('_', ' ')} Interview
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatDate(session.created_at)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {session.duration_minutes ? `${session.duration_minutes}m` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(session.status, session.score)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        <span className={getScoreColor(session.score)}>
-                          {session.score !== null ? `${session.score}%` : '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/interview/${session.id}/report`} className="flex items-center cursor-pointer">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                View Report
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={session.status !== 'completed' || session.score === null}
-                              className="flex items-center cursor-pointer"
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download PDF
-                            </DropdownMenuItem>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600 focus:bg-red-50">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </div>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Interview Report</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete this interview report? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(session.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+              {filteredAndSortedSessions.length !== sessions.length && (
+                <div className="mt-3 text-sm text-muted-foreground">
+                  Showing {filteredAndSortedSessions.length} of {sessions.length} interviews
+                </div>
+              )}
+            </CardContent>
+
+            {/* Separator Line */}
+            <div className="border-t border-border" />
+
+            {/* Reports List Section */}
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-3">
+                {filteredAndSortedSessions.map((session) => (
+                  <div key={session.id} className="p-4 flex flex-col sm:flex-row items-center gap-4 border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all bg-card">
+                    {/* Left: Avatar & Main Info */}
+                    <div className="flex items-center gap-4 w-full sm:flex-1">
+                      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
+                        {session.position.substring(0, 2).toUpperCase()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-base truncate text-foreground">
+                          {session.position}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                          <span className="capitalize font-medium text-foreground/80">{session.interview_type.replace('_', ' ')}</span>
+                          <span className="text-muted-foreground/40">•</span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(session.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Middle: Status & Metrics */}
+                    <div className="flex items-center gap-6 w-full sm:w-auto border-t sm:border-t-0 sm:border-l sm:border-r border-border/50 py-3 sm:py-0 sm:px-6">
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(session.status, session.score)}
+                      </div>
+
+                      {session.duration_minutes && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                          <Clock className="h-4 w-4 text-muted-foreground/70" />
+                          <span>{session.duration_minutes}m</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Score & Action */}
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      {session.score !== null && (
+                        <div className="flex flex-col items-end mr-2">
+                          <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600' :
+                            session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                            {session.score}%
+                          </span>
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Score</span>
+                        </div>
+                      )}
+
+                      {session.status === 'completed' && session.score !== null ? (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
+                          <Link to={`/interview/${session.id}/report`}>
+                            View
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button
+                          asChild
+                          size="sm"
+                          className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                        >
+                          <Link to={`/interview/${session.id}/active`}>
+                            <Play className="h-3.5 w-3.5" />
+                            Resume
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
