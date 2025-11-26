@@ -3,15 +3,16 @@ import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play } from "lucide-react";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
-import { useUserProfile } from "@/hooks/use-user-profile";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 interface UserProfile {
   full_name: string | null;
@@ -31,9 +32,9 @@ interface InterviewSession {
 
 export default function Reports() {
   const { user } = useAuth();
-  const { sessions: cachedSessions, fetchSessions, isCached } = useOptimizedQueries();
-  const { profile: userProfile, loading: profileLoading } = useUserProfile();
+  const { sessions: cachedSessions, profile: cachedProfile, fetchSessions, fetchProfile, isCached } = useOptimizedQueries();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -61,7 +62,17 @@ export default function Reports() {
           console.log('📦 Using cached sessions data');
         }
 
+        // Use cached profile if available, otherwise fetch
+        let profileData = cachedProfile;
+        if (!isCached.profile || !cachedProfile) {
+          console.log('🔄 Fetching profile data...');
+          profileData = await fetchProfile();
+        } else {
+          console.log('📦 Using cached profile data');
+        }
+
         setSessions(sessionsData);
+        setProfile(profileData);
         setHasLoaded(true);
       } catch (err) {
         console.error('Error loading reports data:', err);
@@ -72,14 +83,21 @@ export default function Reports() {
     };
 
     loadData();
-  }, [user?.id, hasLoaded, cachedSessions, isCached.sessions]); // Add necessary dependencies
+  }, [user?.id, hasLoaded, cachedSessions, cachedProfile, isCached.sessions, isCached.profile, fetchSessions, fetchProfile]);
 
-  // Sync cached sessions with local state
+  // Sync cached data with local state
   useEffect(() => {
     if (cachedSessions.length > 0 && sessions.length === 0) {
       setSessions(cachedSessions);
     }
   }, [cachedSessions, sessions.length]);
+
+  useEffect(() => {
+    if (cachedProfile && !profile) {
+      setProfile(cachedProfile);
+    }
+  }, [cachedProfile, profile]);
+
 
   // Filtered and sorted sessions - optimized to reduce re-calculations
   const filteredAndSortedSessions = useMemo(() => {
@@ -186,7 +204,7 @@ export default function Reports() {
     }
   };
 
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -346,16 +364,19 @@ export default function Reports() {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-4">
                       <Avatar className="h-12 w-12">
+                        <AvatarImage src={getAvatarUrl(
+                          profile?.avatar_url,
+                          user?.id || user?.email || 'user',
+                          'avataaars',
+                          user?.user_metadata?.picture
+                        )} />
                         <AvatarFallback className="bg-muted text-muted-foreground text-lg">
-                          {userProfile?.full_name
-                            ? userProfile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
-                            : user?.email?.charAt(0).toUpperCase() || "U"
-                          }
+                          {getInitials(profile?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="font-semibold text-lg capitalize">
-                          {userProfile?.full_name || "User"}
+                          {profile?.full_name || "User"}
                         </h3>
                         <p className="text-sm text-muted-foreground">{session.position}</p>
                         <div className="flex items-center gap-2 mt-1">
@@ -386,24 +407,28 @@ export default function Reports() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      asChild
-                      className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Link to={`/reports/${session.id}`}>
-                        <ExternalLink className="h-4 w-4" />
-                        View Report
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      disabled={session.status !== 'completed' || session.score === null}
-                    >
-                      <Download className="h-4 w-4" />
-                      PDF
-                    </Button>
+                  <div className="grid grid-cols-1 gap-3">
+                    {session.status === 'completed' && session.score !== null ? (
+                      <Button
+                        asChild
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Link to={`/interview/${session.id}/report`}>
+                          <ExternalLink className="h-4 w-4" />
+                          View Report
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Link to={`/interview/${session.id}/active`}>
+                          <Play className="h-4 w-4" />
+                          Continue Interview
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

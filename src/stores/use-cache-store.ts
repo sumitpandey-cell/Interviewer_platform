@@ -20,7 +20,7 @@ interface CacheState {
   sessions: InterviewSession[];
   sessionsLastFetch: number | null;
   sessionsCacheValid: boolean;
-  
+
   // Stats cache
   stats: {
     totalInterviews: number;
@@ -30,30 +30,42 @@ interface CacheState {
   } | null;
   statsLastFetch: number | null;
   statsCacheValid: boolean;
-  
+
+  // Profile cache
+  profile: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+  profileLastFetch: number | null;
+  profileCacheValid: boolean;
+
   // Individual session cache
   sessionDetails: Record<string, InterviewSession>;
   sessionDetailsLastFetch: Record<string, number>;
   sessionDetailsCacheValid: Record<string, boolean>;
-  
+
   // Cache actions
   setSessions: (sessions: InterviewSession[]) => void;
   invalidateSessions: () => void;
   setStats: (stats: any) => void;
   invalidateStats: () => void;
+  setProfile: (profile: { full_name: string | null; avatar_url: string | null }) => void;
+  invalidateProfile: () => void;
   setSessionDetail: (sessionId: string, session: InterviewSession) => void;
   invalidateSessionDetail: (sessionId: string) => void;
   invalidateAllCache: () => void;
-  
+
   // Cache validation
   isSessionsCacheValid: () => boolean;
   isStatsCacheValid: () => boolean;
+  isProfileCacheValid: () => boolean;
   isSessionDetailCacheValid: (sessionId: string) => boolean;
-  
+
   // Event tracking for cache invalidation
   onInterviewCreated: () => void;
   onInterviewCompleted: (sessionId: string) => void;
   onInterviewUpdated: (sessionId: string) => void;
+  onProfileUpdated: () => void;
 }
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -65,83 +77,106 @@ export const useCacheStore = create<CacheState>()(
       sessions: [],
       sessionsLastFetch: null,
       sessionsCacheValid: false,
-      
+
       stats: null,
       statsLastFetch: null,
       statsCacheValid: false,
-      
+
+      profile: null,
+      profileLastFetch: null,
+      profileCacheValid: false,
+
       sessionDetails: {},
       sessionDetailsLastFetch: {},
       sessionDetailsCacheValid: {},
-      
+
       // Cache setters
       setSessions: (sessions) => set({
         sessions,
         sessionsLastFetch: Date.now(),
         sessionsCacheValid: true
       }),
-      
+
       invalidateSessions: () => set({
         sessionsCacheValid: false,
         sessions: []
       }),
-      
+
       setStats: (stats) => set({
         stats,
         statsLastFetch: Date.now(),
         statsCacheValid: true
       }),
-      
+
       invalidateStats: () => set({
         statsCacheValid: false,
         stats: null
       }),
-      
+
+      setProfile: (profile) => set({
+        profile,
+        profileLastFetch: Date.now(),
+        profileCacheValid: true
+      }),
+
+      invalidateProfile: () => set({
+        profileCacheValid: false,
+        profile: null
+      }),
+
       setSessionDetail: (sessionId, session) => set((state) => ({
         sessionDetails: { ...state.sessionDetails, [sessionId]: session },
         sessionDetailsLastFetch: { ...state.sessionDetailsLastFetch, [sessionId]: Date.now() },
         sessionDetailsCacheValid: { ...state.sessionDetailsCacheValid, [sessionId]: true }
       })),
-      
+
       invalidateSessionDetail: (sessionId) => set((state) => {
         const newDetails = { ...state.sessionDetails };
         const newLastFetch = { ...state.sessionDetailsLastFetch };
         const newValid = { ...state.sessionDetailsCacheValid };
-        
+
         delete newDetails[sessionId];
         delete newLastFetch[sessionId];
         delete newValid[sessionId];
-        
+
         return {
           sessionDetails: newDetails,
           sessionDetailsLastFetch: newLastFetch,
           sessionDetailsCacheValid: newValid
         };
       }),
-      
+
       invalidateAllCache: () => set({
         sessionsCacheValid: false,
         statsCacheValid: false,
+        profileCacheValid: false,
         sessionDetailsCacheValid: {},
         sessions: [],
         stats: null,
+        profile: null,
         sessionDetails: {},
         sessionDetailsLastFetch: {},
       }),
-      
+
       // Cache validation
       isSessionsCacheValid: () => {
         const state = get();
         if (!state.sessionsCacheValid || !state.sessionsLastFetch) return false;
         return Date.now() - state.sessionsLastFetch < CACHE_DURATION;
       },
-      
+
       isStatsCacheValid: () => {
         const state = get();
         if (!state.statsCacheValid || !state.statsLastFetch) return false;
         return Date.now() - state.statsLastFetch < CACHE_DURATION;
       },
-      
+
+      isProfileCacheValid: () => {
+        const state = get();
+        if (!state.profileCacheValid || !state.profileLastFetch) return false;
+        return Date.now() - state.profileLastFetch < CACHE_DURATION;
+      },
+
       isSessionDetailCacheValid: (sessionId) => {
         const state = get();
         if (!state.sessionDetailsCacheValid[sessionId] || !state.sessionDetailsLastFetch[sessionId]) {
@@ -149,7 +184,7 @@ export const useCacheStore = create<CacheState>()(
         }
         return Date.now() - state.sessionDetailsLastFetch[sessionId] < CACHE_DURATION;
       },
-      
+
       // Event handlers for cache invalidation
       onInterviewCreated: () => {
         const state = get();
@@ -159,7 +194,7 @@ export const useCacheStore = create<CacheState>()(
           statsCacheValid: false
         });
       },
-      
+
       onInterviewCompleted: (sessionId) => {
         const state = get();
         // Invalidate all related caches when interview is completed
@@ -172,7 +207,7 @@ export const useCacheStore = create<CacheState>()(
           }
         });
       },
-      
+
       onInterviewUpdated: (sessionId) => {
         const state = get();
         // Invalidate specific session and general caches
@@ -183,6 +218,13 @@ export const useCacheStore = create<CacheState>()(
             ...state.sessionDetailsCacheValid,
             [sessionId]: false
           }
+        });
+      },
+
+      onProfileUpdated: () => {
+        // Invalidate profile cache when profile is updated
+        set({
+          profileCacheValid: false
         });
       },
     }),

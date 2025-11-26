@@ -15,9 +15,11 @@ import { User, Bell, Shield, Trash2, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+import { useCacheStore } from "@/stores/use-cache-store";
 
 export default function Settings() {
     const { user } = useAuth();
+    const { onProfileUpdated } = useCacheStore();
     const [loading, setLoading] = useState(false);
 
     // Profile settings
@@ -53,23 +55,51 @@ export default function Settings() {
             const fileName = `avatar.${fileExt}`;
             const filePath = `${user.id}/${fileName}`;
 
+            console.log('Uploading avatar to storage...', filePath);
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
                 .upload(filePath, compressedFile, { upsert: true });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error('Upload error:', uploadError);
+                throw uploadError;
+            }
 
             const { data: { publicUrl } } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(filePath);
 
+            console.log('Public URL:', publicUrl);
+
+            // Update user metadata
+            console.log('Updating user metadata...');
             const { error: updateError } = await supabase.auth.updateUser({
                 data: { avatar_url: publicUrl }
             });
 
-            if (updateError) throw updateError;
+            if (updateError) {
+                console.error('User metadata update error:', updateError);
+                throw updateError;
+            }
 
+            // Also update profiles table
+            console.log('Updating profiles table for user:', user.id);
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', user.id);
+
+            if (profileError) {
+                console.error('Profile table update error:', profileError);
+                throw profileError;
+            }
+
+            console.log('Avatar updated successfully!');
             setAvatarUrl(publicUrl);
+
+            // Invalidate profile cache
+            onProfileUpdated();
+
             toast.success("Profile picture updated successfully!");
         } catch (error: any) {
             console.error("Error updating profile picture:", error);
@@ -83,11 +113,23 @@ export default function Settings() {
         try {
             setLoading(true);
 
+            // Update user metadata
             const { error } = await supabase.auth.updateUser({
                 data: { full_name: fullName }
             });
 
             if (error) throw error;
+
+            // Also update profiles table
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ full_name: fullName })
+                .eq('id', user?.id);
+
+            if (profileError) throw profileError;
+
+            // Invalidate profile cache
+            onProfileUpdated();
 
             toast.success("Profile updated successfully!");
         } catch (error: any) {

@@ -73,6 +73,8 @@ const Leaderboard = () => {
                 // 5. Fetch profiles for the Top 10
                 if (top10.length > 0) {
                     const userIds = top10.map((u) => u.userId);
+
+                    // Fetch from profiles table
                     const { data: profiles, error: profilesError } = await supabase
                         .from("profiles")
                         .select("id, full_name, avatar_url")
@@ -80,14 +82,21 @@ const Leaderboard = () => {
 
                     if (profilesError) throw profilesError;
 
+                    // Get current user's OAuth picture if they're in the leaderboard
+                    const { data: { user: currentUser } } = await supabase.auth.getUser();
+                    const currentUserOAuthPicture = currentUser?.user_metadata?.picture || currentUser?.user_metadata?.avatar_url;
+
                     // Merge profile data
                     const finalLeaderboard = top10.map((user) => {
                         const profile = profiles?.find((p) => p.id === user.userId);
+                        // Use OAuth picture only for current user (we can't access other users' auth metadata from client)
+                        const oauthPicture = user.userId === currentUser?.id ? currentUserOAuthPicture : null;
+
                         return {
                             ...user,
                             fullName: profile?.full_name || "Anonymous",
                             avatarUrl: profile?.avatar_url,
-                            oauthPicture: null, // Will be populated from avatar_url if available
+                            oauthPicture: oauthPicture,
                         };
                     });
 
@@ -169,8 +178,10 @@ const Leaderboard = () => {
                                         <div className="relative mb-3">
                                             <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-slate-400 shadow-lg">
                                                 <AvatarImage src={getAvatarUrl(
-                                                    users[1]?.avatarUrl || users[1]?.oauthPicture,
-                                                    users[1]?.userId || users[1]?.fullName || 'user2'
+                                                    users[1]?.avatarUrl,
+                                                    users[1]?.userId || users[1]?.fullName || 'user2',
+                                                    'avataaars',
+                                                    users[1]?.oauthPicture
                                                 )} />
                                                 <AvatarFallback className="bg-slate-200 text-slate-700 text-xl font-bold">
                                                     {getInitials(users[1]?.fullName)}
@@ -201,8 +212,10 @@ const Leaderboard = () => {
                                             </div>
                                             <Avatar className="h-20 w-20 sm:h-28 sm:w-28 border-4 border-yellow-500 shadow-2xl ring-4 ring-yellow-500/20">
                                                 <AvatarImage src={getAvatarUrl(
-                                                    users[0]?.avatarUrl || users[0]?.oauthPicture,
-                                                    users[0]?.userId || users[0]?.fullName || 'user1'
+                                                    users[0]?.avatarUrl,
+                                                    users[0]?.userId || users[0]?.fullName || 'user1',
+                                                    'avataaars',
+                                                    users[0]?.oauthPicture
                                                 )} />
                                                 <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-2xl font-bold">
                                                     {getInitials(users[0]?.fullName)}
@@ -230,8 +243,10 @@ const Leaderboard = () => {
                                         <div className="relative mb-3">
                                             <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-amber-700 shadow-lg">
                                                 <AvatarImage src={getAvatarUrl(
-                                                    users[2]?.avatarUrl || users[2]?.oauthPicture,
-                                                    users[2]?.userId || users[2]?.fullName || 'user3'
+                                                    users[2]?.avatarUrl,
+                                                    users[2]?.userId || users[2]?.fullName || 'user3',
+                                                    'avataaars',
+                                                    users[2]?.oauthPicture
                                                 )} />
                                                 <AvatarFallback className="bg-amber-200 text-amber-900 text-xl font-bold">
                                                     {getInitials(users[2]?.fullName)}
@@ -292,8 +307,10 @@ const Leaderboard = () => {
                                                         <div className="flex items-center gap-2 sm:gap-3">
                                                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-background">
                                                                 <AvatarImage src={getAvatarUrl(
-                                                                    user.avatarUrl || user.oauthPicture,
-                                                                    user.userId || user.fullName || 'user'
+                                                                    user.avatarUrl,
+                                                                    user.userId || user.fullName || 'user',
+                                                                    'avataaars',
+                                                                    user.oauthPicture
                                                                 )} />
                                                                 <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
                                                             </Avatar>

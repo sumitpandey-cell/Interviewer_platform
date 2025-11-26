@@ -422,9 +422,16 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mt-6 flex justify-end">
-                    <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
-                      Report <ArrowUpRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {sessions[0]?.status === 'completed' && sessions[0]?.score !== null ? (
+                      <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
+                        Report <ArrowUpRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/active`)}>
+                        <Play className="mr-2 h-4 w-4" />
+                        Continue
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -503,9 +510,16 @@ export default function Dashboard() {
                           </Badge>
                         </td>
                         <td className="p-4 text-right">
-                          <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
-                            Report <ExternalLink className="ml-2 h-3 w-3" />
-                          </Button>
+                          {session.status === 'completed' && session.score !== null ? (
+                            <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
+                              Report <ExternalLink className="ml-2 h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" className="h-8 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" onClick={() => navigate(`/interview/${session.id}/active`)}>
+                              <Play className="mr-2 h-3 w-3" />
+                              Continue
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))
