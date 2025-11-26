@@ -138,9 +138,16 @@ export default function Auth() {
             .from('avatars')
             .getPublicUrl(filePath);
 
+          // Update user metadata
           await supabase.auth.updateUser({
             data: { avatar_url: publicUrl }
           });
+
+          // Also update profiles table
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('id', session.user.id);
         }
       }
 

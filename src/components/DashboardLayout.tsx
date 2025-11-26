@@ -17,6 +17,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
@@ -35,6 +36,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { remaining_minutes, type: subscriptionType, plan_name } = useSubscription();
   const [streak, setStreak] = useState(0);
   const [lastActivityDate, setLastActivityDate] = useState<Date | null>(null);
+
+  // Use optimized queries for profile data
+  const { profile, fetchProfile, isCached } = useOptimizedQueries();
+
+  useEffect(() => {
+    if (user) {
+      // Fetch profile if not cached or if we want to ensure freshness
+      if (!isCached.profile || !profile) {
+        fetchProfile();
+      }
+    }
+  }, [user, fetchProfile, isCached.profile, profile]);
 
   useEffect(() => {
     if (!user) return;
@@ -290,11 +303,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
                     <AvatarImage src={getAvatarUrl(
-                      user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
-                      user?.id || user?.email || 'user'
+                      profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
+                      user?.id || user?.email || 'user',
+                      'avataaars',
+                      user?.user_metadata?.picture
                     )} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
+                      {getInitials(profile?.full_name || user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -302,7 +317,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "User"}</p>
+                    <p className="text-sm font-medium leading-none">{profile?.full_name || user?.user_metadata?.full_name || "User"}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
                     </p>
