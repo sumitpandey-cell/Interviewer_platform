@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,23 +9,10 @@ import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, Trend
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 
 interface UserProfile {
@@ -45,16 +32,13 @@ interface InterviewSession {
 }
 
 export default function Reports() {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions: cachedSessions, fetchSessions, isCached, deleteInterviewSession } = useOptimizedQueries();
-  const { profile: userProfile, loading: profileLoading } = useUserProfile();
+  const { sessions: cachedSessions, profile: cachedProfile, fetchSessions, fetchProfile, isCached } = useOptimizedQueries();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filtering and sorting state
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -79,8 +63,17 @@ export default function Reports() {
           console.log('📦 Using cached sessions data');
         }
 
+        // Use cached profile if available, otherwise fetch
+        let profileData = cachedProfile;
+        if (!isCached.profile || !cachedProfile) {
+          console.log('🔄 Fetching profile data...');
+          profileData = await fetchProfile();
+        } else {
+          console.log('📦 Using cached profile data');
+        }
+
         setSessions(sessionsData);
-        setHasLoaded(true);
+        setProfile(profileData);
         setHasLoaded(true);
       } catch (err) {
         console.error('Error loading reports data:', err);
@@ -91,7 +84,7 @@ export default function Reports() {
     };
 
     loadData();
-  }, [user?.id, hasLoaded, cachedSessions, isCached.sessions]);
+  }, [user?.id, hasLoaded, cachedSessions, cachedProfile, isCached.sessions, isCached.profile, fetchSessions, fetchProfile]);
 
   // Sync cached data with local state
   useEffect(() => {
@@ -101,10 +94,10 @@ export default function Reports() {
   }, [cachedSessions, sessions.length]);
 
   useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
+    if (cachedProfile && !profile) {
+      setProfile(cachedProfile);
     }
-  }, [userProfile]);
+  }, [cachedProfile, profile]);
 
 
   // Filtered and sorted sessions - optimized to reduce re-calculations
@@ -168,20 +161,6 @@ export default function Reports() {
     return positions.sort();
   }, [sessions]);
 
-  const handleDelete = async (sessionId: string) => {
-    try {
-      setDeletingId(sessionId);
-      await deleteInterviewSession(sessionId);
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      toast.success("Report deleted successfully");
-    } catch (error) {
-      console.error("Error deleting session:", error);
-      toast.error("Failed to delete report");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -193,33 +172,33 @@ export default function Reports() {
   };
 
   const getScoreColor = (score: number | null) => {
-    if (!score) return 'text-slate-500';
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (!score) return 'bg-gray-100 text-gray-700';
+    if (score >= 80) return 'bg-green-100 text-green-700';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-red-100 text-red-700';
   };
 
   const getStatusBadge = (status: string, score: number | null) => {
     switch (status) {
       case 'completed':
         return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
+          <Badge variant="secondary" className="bg-green-100 text-green-700">
             Completed
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
-            Processing
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+            In Progress
           </Badge>
         );
       case 'in_progress':
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
             In Progress
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
             {status}
           </Badge>
         );
@@ -230,7 +209,7 @@ export default function Reports() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </DashboardLayout>
     );
@@ -255,22 +234,21 @@ export default function Reports() {
     ? Math.round(completedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / completedSessions.length)
     : 0;
 
+  const filteredCompletedSessions = filteredAndSortedSessions.filter(s => s.status === 'completed' && s.score !== null);
+  const filteredAverageScore = filteredCompletedSessions.length > 0
+    ? Math.round(filteredCompletedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / filteredCompletedSessions.length)
+    : 0;
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-            <p className="text-muted-foreground">Track your interview performance and progress</p>
+            <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
+            <p className="text-muted-foreground">
+              View insights and analysis from your completed interviews
+            </p>
           </div>
-          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            <Link to="/start-interview">
-              Start New Interview
-            </Link>
-          </Button>
-        </div>
 
           <Button asChild className="bg-blue-600 hover:bg-blue-700">
             <Link to="/start-interview">Start New Interview</Link>
@@ -445,88 +423,67 @@ export default function Reports() {
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Filters:</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
-        {/* Main Content Area */}
-        <Card className="border-none shadow-md bg-card">
-          <CardHeader className="p-6 border-b border-border/50">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search reports..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-background/50 border-border"
-                />
-              </div>
-              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px] bg-background/50">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-3 flex-1">
+                  <Input
+                    placeholder="Search by position or type..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full sm:w-64"
+                  />
 
-                <Select value={positionFilter} onValueChange={setPositionFilter}>
-                  <SelectTrigger className="w-[150px] bg-background/50">
-                    <SelectValue placeholder="Position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Positions</SelectItem>
-                    {uniquePositions.map(position => (
-                      <SelectItem key={position} value={position}>{position}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[150px] bg-background/50">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date-desc">Newest First</SelectItem>
-                    <SelectItem value="date-asc">Oldest First</SelectItem>
-                    <SelectItem value="score-desc">Highest Score</SelectItem>
-                    <SelectItem value="score-asc">Lowest Score</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {sessions.length === 0 ? (
-              <div className="p-12 text-center">
-                <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start your first interview to generate reports and analytics.
-                </p>
-                <Button asChild>
-                  <Link to="/start-interview">Start Interview</Link>
-                </Button>
-              </div>
-            ) : filteredAndSortedSessions.length === 0 ? (
-              <div className="p-12 text-center">
-                <p className="text-muted-foreground">No reports match your current filters.</p>
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setStatusFilter('all');
-                    setPositionFilter('all');
-                    setSearchQuery('');
-                  }}
-                  className="mt-2"
-                >
-                  Clear all filters
-                </Button>
+                  <Select value={positionFilter} onValueChange={setPositionFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Positions</SelectItem>
+                      {uniquePositions.map(position => (
+                        <SelectItem key={position} value={position}>{position}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date-desc">Newest First</SelectItem>
+                      <SelectItem value="date-asc">Oldest First</SelectItem>
+                      <SelectItem value="score-desc">Highest Score</SelectItem>
+                      <SelectItem value="score-asc">Lowest Score</SelectItem>
+                      <SelectItem value="duration-desc">Longest Duration</SelectItem>
+                      <SelectItem value="duration-asc">Shortest Duration</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(statusFilter !== 'all' || positionFilter !== 'all' || searchQuery || sortBy !== 'date-desc') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setPositionFilter('all');
+                      setSearchQuery('');
+                      setSortBy('date-desc');
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
 
               {filteredAndSortedSessions.length !== sessions.length && (
