@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
-import { Brain, LayoutDashboard, Briefcase, FileText, BarChart3, Settings, LogOut, Trophy, Menu, X, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Brain, LayoutDashboard, Briefcase, FileText, BarChart3, Settings, LogOut, Trophy, Menu, X, ChevronLeft, ChevronRight, Sparkles, Flame, Clock, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -26,9 +21,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  showTopNav?: boolean;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, showTopNav = true }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -134,17 +130,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Reports", href: "/reports", icon: BarChart3 },
+    { name: "Templates", href: "/templates", icon: FileText },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
     { name: "Recommended Jobs", href: "/jobs", icon: Briefcase },
-    { name: "Templates", href: "/templates", icon: FileText },
-    { name: "Reports", href: "/reports", icon: BarChart3 },
+    { name: "Profile", href: "/settings", icon: User },
+    { name: "Settings", href: "/settings", icon: Settings },
     ...(isAdmin ? [{ name: "Admin Notifications", href: "/admin/notifications", icon: Settings }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-black">
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
@@ -156,21 +154,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className={`
         fixed lg:sticky top-0 left-0 z-50 lg:z-0
-        border-r bg-card flex flex-col h-screen
+        border-r border-gray-800 bg-black text-white flex flex-col h-screen
         transition-all duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${sidebarCollapsed ? 'lg:w-20' : 'w-64'}
       `}>
         {/* Header */}
-        <div className="flex h-16 items-center justify-between px-6 flex-shrink-0 lg:r relative">
+        <div className="flex h-20 items-center px-6 flex-shrink-0 relative">
           {!sidebarCollapsed && (
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Aura Logo" className="h-8 w-8 rounded-full" />
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent lg:block">Meet Aura</span>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="font-bold text-white text-lg">A</span>
+              </div>
+              <span className="text-xl font-bold text-white">Aura</span>
             </div>
           )}
           {sidebarCollapsed && (
-            <img src="/logo.png" alt="Aura Logo" className="h-8 w-8" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto">
+              <span className="font-bold text-white text-lg">A</span>
+            </div>
           )}
 
           {/* Mobile Close Button */}
@@ -194,61 +196,57 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
         </div>
 
-        <nav className="space-y-1 p-4 flex-1 overflow-y-auto">
+        <nav className="space-y-2 p-4 flex-1 overflow-y-auto">
           {navigation.map((item) => (
             <Link
               key={item.name}
               to={item.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive(item.href)
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                } ${sidebarCollapsed ? 'justify-center' : ''}`}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${isActive(item.href)
+                ? "bg-white/10 text-white"
+                : "text-gray-400 hover:bg-white/5 hover:text-white"
+                } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
               title={sidebarCollapsed ? item.name : undefined}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.href) ? "text-white" : "text-gray-400"}`} />
               {!sidebarCollapsed && <span>{item.name}</span>}
             </Link>
           ))}
+
+          {/* Streak Widget */}
+          {!sidebarCollapsed && (
+            <div className="mt-6 mx-2 p-4 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-full bg-orange-500/20">
+                  <Flame className="h-5 w-5 text-orange-500 fill-orange-500" />
+                </div>
+                <div>
+                  <div className="text-white font-bold">Streak</div>
+                  <div className="text-xs text-gray-400">{streak} Day Streak</div>
+                </div>
+              </div>
+            </div>
+          )}
         </nav>
 
-        <div className={`p-4 mt-auto border-t ${sidebarCollapsed ? 'px-2' : ''}`}>
+        <div className={`p-4 mt-auto ${sidebarCollapsed ? 'px-2' : ''}`}>
           {!sidebarCollapsed && (
-            <>
-              <div className="mb-4 rounded-xl border bg-card p-4 shadow-sm">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-green-600">{stats.label}</span>
-                  {plan_name?.toLowerCase() !== 'business' && (
-                    <span className="text-xs text-muted-foreground">{stats.usedStr}</span>
-                  )}
-                </div>
-                {plan_name?.toLowerCase() !== 'business' ? (
-                  <>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className={`h-full transition-all ${remaining_minutes < 5 ? 'bg-red-500' : 'bg-green-500'}`}
-                        style={{ width: `${stats.percent}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">{stats.text}</p>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 text-green-600 mt-1">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="text-xs font-medium">Unlimited Access</span>
-                  </div>
-                )}
-              </div>
-              <Button className="w-full bg-primary hover:bg-primary/90" onClick={() => navigate('/pricing')}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Upgrade to Premium
+            <div className="rounded-2xl bg-[#1a1a1a] p-4 border border-gray-800">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 mb-3" onClick={() => navigate('/pricing')}>
+                Upgrade
               </Button>
-            </>
+              <div className="text-center">
+                <div className="text-xs text-gray-400 mb-1">Remaining Time:</div>
+                <div className="text-lg font-mono text-white font-bold">
+                  {Math.floor(remaining_minutes / 60)}h {remaining_minutes % 60}m
+                </div>
+              </div>
+            </div>
           )}
           {sidebarCollapsed && (
             <Button
-              className="w-full bg-primary hover:bg-primary/90 px-2"
-              title="Upgrade to Premium"
+              className="w-full bg-blue-600 hover:bg-blue-700 px-2 rounded-xl"
+              title="Upgrade"
               onClick={() => navigate('/pricing')}
             >
               <Sparkles className="h-5 w-5" />
@@ -258,87 +256,63 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-white rounded-l-[30px] overflow-hidden my-2 mr-2">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6 flex-shrink-0">
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 hover:bg-accent rounded-lg"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+        {showTopNav && (
+          <header className="flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6 flex-shrink-0">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 hover:bg-accent rounded-lg"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
 
-          <div className="flex items-center gap-2 lg:gap-4 ml-auto">
-            <NotificationBell />
+            <div className="flex items-center gap-2 lg:gap-4 ml-auto">
+              <NotificationBell />
 
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-600 border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors">
-                  <span>{streak}</span>
-                  <span role="img" aria-label="fire">🔥</span>
-                </div>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80">
-                <div className="flex justify-between space-x-4">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-semibold">Daily Streak</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {streak > 0
-                        ? "Keep up the great work! Consistency is key to success."
-                        : "Start your streak today by completing an interview!"}
-                    </p>
-                    <div className="flex items-center pt-2">
-                      <span className="text-xs text-muted-foreground">
-                        Last activity: {lastActivityDate ? lastActivityDate.toLocaleDateString() : "No activity yet"}
-                      </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                      <AvatarImage src={getAvatarUrl(
+                        profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
+                        user?.id || user?.email || 'user',
+                        'avataaars',
+                        user?.user_metadata?.picture
+                      )} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getInitials(profile?.full_name || user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{profile?.full_name || user?.user_metadata?.full_name || "User"}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
                     </div>
-                  </div>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
-                    <AvatarImage src={getAvatarUrl(
-                      profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
-                      user?.id || user?.email || 'user',
-                      'avataaars',
-                      user?.user_metadata?.picture
-                    )} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(profile?.full_name || user?.user_metadata?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name || user?.user_metadata?.full_name || "User"}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+        )}
 
         {/* Page Content */}
-        <main className="p-4 lg:p-6 flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

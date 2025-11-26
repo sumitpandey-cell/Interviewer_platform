@@ -2,9 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, ExternalLink, Calendar, Clock, TrendingUp, Filter, Trash2, MoreHorizontal, Search, CheckCircle2, XCircle, BarChart3, MessageSquare, SortAsc, SortDesc, Play } from "lucide-react";
+import { FileText, Download, ExternalLink, Calendar, Clock, TrendingUp, Filter, Trash2, MoreHorizontal, Search, CheckCircle2, XCircle, BarChart3, MessageSquare, SortAsc, SortDesc, Play, Star, Bell, Sun, Moon, Settings, LogOut } from "lucide-react";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 
@@ -25,8 +25,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface UserProfile {
   full_name: string | null;
@@ -46,8 +47,8 @@ interface InterviewSession {
 
 export default function Reports() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { sessions: cachedSessions, fetchSessions, isCached, deleteInterviewSession } = useOptimizedQueries();
+  const { user, signOut } = useAuth();
+  const { sessions: cachedSessions, fetchSessions, fetchStats, isCached, deleteInterviewSession, stats } = useOptimizedQueries();
   const { profile: userProfile, loading: profileLoading } = useUserProfile();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -79,8 +80,12 @@ export default function Reports() {
           console.log('📦 Using cached sessions data');
         }
 
+        // Always fetch stats to ensure rank is up to date
+        if (!isCached.stats || !stats) {
+          await fetchStats();
+        }
+
         setSessions(sessionsData);
-        setHasLoaded(true);
         setHasLoaded(true);
       } catch (err) {
         console.error('Error loading reports data:', err);
@@ -185,328 +190,264 @@ export default function Reports() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: '2-digit',
+      day: '2-digit',
     });
   };
 
-  const getScoreColor = (score: number | null) => {
-    if (!score) return 'text-slate-500';
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getStatusBadge = (status: string, score: number | null) => {
-    switch (status) {
-      case 'completed':
-        return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
-            Completed
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
-            Processing
-          </Badge>
-        );
-      case 'in_progress':
-        return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-            In Progress
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100">
-            {status}
-          </Badge>
-        );
-    }
-  };
-
-  if (loading) {
+  const renderStars = (score: number | null) => {
+    if (score === null) return <div className="flex gap-1"><Star className="h-4 w-4 text-gray-300" /></div>;
+    const stars = Math.round((score / 100) * 5);
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < stars ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+          />
+        ))}
+      </div>
     );
-  }
-
-  if (error) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Error Loading Reports</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  };
 
   const completedSessions = sessions.filter(s => s.status === 'completed' && s.score !== null);
   const averageScore = completedSessions.length > 0
     ? Math.round(completedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / completedSessions.length)
     : 0;
+  const averageStars = (averageScore / 100) * 5;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-
+    <DashboardLayout showTopNav={false}>
+      <div className="p-6 sm:p-8 h-full">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-            <p className="text-muted-foreground">Track your interview performance and progress</p>
+            <h1 className="text-3xl font-bold text-gray-900">Reports Overview</h1>
+            <p className="text-gray-500 mt-1">Aura: Your AI Voice Interviewer.</p>
           </div>
-          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            <Link to="/start-interview">
-              Start New Interview
-            </Link>
-          </Button>
+
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-auto pl-2 pr-4 rounded-full border border-gray-200 hover:bg-gray-50 gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={getAvatarUrl(
+                      profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
+                      user?.id || user?.email || 'user',
+                      'avataaars',
+                      user?.user_metadata?.picture
+                    )} />
+                    <AvatarFallback>
+                      {getInitials(profile?.full_name || user?.user_metadata?.full_name) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-gray-700">
+                    {profile?.full_name || user?.user_metadata?.full_name || "User"}
+                  </span>
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
+              <div className="p-1.5 rounded-full bg-white shadow-sm">
+                <Sun className="h-4 w-4 text-gray-700" />
+              </div>
+              <div className="p-1.5 rounded-full">
+                <Moon className="h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats Overview */}
-        {sessions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Interviews</p>
-                  <h3 className="text-2xl font-bold">{sessions.length}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-green-100 text-green-600">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <h3 className="text-2xl font-bold">{completedSessions.length}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Average Score</p>
-                  <h3 className="text-2xl font-bold">{averageScore}%</h3>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-                  <Clock className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Practice Time</p>
-                  <h3 className="text-2xl font-bold">
-                    {Math.round(sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0))}m
-                  </h3>
-                </div>
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Total Interviews:</p>
+            <h3 className="text-3xl font-bold text-gray-900">{sessions.length}</h3>
           </div>
-        )}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Total Time:</p>
+            <h3 className="text-3xl font-bold text-gray-900">
+              {Math.floor((stats?.timePracticed || 0) / 60)}h {(stats?.timePracticed || 0) % 60}m
+            </h3>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Leaderboard Rank:</p>
+            <h3 className="text-3xl font-bold text-gray-900">#{stats?.rank || 0}</h3>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Average Feedback:</p>
+            <h3 className="text-3xl font-bold text-gray-900">{averageStars.toFixed(1)} Stars</h3>
+          </div>
+        </div>
 
-        {/* Main Content Area */}
-        <Card className="border-none shadow-md bg-card">
-          <CardHeader className="p-6 border-b border-border/50">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search reports..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-background/50 border-border"
-                />
-              </div>
-              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px] bg-background/50">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                  </SelectContent>
-                </Select>
+        {/* Filter Section */}
+        <div className="bg-[#eff6ff] p-4 rounded-[20px] mb-8 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+          <span className="font-bold text-gray-900 text-lg mr-2">Filter Reports</span>
 
-                <Select value={positionFilter} onValueChange={setPositionFilter}>
-                  <SelectTrigger className="w-[150px] bg-background/50">
-                    <SelectValue placeholder="Position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Positions</SelectItem>
-                    {uniquePositions.map(position => (
-                      <SelectItem key={position} value={position}>{position}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="flex flex-wrap gap-3 flex-1">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-auto min-w-[140px] bg-white border-none shadow-sm rounded-xl h-10 px-3 gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <SelectValue placeholder="Date Range" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date-desc">Newest First</SelectItem>
+                <SelectItem value="date-asc">Oldest First</SelectItem>
+              </SelectContent>
+            </Select>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[150px] bg-background/50">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date-desc">Newest First</SelectItem>
-                    <SelectItem value="date-asc">Oldest First</SelectItem>
-                    <SelectItem value="score-desc">Highest Score</SelectItem>
-                    <SelectItem value="score-asc">Lowest Score</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {sessions.length === 0 ? (
-              <div className="p-12 text-center">
-                <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start your first interview to generate reports and analytics.
-                </p>
-                <Button asChild>
-                  <Link to="/start-interview">Start Interview</Link>
-                </Button>
-              </div>
-            ) : filteredAndSortedSessions.length === 0 ? (
-              <div className="p-12 text-center">
-                <p className="text-muted-foreground">No reports match your current filters.</p>
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setStatusFilter('all');
-                    setPositionFilter('all');
-                    setSearchQuery('');
-                  }}
-                  className="mt-2"
-                >
-                  Clear all filters
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-b border-border/50">
-                    <TableHead className="w-[300px]">Interview Details</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Score</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+            <Select value={positionFilter} onValueChange={setPositionFilter}>
+              <SelectTrigger className="w-auto min-w-[160px] bg-white border-none shadow-sm rounded-xl h-10 px-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Interviewer</span>
+                  <span className="font-medium text-gray-900"><SelectValue placeholder="All" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {uniquePositions.map(position => (
+                  <SelectItem key={position} value={position}>{position}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-auto min-w-[140px] bg-white border-none shadow-sm rounded-xl h-10 px-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Status</span>
+                  <span className="font-medium text-gray-900"><SelectValue placeholder="All" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-auto min-w-[140px] bg-white border-none shadow-sm rounded-xl h-10 px-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Rating</span>
+                  <span className="font-medium text-gray-900"><SelectValue placeholder="All" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="score-desc">Highest</SelectItem>
+                <SelectItem value="score-asc">Lowest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Reports Table */}
+        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="font-bold text-lg text-gray-900">All Interview Reports</h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                  <TableHead className="w-[300px] pl-6 text-base text-gray-500 font-medium">Interviewee</TableHead>
+                  <TableHead className="text-base text-gray-500 font-medium">Date</TableHead>
+                  <TableHead className="text-base text-gray-500 font-medium">Status</TableHead>
+                  <TableHead className="text-base text-gray-500 font-medium">Duration</TableHead>
+                  <TableHead className="text-base text-gray-500 font-medium">Rating</TableHead>
+                  <TableHead className="text-right pr-6 text-base text-gray-500 font-medium"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedSessions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                      No reports found.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedSessions.map((session) => (
+                ) : (
+                  filteredAndSortedSessions.map((session) => (
                     <TableRow
                       key={session.id}
-                      className="hover:bg-muted/50 transition-colors group cursor-pointer"
-                      onClick={() => navigate(`/interview/${session.id}/report`)}
+                      className="hover:bg-gray-50/50 transition-colors border-b border-gray-50"
                     >
-                      <TableCell>
+                      <TableCell className="pl-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9 border border-border">
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {session.position.substring(0, 2).toUpperCase()}
+                          <Avatar className="h-10 w-10 border border-gray-200">
+                            <AvatarImage src={getAvatarUrl(
+                              profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
+                              user?.id || user?.email || 'user',
+                              'avataaars',
+                              user?.user_metadata?.picture
+                            )} />
+                            <AvatarFallback>
+                              {getInitials(profile?.full_name || user?.user_metadata?.full_name) || "U"}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-foreground">{session.position}</p>
-                            <p className="text-xs text-muted-foreground capitalize">
-                              {session.interview_type.replace('_', ' ')} Interview
+                            <p className="font-semibold text-gray-900 text-base">
+                              {profile?.full_name || user?.user_metadata?.full_name || "User"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {session.position}
                             </p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-gray-600 font-medium text-base">
                         {formatDate(session.created_at)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                          ${session.status === 'completed'
+                            ? 'bg-green-50 text-green-700'
+                            : session.status === 'success'
+                              ? 'bg-yellow-50 text-yellow-700'
+                              : 'bg-blue-50 text-blue-700'}
+                        `}>
+                          {session.status === 'completed' ? 'Completed' : session.status === 'success' ? 'Success' : 'In Progress'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-gray-600 font-medium text-base">
                         {session.duration_minutes ? `${session.duration_minutes}m` : '-'}
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(session.status, session.score)}
+                        {renderStars(session.score)}
                       </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        <span className={getScoreColor(session.score)}>
-                          {session.score !== null ? `${session.score}%` : '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/interview/${session.id}/report`} className="flex items-center cursor-pointer">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                View Report
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={session.status !== 'completed' || session.score === null}
-                              className="flex items-center cursor-pointer"
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download PDF
-                            </DropdownMenuItem>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600 focus:bg-red-50">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </div>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Interview Report</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete this interview report? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(session.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <TableCell className="text-right pr-6">
+                        <Button
+                          variant="outline"
+                          className="h-9 px-4 rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900 text-gray-600 font-medium"
+                          onClick={() => navigate(`/interview/${session.id}/report`)}
+                        >
+                          Download
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

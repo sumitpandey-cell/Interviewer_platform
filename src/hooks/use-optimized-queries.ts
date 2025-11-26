@@ -93,7 +93,47 @@ export function useOptimizedQueries() {
         ? Math.round(completedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / completedSessions.length)
         : 0;
       const timePracticed = sessionsData.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
-      const rank = totalInterviews > 0 ? Math.max(100 - totalInterviews * 5, 1) : 0;
+
+      // Calculate Rank (Real implementation)
+      let rank = 0;
+      try {
+        // Fetch all completed sessions for leaderboard calculation
+        const { data: allSessions, error: rankError } = await supabase
+          .from("interview_sessions")
+          .select("user_id, score")
+          .not("score", "is", null)
+          .eq("status", "completed");
+
+        if (!rankError && allSessions) {
+          // Aggregate scores
+          const userStats: Record<string, { totalScore: number; count: number }> = {};
+          allSessions.forEach((session) => {
+            if (!userStats[session.user_id]) {
+              userStats[session.user_id] = { totalScore: 0, count: 0 };
+            }
+            userStats[session.user_id].totalScore += session.score || 0;
+            userStats[session.user_id].count += 1;
+          });
+
+          // Calculate Bayesian Score
+          const PRIOR_MEAN = 70;
+          const M = 20;
+          const rankedUsers = Object.entries(userStats).map(([userId, stats]) => {
+            const avgScore = stats.totalScore / stats.count;
+            const bayesianScore = (avgScore * stats.count + PRIOR_MEAN * M) / (stats.count + M);
+            return { userId, bayesianScore };
+          });
+
+          // Sort
+          rankedUsers.sort((a, b) => b.bayesianScore - a.bayesianScore);
+
+          // Find current user rank
+          const userRankIndex = rankedUsers.findIndex(u => u.userId === user.id);
+          rank = userRankIndex !== -1 ? userRankIndex + 1 : 0;
+        }
+      } catch (e) {
+        console.error("Error calculating rank", e);
+      }
 
       const calculatedStats = {
         totalInterviews,
