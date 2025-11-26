@@ -274,7 +274,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <HoverCard>
               <HoverCardTrigger asChild>
-                <div className="hidden sm:flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-600 border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors">
+                <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-600 border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors">
                   <span>{streak}</span>
                   <span role="img" aria-label="fire">🔥</span>
                 </div>

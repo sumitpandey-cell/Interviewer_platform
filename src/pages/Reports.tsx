@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,7 @@ interface InterviewSession {
 }
 
 export default function Reports() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { sessions: cachedSessions, fetchSessions, isCached, deleteInterviewSession } = useOptimizedQueries();
   const { profile: userProfile, loading: profileLoading } = useUserProfile();
@@ -418,7 +419,7 @@ export default function Reports() {
                     <TableRow
                       key={session.id}
                       className="hover:bg-muted/50 transition-colors group cursor-pointer"
-                      onClick={() => window.location.href = `/reports/${session.id}`}
+                      onClick={() => navigate(`/interview/${session.id}/report`)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -458,7 +459,7 @@ export default function Reports() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to={`/reports/${session.id}`} className="flex items-center cursor-pointer">
+                              <Link to={`/interview/${session.id}/report`} className="flex items-center cursor-pointer">
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 View Report
                               </Link>
