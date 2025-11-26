@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star } from "lucide-react";
+import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -126,8 +127,8 @@ export default function Landing() {
       {/* Navbar */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-            ? "bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm"
-            : "bg-transparent"
+          ? "bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm"
+          : "bg-transparent"
           }`}
       >
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
@@ -141,6 +142,7 @@ export default function Landing() {
             </span>
           </Link>
 
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
             <a href="#features" className="hover:text-indigo-600 transition-colors">
               Features
@@ -153,14 +155,57 @@ export default function Landing() {
             </a>
           </nav>
 
-          <Button
-            variant="outline"
-            className="border-indigo-200 text-indigo-600 font-medium rounded-lg px-6 hover:bg-indigo-50"
-            asChild
+          <div className="hidden md:block">
+            <Button
+              variant="outline"
+              className="border-indigo-200 text-indigo-600 font-medium rounded-lg px-6 hover:bg-indigo-50"
+              asChild
+            >
+              <Link to="/auth">Get Started</Link>
+            </Button>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="md:hidden p-2 text-slate-600"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <Link to="/auth">Get Started</Link>
-          </Button>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg p-4 flex flex-col gap-4 animate-in slide-in-from-top-5">
+            <a
+              href="#features"
+              className="text-sm font-medium text-slate-600 hover:text-indigo-600 py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              className="text-sm font-medium text-slate-600 hover:text-indigo-600 py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              How It Works
+            </a>
+            <a
+              href="#testimonials"
+              className="text-sm font-medium text-slate-600 hover:text-indigo-600 py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Testimonials
+            </a>
+            <Button
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+              asChild
+            >
+              <Link to="/auth">Get Started</Link>
+            </Button>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}

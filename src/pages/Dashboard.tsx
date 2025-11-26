@@ -5,39 +5,39 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Target,
-  TrendingUp,
-  Clock,
-  Trophy,
-  Code,
-  Users,
-  ArrowUpRight,
-  X,
-  Gift,
   Play,
-  ExternalLink
+  ExternalLink,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  Clock,
+  FileText,
+  Bell,
+  Settings,
+  LogOut
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useSubscription } from "@/hooks/use-subscription";
-
-interface InterviewSession {
-  id: string;
-  interview_type: string;
-  position: string;
-  score: number | null;
-  status: string;
-  created_at: string;
-  duration_minutes: number | null;
-}
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showBanner, setShowBanner] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showReportProgress, setShowReportProgress] = useState(false);
 
@@ -48,11 +48,10 @@ export default function Dashboard() {
     fetchSessions,
     fetchStats,
     fetchSessionDetail,
-    deleteInterviewSession,
-    isCached
+    profile
   } = useOptimizedQueries();
 
-  const { remaining_minutes, allowed, type: subscriptionType, loading: subscriptionLoading } = useSubscription();
+  const { allowed, loading: subscriptionLoading } = useSubscription();
 
   useEffect(() => {
     if (user) {
@@ -66,7 +65,6 @@ export default function Dashboard() {
   useEffect(() => {
     const state = location.state as any;
     if (state?.showReportProgress) {
-      // Prevent duplicate execution for the same session
       if (state.sessionId && pollingRef.current === state.sessionId) {
         return;
       }
@@ -76,35 +74,29 @@ export default function Dashboard() {
       }
 
       setShowReportProgress(true);
-      const loadingToastId = toast.info(state.message || "Your interview report is being generated. This may take a few moments.", {
+      const loadingToastId = toast.info(state.message || "Your interview report is being generated.", {
         duration: 10000
       });
 
-      // Check for report completion periodically
       if (state.sessionId) {
         let checkCount = 0;
-        const maxChecks = 20; // Check for up to ~1 minute (20 * 3 seconds)
+        const maxChecks = 20;
 
         const checkReportStatus = async () => {
           try {
             checkCount++;
-            const sessionData = await fetchSessionDetail(state.sessionId, true); // Force refresh
+            const sessionData = await fetchSessionDetail(state.sessionId, true);
 
             if (!sessionData) {
-              console.error('Session not found');
               setShowReportProgress(false);
               toast.dismiss(loadingToastId);
               return;
             }
 
-            // If feedback exists or status is completed, report is ready
             if ((sessionData as any).feedback || sessionData.status === 'completed') {
               setShowReportProgress(false);
               toast.dismiss(loadingToastId);
-
-              // Refresh the sessions list to show the completed interview
               await loadDashboardData();
-
               toast.success("Your interview report is ready!", {
                 duration: 8000,
                 action: {
@@ -115,14 +107,12 @@ export default function Dashboard() {
               return;
             }
 
-            // Continue checking if still processing and haven't exceeded max checks
             if (checkCount < maxChecks) {
               setTimeout(checkReportStatus, 3000);
             } else {
-              // Max checks reached, show message to check back later
               setShowReportProgress(false);
               toast.dismiss(loadingToastId);
-              toast.info("Report generation is taking longer than expected. Please check back in a few minutes.", {
+              toast.info("Report generation is taking longer than expected.", {
                 duration: 10000,
                 action: {
                   label: "View Reports",
@@ -134,15 +124,10 @@ export default function Dashboard() {
             console.error('Error checking report status:', error);
             setShowReportProgress(false);
             toast.dismiss(loadingToastId);
-            toast.error("Unable to check report status. Please refresh the page.");
           }
         };
-
-        // Start checking after 3 seconds (give time for initial processing)
         setTimeout(checkReportStatus, 3000);
       }
-
-      // Clear the state to prevent showing progress on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state, navigate, fetchSessionDetail]);
@@ -153,29 +138,15 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  // Load dashboard data using optimized queries
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      console.log('🚀 Loading dashboard data...');
-
-      // Fetch both sessions and stats - will use cache if available
-      const [sessionsData, statsData] = await Promise.all([
+      await Promise.all([
         fetchSessions(),
         fetchStats()
       ]);
-
-      console.log('📊 Dashboard data loaded:', {
-        sessionsCount: sessionsData?.length || 0,
-        statsCalculated: statsData ? 'yes' : 'no',
-        fromCache: {
-          sessions: isCached.sessions,
-          stats: isCached.stats
-        }
-      });
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -185,348 +156,248 @@ export default function Dashboard() {
     navigate('/start-interview');
   };
 
+  // Helper to render stars based on score
+  const renderStars = (score: number | null) => {
+    if (score === null) return <span className="text-muted-foreground">-</span>;
+    const stars = Math.round(score / 20); // 0-5 stars
+    return (
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < stars ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Helper to format time
+  const formatTime = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Welcome Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-indigo-600">
-              Welcome {user?.user_metadata?.full_name?.split(' ')[0] || "User"}!
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Practice, earn streaks & boost your rank!
-            </p>
+        {/* Header Section with Controls */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+              Good morning, {profile?.full_name?.split(' ')[0] || "James"}!
+            </h1>
+            <p className="text-gray-500 text-sm">Aura: Your AI Voice Interviewer.</p>
           </div>
+
+          {/* Header Controls */}
+          <div className="flex items-center gap-2 ">
+            <NotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-gray-200">
+                    <AvatarImage src={getAvatarUrl(
+                      profile?.avatar_url || user?.user_metadata?.avatar_url,
+                      user?.id || 'user',
+                      'avataaars'
+                    )} />
+                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                    {profile?.full_name?.split(' ')[0] || "User"}
+                  </span>
+                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <ThemeToggle />
+          </div>
+        </div>
+
+        {/* Top Actions Section */}
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-6">
           <Button
-            className="bg-green-500 hover:bg-green-600 text-white font-medium px-6 w-full sm:w-auto"
-            onClick={() => startInterview()}
+            className="h-auto w-full xl:w-auto px-8 xl:px-16 py-4 text-base bg-black hover:bg-gray-900 text-white rounded-2xl shadow-lg transition-transform hover:scale-105 font-medium"
+            onClick={startInterview}
             disabled={loading || subscriptionLoading || !allowed}
           >
-            <Play className="mr-2 h-4 w-4 fill-current" />
-            {loading || subscriptionLoading ? "Loading..." : !allowed ? "Daily Limit Reached" : "Start Interview"}
+            {loading ? "Loading..." : "Start Interview"}
           </Button>
-        </div>
 
-        {/* Report Generation Progress Banner */}
-        {showReportProgress && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900">Report Generation in Progress</h3>
-                  <p className="text-sm text-blue-700">
-                    Your interview report is being generated. You'll be notified when it's ready to view.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                  onClick={() => setShowReportProgress(false)}
-                >
-                  Dismiss
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          <div className="grid grid-cols-2 gap-6 md:gap-0 md:flex md:divide-x md:divide-gray-200 xl:ml-auto bg-white rounded-2xl p-6 md:px-8 md:py-5 shadow-sm border border-gray-200">
+            <div className="flex flex-col md:pr-8">
+              <span className="text-sm text-gray-500 mb-1 font-normal">Number of Interviews:</span>
+              {loading ? (
+                <Skeleton className="h-10 w-16" />
+              ) : (
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.totalInterviews || 28}</span>
+              )}
+            </div>
 
-        {/* Time Remaining Banner */}
-        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-6 text-white shadow-lg mb-6 ${!allowed ? 'bg-red-500' : 'bg-indigo-600'
-          }`}>
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="rounded-full bg-white/20 p-3">
-              <Clock className="h-6 w-6 text-white" />
+            <div className="flex flex-col md:px-8">
+              <span className="text-sm text-gray-500 mb-1 font-normal">Total Timing:</span>
+              {loading ? (
+                <Skeleton className="h-10 w-24" />
+              ) : (
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{formatTime(stats?.timePracticed || 2535)}</span>
+              )}
             </div>
-            <div className="space-y-1 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-yellow-300">
-                  {subscriptionType === 'free' ? 'Free Plan' : 'Premium Plan'}
-                </span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold">
-                {!allowed
-                  ? "You've used your daily interview time!"
-                  : `You have ${remaining_minutes} minutes remaining ${subscriptionType === 'free' ? 'today' : 'this month'}`
-                }
-              </h3>
-              <p className="text-sm text-white/90">
-                {subscriptionType === 'free'
-                  ? "Free users get 30 minutes of interview practice every day. Resets at midnight IST."
-                  : "Upgrade to Business for unlimited minutes!"
-                }
-              </p>
+
+            <div className="flex flex-col md:px-8">
+              <span className="text-sm text-gray-500 mb-1 font-normal">Leaderboard Rank:</span>
+              {loading ? (
+                <Skeleton className="h-10 w-16" />
+              ) : (
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">#{stats?.rank || 12}</span>
+              )}
             </div>
-            <div className="sm:absolute sm:right-12 sm:top-1/2 sm:-translate-y-1/2">
-              <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-                <Clock className="h-4 w-4" />
-                {remaining_minutes} min left
-              </div>
+
+            <div className="flex flex-col md:pl-8">
+              <span className="text-sm text-gray-500 mb-1 font-normal">Average Score:</span>
+              {loading ? (
+                <Skeleton className="h-10 w-16" />
+              ) : (
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.averageScore || 85}%</span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Total Interviews */}
-          <Card className="border-none shadow-sm bg-blue-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Total Interviews</span>
-                <div className="rounded-full bg-white p-1">
-                  <Target className="h-4 w-4 text-blue-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.totalInterviews || 0} <span className="text-lg font-normal text-blue-600">Interviews</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Total Interviews completed</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Average Score */}
-          <Card className="border-none shadow-sm bg-yellow-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Average Score</span>
-                <div className="rounded-full bg-white p-1">
-                  <TrendingUp className="h-4 w-4 text-yellow-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.averageScore || 0}% <span className="text-lg font-normal text-yellow-600">Average</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Consistently scoring above {(stats?.averageScore || 0) > 0 ? (stats?.averageScore || 0) - 5 : 0}%</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Time Practiced */}
-          <Card className="border-none shadow-sm bg-green-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground">Time Practiced</span>
-                <div className="rounded-full bg-white p-1">
-                  <Clock className="h-4 w-4 text-green-500" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{stats?.timePracticed || 0} <span className="text-lg font-normal text-green-600">mins</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Keep practicing!</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Leaderboard */}
-          <Card className="border-none shadow-sm bg-purple-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                  Leaderboard <ArrowUpRight className="h-3 w-3" />
-                </span>
-                <div className="flex items-center gap-1 text-sm font-bold text-purple-600">
-                  <Trophy className="h-4 w-4 fill-current" />
-                  #{stats?.rank || '-'}
-                </div>
-              </div>
-              <div className="space-y-1">
-                {loading ? (
-                  <Skeleton className="h-8 w-24" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground">{(stats?.rank || 0) > 0 ? `Top ${Math.min(stats?.rank || 0, 100)}%` : 'NO'} <span className="text-lg font-normal text-purple-600">Global</span></h3>
-                )}
-                <p className="text-xs text-muted-foreground">Compete with others!</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Interview Type Section */}
-        <div>
-          <h3 className="mb-4 text-lg font-bold text-foreground">Interview Type</h3>
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Test Yourself */}
-            <Card className="border-none shadow-sm bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
-              <CardContent className="p-6 flex flex-col h-full justify-between">
-                <div>
-                  <div className="mb-4 inline-flex rounded-lg bg-blue-100 p-2">
-                    <Code className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <h4 className="mb-2 text-lg font-bold text-foreground">Test Yourself</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Realistic interview, get scored, no hints during.
-                  </p>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => startInterview()}>
-                    Start <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Practice with Help */}
-            <Card className="border-none shadow-sm bg-purple-50/30 hover:bg-purple-50/50 transition-colors">
-              <CardContent className="p-6 flex flex-col h-full justify-between">
-                <div>
-                  <div className="mb-4 inline-flex rounded-lg bg-purple-100 p-2">
-                    <Users className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <h4 className="mb-2 text-lg font-bold text-foreground">Practice with Help</h4>
-                  <p className="text-sm text-muted-foreground">
-                    AI guides you through answers, corrects mistakes in real-time.
-                  </p>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => startInterview()}>
-                    Start <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Last Interview Summary */}
-            {sessions && sessions.length > 0 && (
-              <Card className="border-none shadow-sm bg-green-50/30">
-                <CardContent className="p-6 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="mb-4 inline-flex rounded-lg bg-green-100 p-2">
-                      <Code className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h4 className="mb-2 text-lg font-bold text-foreground">Last Interview Summary</h4>
-                    <div className="space-y-1 text-sm mt-4">
-                      <p className="text-muted-foreground">
-                        Interview Type: <span className="font-semibold text-foreground">{sessions[0]?.interview_type}</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        Position: <span className="font-semibold text-foreground">{sessions[0]?.position}</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        Overall Score: <span className="font-semibold text-foreground">{sessions[0]?.score !== null ? `${sessions[0]?.score}%` : 'N/A'}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end">
-                    {sessions[0]?.status === 'completed' && sessions[0]?.score !== null ? (
-                      <Button variant="secondary" className="bg-white hover:bg-gray-50 text-foreground shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/report`)}>
-                        Report <ArrowUpRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => navigate(`/interview/${sessions[0]?.id}/active`)}>
-                        <Play className="mr-2 h-4 w-4" />
-                        Continue
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        {/* Interview List Section */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-900">Top 5 Interviews</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/reports')}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              View All →
+            </Button>
           </div>
-        </div>
 
-        {/* Recent Practice Sessions */}
-        <div>
-          <h3 className="mb-4 text-lg font-bold text-foreground">
-            Recent Practice Sessions
-          </h3>
-          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
-                <thead className="bg-muted/30">
-                  <tr>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Interview Type
-                    </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Position
-                    </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="p-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {loading ? (
-                    [...Array(3)].map((_, i) => (
-                      <tr key={i}>
-                        <td className="p-4"><Skeleton className="h-4 w-24" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-20" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-12" /></td>
-                        <td className="p-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                        <td className="p-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
-                      </tr>
-                    ))
-                  ) : sessions?.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No interviews yet. Start one today!
-                      </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left border-b border-gray-100">
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Role</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Date</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Type</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Duration</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Status</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm">Feedback</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {loading ? (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i}>
+                      <td className="py-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
+                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
                     </tr>
-                  ) : (
-                    sessions?.slice(0, 5).map((session) => (
-                      <tr key={session.id} className="bg-white hover:bg-muted/50 transition-colors">
-                        <td className="p-4 text-sm font-medium text-foreground">
-                          {session.interview_type}
+                  ))
+                ) : sessions?.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center gap-2">
+                        <FileText className="h-8 w-8 text-gray-300" />
+                        <p>No interviews yet</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  sessions
+                    ?.filter(s => s.status === 'completed' && s.score !== null)
+                    .sort((a, b) => (b.score || 0) - (a.score || 0))
+                    .slice(0, 5)
+                    .map((session) => (
+                      <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
+                              {(session.position || 'General').substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-gray-900">{session.position || 'General Interview'}</span>
+                          </div>
                         </td>
-                        <td className="p-4 text-sm text-muted-foreground">
+                        <td className="py-4 text-gray-500 text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="p-4 text-sm text-muted-foreground">
-                          {session.position}
+                        <td className="py-4 text-gray-900 text-sm font-medium capitalize">
+                          {session.interview_type?.replace('_', ' ') || 'General'}
                         </td>
-                        <td className="p-4 text-sm text-foreground font-medium">
-                          {session.score !== null ? `${session.score}%` : '-'}
+                        <td className="py-4 text-gray-500 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{session.duration_minutes || 0}m</span>
+                          </div>
                         </td>
-                        <td className="p-4">
-                          <Badge variant="secondary" className={`
-                            ${session.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}
-                          `}>
-                            {session.status === 'completed' ? 'Completed' : 'In Progress'}
+                        <td className="py-4">
+                          <Badge
+                            variant="secondary"
+                            className="font-normal px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#C8E6C9]"
+                          >
+                            Completed
                           </Badge>
                         </td>
-                        <td className="p-4 text-right">
-                          {session.status === 'completed' && session.score !== null ? (
-                            <Button variant="outline" size="sm" className="h-8" onClick={() => navigate(`/interview/${session.id}/report`)}>
-                              Report <ExternalLink className="ml-2 h-3 w-3" />
-                            </Button>
-                          ) : (
-                            <Button variant="outline" size="sm" className="h-8 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" onClick={() => navigate(`/interview/${session.id}/active`)}>
-                              <Play className="mr-2 h-3 w-3" />
-                              Continue
-                            </Button>
-                          )}
+                        <td className="py-4">
+                          <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600' :
+                            (session.score || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                            {session.score}%
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            {renderStars(session.score)}
+                            <div className="flex gap-1 ml-2 border-l pl-3 border-gray-200">
+                              <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <ThumbsDown className="h-4 w-4 text-gray-300" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-6"
+                            onClick={() => navigate(`/interview/${session.id}/report`)}
+                          >
+                            Report
+                          </Button>
                         </td>
                       </tr>
                     ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

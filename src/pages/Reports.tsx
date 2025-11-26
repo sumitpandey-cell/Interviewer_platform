@@ -1,19 +1,28 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer } from "lucide-react";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface UserProfile {
   full_name: string | null;
@@ -32,7 +41,8 @@ interface InterviewSession {
 }
 
 export default function Reports() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const { sessions: cachedSessions, profile: cachedProfile, fetchSessions, fetchProfile, isCached } = useOptimizedQueries();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -172,33 +182,33 @@ export default function Reports() {
   };
 
   const getScoreColor = (score: number | null) => {
-    if (!score) return 'bg-gray-100 text-gray-700';
-    if (score >= 80) return 'bg-green-100 text-green-700';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-red-100 text-red-700';
+    if (!score) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    if (score >= 80) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
   };
 
   const getStatusBadge = (status: string, score: number | null) => {
     switch (status) {
       case 'completed':
         return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700">
+          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
             Completed
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
             In Progress
           </Badge>
         );
       case 'in_progress':
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
             In Progress
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             {status}
           </Badge>
         );
@@ -209,7 +219,7 @@ export default function Reports() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </DashboardLayout>
     );
@@ -219,7 +229,7 @@ export default function Reports() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Error Loading Reports</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Error Loading Reports</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>
             Try Again
@@ -241,168 +251,126 @@ export default function Reports() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
+      <div className="space-y-6 pb-8">
+        {/* Header Section with Controls */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
             <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               View insights and analysis from your completed interviews
             </p>
           </div>
 
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
-            <Link to="/start-interview">Start New Interview</Link>
-          </Button>
+          {/* Header Controls */}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-gray-200">
+                    <AvatarImage src={getAvatarUrl(
+                      profile?.avatar_url || user?.user_metadata?.avatar_url,
+                      user?.id || 'user',
+                      'avataaars'
+                    )} />
+                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                    {profile?.full_name?.split(' ')[0] || "User"}
+                  </span>
+                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <SettingsIcon className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <ThemeToggle />
+          </div>
         </div>
 
-        {/* Statistics Card */}
+        {/* Statistics Section */}
         {completedSessions.length > 0 && (
-          <Card className="border-none shadow-lg">
-            <CardContent className="p-6">
-              <Tabs defaultValue="overall" className="w-full">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-primary" />
-                    Statistics
-                  </h3>
-                  <TabsList className="grid w-[280px] grid-cols-2">
-                    <TabsTrigger value="overall">Overall</TabsTrigger>
-                    <TabsTrigger value="filtered">Filtered</TabsTrigger>
-                  </TabsList>
+          <div className="bg-white rounded-2xl px-8 py-5 shadow-sm border border-gray-200">
+            <Tabs defaultValue="overall" className="w-full">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Statistics</h3>
+                <TabsList className="grid w-[280px] grid-cols-2">
+                  <TabsTrigger value="overall">Overall</TabsTrigger>
+                  <TabsTrigger value="filtered">Filtered</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="overall" className="mt-0">
+                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-gray-200 md:gap-0">
+                  <div className="flex flex-col md:pr-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Total Interviews</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{sessions.length}</span>
+                  </div>
+
+                  <div className="flex flex-col md:px-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Completed</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{completedSessions.length}</span>
+                  </div>
+
+                  <div className="flex flex-col md:px-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Average Score</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{averageScore}%</span>
+                  </div>
+
+                  <div className="flex flex-col md:pl-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Practice Time</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">
+                      {Math.floor(sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) / 60)}h {sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) % 60}m
+                    </span>
+                  </div>
                 </div>
+              </TabsContent>
 
-                <TabsContent value="overall" className="mt-0">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-none shadow-md bg-gradient-to-br from-blue-500/10 to-blue-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Total Interviews</p>
-                            <p className="text-3xl font-bold text-blue-600">{sessions.length}</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <FileText className="h-6 w-6 text-blue-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-green-500/10 to-green-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                            <p className="text-3xl font-bold text-green-600">{completedSessions.length}</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-green-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-purple-500/10 to-purple-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
-                            <p className="text-3xl font-bold text-purple-600">{averageScore}%</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                            <Target className="h-6 w-6 text-purple-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-orange-500/10 to-orange-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
-                            <p className="text-3xl font-bold text-orange-600">
-                              {sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">minutes</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
-                            <Timer className="h-6 w-6 text-orange-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+              <TabsContent value="filtered" className="mt-0">
+                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-gray-200 md:gap-0">
+                  <div className="flex flex-col md:pr-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Showing</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredAndSortedSessions.length}</span>
                   </div>
-                </TabsContent>
 
-                <TabsContent value="filtered" className="mt-0">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-none shadow-md bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Showing</p>
-                            <p className="text-3xl font-bold text-cyan-600">{filteredAndSortedSessions.length}</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                            <FileText className="h-6 w-6 text-cyan-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                            <p className="text-3xl font-bold text-emerald-600">{filteredCompletedSessions.length}</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-violet-500/10 to-violet-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
-                            <p className="text-3xl font-bold text-violet-600">{filteredAverageScore}%</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center">
-                            <Target className="h-6 w-6 text-violet-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:shadow-lg transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">Practice Time</p>
-                            <p className="text-3xl font-bold text-amber-600">
-                              {filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">minutes</p>
-                          </div>
-                          <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                            <Timer className="h-6 w-6 text-amber-600" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="flex flex-col md:px-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Completed</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredCompletedSessions.length}</span>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+
+                  <div className="flex flex-col md:px-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Average Score</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredAverageScore}%</span>
+                  </div>
+
+                  <div className="flex flex-col md:pl-8">
+                    <span className="text-sm text-gray-500 mb-1 font-normal">Practice Time</span>
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">
+                      {Math.floor(filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) / 60)}h {filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) % 60}m
+                    </span>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
 
         {sessions.length === 0 ? (
-          <Card>
+          <Card className="border-none shadow-md">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Interview Reports Yet</h3>
@@ -415,7 +383,7 @@ export default function Reports() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             {/* Filters Section */}
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -497,87 +465,89 @@ export default function Reports() {
             <div className="border-t border-border" />
 
             {/* Reports List Section */}
-            <CardContent className="p-4">
-              <div className="flex flex-col gap-3">
-                {filteredAndSortedSessions.map((session) => (
-                  <div key={session.id} className="p-4 flex flex-col sm:flex-row items-center gap-4 border border-border rounded-lg hover:shadow-md hover:border-primary/50 transition-all bg-card">
-                    {/* Left: Avatar & Main Info */}
-                    <div className="flex items-center gap-4 w-full sm:flex-1">
-                      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
-                        {session.position.substring(0, 2).toUpperCase()}
-                      </div>
+            <div className="bg-white rounded-3xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold mb-6 text-gray-900">All Interview Reports</h3>
 
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-base truncate text-foreground">
-                          {session.position}
-                        </h3>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span className="capitalize font-medium text-foreground/80">{session.interview_type.replace('_', ' ')}</span>
-                          <span className="text-muted-foreground/40">•</span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(session.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Middle: Status & Metrics */}
-                    <div className="flex items-center gap-6 w-full sm:w-auto border-t sm:border-t-0 sm:border-l sm:border-r border-border/50 py-3 sm:py-0 sm:px-6">
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(session.status, session.score)}
-                      </div>
-
-                      {session.duration_minutes && (
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
-                          <Clock className="h-4 w-4 text-muted-foreground/70" />
-                          <span>{session.duration_minutes}m</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right: Score & Action */}
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                      {session.score !== null && (
-                        <div className="flex flex-col items-end mr-2">
-                          <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600' :
-                            session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
-                            }`}>
-                            {session.score}%
-                          </span>
-                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Score</span>
-                        </div>
-                      )}
-
-                      {session.status === 'completed' && session.score !== null ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-                        >
-                          <Link to={`/interview/${session.id}/report`}>
-                            View
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button
-                          asChild
-                          size="sm"
-                          className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
-                        >
-                          <Link to={`/interview/${session.id}/active`}>
-                            <Play className="h-3.5 w-3.5" />
-                            Resume
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b border-gray-100">
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Position</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Date</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Type</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Duration</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Status</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredAndSortedSessions.map((session) => (
+                      <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
+                              {session.position.substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-gray-900">{session.position}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-gray-500 text-sm">
+                          {new Date(session.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 text-gray-500 text-sm capitalize">
+                          {session.interview_type.replace('_', ' ')}
+                        </td>
+                        <td className="py-4 text-gray-500 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{session.duration_minutes || 0}m</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          {getStatusBadge(session.status, session.score)}
+                        </td>
+                        <td className="py-4">
+                          {session.score !== null ? (
+                            <span className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600' :
+                              session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                              {session.score}%
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                        <td className="py-4 text-right">
+                          {session.status === 'completed' && session.score !== null ? (
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-6"
+                            >
+                              <Link to={`/interview/${session.id}/report`}>
+                                View Report
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button
+                              asChild
+                              size="sm"
+                              className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-6"
+                            >
+                              <Link to={`/interview/${session.id}/active`}>
+                                Continue
+                              </Link>
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </CardContent>
+            </div>
           </Card>
         )}
       </div>

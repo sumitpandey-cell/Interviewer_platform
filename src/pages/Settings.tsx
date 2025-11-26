@@ -224,18 +224,18 @@ export default function Settings() {
                 </div>
 
                 <Tabs defaultValue="profile" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-                        <TabsTrigger value="profile" className="gap-2">
+                    <TabsList className="w-full justify-start overflow-x-auto no-scrollbar flex-nowrap">
+                        <TabsTrigger value="profile" className="gap-2 flex-shrink-0">
                             <User className="h-4 w-4" />
-                            <span className="hidden sm:inline">Profile</span>
+                            <span>Profile</span>
                         </TabsTrigger>
-                        <TabsTrigger value="notifications" className="gap-2">
+                        <TabsTrigger value="notifications" className="gap-2 flex-shrink-0">
                             <Bell className="h-4 w-4" />
-                            <span className="hidden sm:inline">Notifications</span>
+                            <span>Notifications</span>
                         </TabsTrigger>
-                        <TabsTrigger value="account" className="gap-2">
+                        <TabsTrigger value="account" className="gap-2 flex-shrink-0">
                             <Shield className="h-4 w-4" />
-                            <span className="hidden sm:inline">Account</span>
+                            <span>Account</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -249,7 +249,7 @@ export default function Settings() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="flex items-center gap-6">
+                                <div className="flex flex-col sm:flex-row items-center gap-6">
                                     <div className="relative group">
                                         <Label htmlFor="avatar-upload" className="cursor-pointer">
                                             <Avatar className="h-20 w-20 border-4 border-white shadow-lg group-hover:opacity-90 transition-opacity">

@@ -26,7 +26,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, Upload, Sparkles } from "lucide-react";
+import { Loader2, Plus, Upload, Sparkles, Play, Briefcase, Clock, FileText, Code, User, Monitor } from "lucide-react";
 
 const formSchema = z.object({
     interviewType: z.string().min(1, "Interview type is required"),
@@ -99,20 +99,20 @@ export default function StartInterview() {
 
     return (
         <DashboardLayout>
-            <div className="mx-auto max-w-3xl space-y-8">
-                <div className="text-center space-y-2">
-                    <div className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+            <div className="mx-auto max-w-3xl space-y-8 pb-12">
+                <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary shadow-sm border border-primary/20">
                         <Sparkles className="mr-2 h-4 w-4" />
                         AI-Powered Interview
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900">Start Practice Interview</h1>
-                    <p className="text-slate-500 max-w-xl mx-auto">
+                    <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Start Practice Interview</h1>
+                    <p className="text-muted-foreground max-w-xl mx-auto text-lg">
                         Configure your AI-powered interview session with advanced customization options
                     </p>
                 </div>
 
-                <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-                    <CardContent className="p-8">
+                <Card className="border-none shadow-2xl bg-card/50 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                    <CardContent className="p-8 sm:p-10">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
@@ -121,22 +121,37 @@ export default function StartInterview() {
                                     name="interviewType"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-semibold flex items-center gap-2">
-                                                <span className="text-green-500">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                                                </span>
+                                            <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                <div className="p-1.5 rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                                                    <Briefcase className="h-4 w-4" />
+                                                </div>
                                                 Interview Type <span className="text-red-500">*</span>
                                             </FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="bg-white border-slate-200 h-12">
+                                                    <SelectTrigger className="bg-background/50 border-input h-12 text-base">
                                                         <SelectValue placeholder="Select type" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="Technical">Technical</SelectItem>
-                                                    <SelectItem value="Behavioral">Behavioral</SelectItem>
-                                                    <SelectItem value="System Design">System Design</SelectItem>
+                                                    <SelectItem value="Technical">
+                                                        <div className="flex items-center gap-2">
+                                                            <Code className="h-4 w-4 text-muted-foreground" />
+                                                            Technical
+                                                        </div>
+                                                    </SelectItem>
+                                                    <SelectItem value="Behavioral">
+                                                        <div className="flex items-center gap-2">
+                                                            <User className="h-4 w-4 text-muted-foreground" />
+                                                            Behavioral
+                                                        </div>
+                                                    </SelectItem>
+                                                    <SelectItem value="System Design">
+                                                        <div className="flex items-center gap-2">
+                                                            <Monitor className="h-4 w-4 text-muted-foreground" />
+                                                            System Design
+                                                        </div>
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -149,14 +164,14 @@ export default function StartInterview() {
                                     name="position"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-semibold flex items-center gap-2">
-                                                <span className="text-green-500">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                                                </span>
+                                            <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                                    <User className="h-4 w-4" />
+                                                </div>
                                                 Choose Position
                                             </FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Type or select a position..." className="bg-white border-slate-200 h-12" {...field} />
+                                                <Input placeholder="e.g. Senior Frontend Engineer" className="bg-background/50 border-input h-12 text-base" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -164,18 +179,18 @@ export default function StartInterview() {
                                 />
 
                                 <div className="space-y-3">
-                                    <FormLabel className="text-slate-700 font-semibold flex items-center gap-2">
-                                        <span className="text-green-500">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                                        </span>
+                                    <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                        <div className="p-1.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                            <Sparkles className="h-4 w-4" />
+                                        </div>
                                         Select Skills <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <div className="flex gap-2">
                                         <Input
-                                            placeholder="Add a skill"
+                                            placeholder="Add a skill (e.g. React, Python)"
                                             value={skillInput}
                                             onChange={(e) => setSkillInput(e.target.value)}
-                                            className="bg-white border-slate-200 h-12"
+                                            className="bg-background/50 border-input h-12 text-base"
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
                                                     e.preventDefault();
@@ -183,21 +198,21 @@ export default function StartInterview() {
                                                 }
                                             }}
                                         />
-                                        <Button type="button" onClick={handleAddSkill} className="h-12 w-12 bg-blue-600 hover:bg-blue-700">
+                                        <Button type="button" onClick={handleAddSkill} className="h-12 w-12 bg-primary hover:bg-primary/90 shadow-sm">
                                             <Plus className="h-5 w-5" />
                                         </Button>
                                     </div>
                                     {skillsList.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 mt-2">
+                                        <div className="flex flex-wrap gap-2 mt-3 p-4 rounded-xl bg-muted/30 border border-border/50">
                                             {skillsList.map((skill, index) => (
-                                                <div key={index} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                                                <div key={index} className="bg-background border border-border px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-sm animate-in zoom-in-95 duration-200">
                                                     {skill}
                                                     <button
                                                         type="button"
                                                         onClick={() => setSkillsList(skillsList.filter((_, i) => i !== index))}
-                                                        className="hover:text-blue-900"
+                                                        className="text-muted-foreground hover:text-destructive transition-colors rounded-full p-0.5 hover:bg-destructive/10"
                                                     >
-                                                        ×
+                                                        <Plus className="h-3 w-3 rotate-45" />
                                                     </button>
                                                 </div>
                                             ))}
@@ -210,14 +225,14 @@ export default function StartInterview() {
                                     name="duration"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-700 font-semibold flex items-center gap-2">
-                                                <span className="text-green-500">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                                </span>
+                                            <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                <div className="p-1.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                                                    <Clock className="h-4 w-4" />
+                                                </div>
                                                 Interview Duration (max 15 minutes) <span className="text-red-500">*</span>
                                             </FormLabel>
                                             <FormControl>
-                                                <Input type="number" max={15} placeholder="Enter duration (in minutes)" className="bg-white border-slate-200 h-12" {...field} />
+                                                <Input type="number" max={15} placeholder="Enter duration (in minutes)" className="bg-background/50 border-input h-12 text-base" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -225,37 +240,37 @@ export default function StartInterview() {
                                 />
 
                                 <div className="space-y-4">
-                                    <FormLabel className="text-slate-700 font-semibold flex items-center gap-2">
-                                        <span className="text-green-500">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                        </span>
+                                    <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                        <div className="p-1.5 rounded-md bg-pink-500/10 text-pink-600 dark:text-pink-400">
+                                            <FileText className="h-4 w-4" />
+                                        </div>
                                         Job Description
                                     </FormLabel>
-                                    <div className="grid grid-cols-2 gap-0 bg-slate-100 p-1 rounded-lg mb-4">
+                                    <div className="grid grid-cols-2 gap-1 bg-muted p-1 rounded-xl mb-4">
                                         <button
                                             type="button"
                                             onClick={() => setJobDescriptionType('upload')}
-                                            className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${jobDescriptionType === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${jobDescriptionType === 'upload' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
                                         >
-                                            Upload
+                                            Upload File
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setJobDescriptionType('manual')}
-                                            className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${jobDescriptionType === 'manual' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${jobDescriptionType === 'manual' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
                                         >
-                                            Manual
+                                            Manual Entry
                                         </button>
                                     </div>
 
                                     {jobDescriptionType === 'upload' ? (
-                                        <div className="border-2 border-dashed border-blue-200 rounded-xl bg-blue-50/30 p-10 text-center hover:bg-blue-50/50 transition-colors cursor-pointer">
-                                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <Upload className="h-6 w-6" />
+                                        <div className="border-2 border-dashed border-primary/20 rounded-2xl bg-primary/5 p-10 text-center hover:bg-primary/10 transition-colors cursor-pointer group">
+                                            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                                                <Upload className="h-7 w-7" />
                                             </div>
-                                            <h3 className="text-slate-900 font-semibold mb-1">Upload job description file</h3>
-                                            <p className="text-slate-500 text-sm mb-6">PDF or DOCX (Max 5MB)</p>
-                                            <Button type="button" className="bg-blue-600 hover:bg-blue-700">Choose File</Button>
+                                            <h3 className="text-foreground font-semibold mb-1 text-lg">Upload job description file</h3>
+                                            <p className="text-muted-foreground text-sm mb-6">PDF or DOCX (Max 5MB)</p>
+                                            <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground">Choose File</Button>
                                         </div>
                                     ) : (
                                         <FormField
@@ -266,7 +281,7 @@ export default function StartInterview() {
                                                     <FormControl>
                                                         <Textarea
                                                             placeholder="Paste or type the job description here..."
-                                                            className="min-h-[200px] bg-white border-slate-200 resize-none focus-visible:ring-blue-500"
+                                                            className="min-h-[200px] bg-background/50 border-input resize-none focus-visible:ring-primary"
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -279,18 +294,18 @@ export default function StartInterview() {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-14 text-lg bg-slate-300 hover:bg-slate-400 text-slate-600 hover:text-slate-800 font-semibold"
+                                    className="w-full h-14 text-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.01] hover:shadow-primary/40"
                                     disabled={isLoading}
                                 >
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                            Starting...
+                                            Starting Session...
                                         </>
                                     ) : (
                                         <>
-                                            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                            Start Interview
+                                            <Play className="mr-2 h-5 w-5 fill-current" />
+                                            Start Interview Session
                                         </>
                                     )}
                                 </Button>
