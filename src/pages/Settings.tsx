@@ -249,7 +249,7 @@ export default function Settings() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="flex items-center gap-6">
+                                <div className="flex flex-col sm:flex-row items-center gap-6">
                                     <div className="relative group">
                                         <Label htmlFor="avatar-upload" className="cursor-pointer">
                                             <Avatar className="h-20 w-20 border-4 border-white shadow-lg group-hover:opacity-90 transition-opacity">

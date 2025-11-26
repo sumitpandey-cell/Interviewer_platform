@@ -149,17 +149,19 @@ const Leaderboard = () => {
         return (
             <div className={cn(
                 "relative flex flex-col items-center transition-all duration-300 overflow-visible",
-                isFirst ? "z-20 md:mb-8" : "mt-0"
+                isFirst ? "z-20 sm:mb-8" : "mt-0"
             )}>
                 {isFirst && (
-                    <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-30">
-                        <Trophy className="h-14 w-14 text-yellow-500 fill-yellow-500 animate-bounce drop-shadow-md" />
+                    <div className="absolute -top-10 sm:-top-14 left-1/2 -translate-x-1/2 z-30">
+                        <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-yellow-500 fill-yellow-500 animate-bounce drop-shadow-md" />
                     </div>
                 )}
 
                 <Card className={cn(
-                    "relative overflow-hidden hover:shadow-lg",
-                    isFirst ? "h-[320px] w-full md:w-[300px] border-2" : "h-[280px] w-full md:w-[280px] border",
+                    "relative overflow-hidden hover:shadow-lg transition-all flex flex-col",
+                    isFirst ? "w-[130px] sm:w-[300px] border-2" : "w-[110px] sm:w-[280px] border",
+                    // Height handling: auto on mobile to fit stacked content, fixed/min on desktop
+                    isFirst ? "min-h-[260px] sm:h-[340px]" : "min-h-[220px] sm:h-[300px]",
                     borderColor,
                     glowColor
                 )}>
@@ -170,44 +172,49 @@ const Leaderboard = () => {
                                 "from-amber-700 to-transparent"
                     )} />
 
-                    <CardContent className="flex flex-col items-center justify-center h-full p-6 space-y-4">
-                        <div className="relative">
+                    <CardContent className="flex flex-col items-center justify-between h-full p-3 sm:p-6 space-y-2 sm:space-y-4">
+                        <div className="relative mt-2 sm:mt-0">
                             <Avatar className={cn(
                                 "border-4",
-                                isFirst ? "h-24 w-24 border-yellow-500" : "h-20 w-20 border-muted",
+                                isFirst ? "h-16 w-16 sm:h-24 sm:w-24 border-yellow-500" : "h-12 w-12 sm:h-20 sm:w-20 border-muted",
                                 borderColor
                             )}>
-                                <AvatarImage src={user.avatarUrl || ""} />
+                                <AvatarImage src={getAvatarUrl(
+                                    user.avatarUrl,
+                                    user.userId || user.fullName || 'user',
+                                    'avataaars',
+                                    user.oauthPicture
+                                )} />
                                 <AvatarFallback className="text-xl font-bold">
                                     {user.fullName?.charAt(0) || "U"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className={cn(
-                                "absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full font-bold text-white shadow-md",
+                                "absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white shadow-md text-xs sm:text-base",
                                 isFirst ? "bg-yellow-500" : isSecond ? "bg-slate-400" : "bg-amber-700"
                             )}>
                                 {rank}
                             </div>
                         </div>
 
-                        <div className="text-center space-y-1">
-                            <h3 className="font-bold text-lg truncate max-w-[200px] mx-auto">
+                        <div className="text-center space-y-1 w-full">
+                            <h3 className="font-bold text-xs sm:text-lg truncate w-full px-1">
                                 {user.fullName}
                             </h3>
-                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-muted-foreground">
                                 {icon}
                                 <span>Rank {rank}</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 w-full pt-4 border-t">
+                        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 sm:gap-4 w-full pt-2 sm:pt-4 border-t mt-auto">
                             <div className="text-center">
-                                <p className="text-xs text-muted-foreground uppercase font-semibold">Score</p>
-                                <p className="text-lg font-bold text-primary">{user.bayesianScore.toFixed(1)}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase font-semibold">Score</p>
+                                <p className="text-sm sm:text-lg font-bold text-primary">{user.bayesianScore.toFixed(1)}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-xs text-muted-foreground uppercase font-semibold">Interviews</p>
-                                <p className="text-lg font-bold">{user.interviewCount}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase font-semibold">Interviews</p>
+                                <p className="text-sm sm:text-lg font-bold">{user.interviewCount}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -218,20 +225,15 @@ const Leaderboard = () => {
 
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-20 -m-4 lg:-m-6">
+            <div className="flex flex-col gap-8 lg:gap-12 max-w-7xl mx-auto w-full">
                 {/* Header Section */}
-                <div className="flex flex-col items-center gap-4 px-4 pt-8 lg:px-6 lg:pt-10 text-center">
+                <div className="flex flex-col items-center gap-4 pt-4 text-center">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-blue-600 uppercase mb-2">Leaderboard</h1>
-                        <p className="text-muted-foreground text-lg">Compete with others to reach the top! Rankings updated in real-time.</p>
+                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-blue-600 uppercase mb-2">Leaderboard</h1>
+                        <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+                            Compete with others to reach the top! Rankings updated in real-time.
+                        </p>
                     </div>
-                    {/* Search bar removed from header to match screenshot clean look, or moved below? 
-                        The screenshot doesn't show the search bar in the header. 
-                        I'll keep it but maybe make it less prominent or move it? 
-                        For now, I'll keep the search bar but center it if I can, or just leave it.
-                        Actually, the screenshot shows NO search bar in the header area.
-                        I will hide it for now or move it to the table section.
-                    */}
                 </div>
 
                 {loading ? (
@@ -251,7 +253,7 @@ const Leaderboard = () => {
                     <>
                         {/* Top 3 Podium Section */}
                         {users.length > 0 && !searchQuery && (
-                            <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-6 py-8 px-4 lg:px-6">
+                            <div className="flex flex-row items-end justify-center gap-3 sm:gap-6 py-4 mt-12 sm:mt-0">
                                 {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
                                 <TopPlayerCard user={users[0]} rank={1} />
                                 {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
@@ -259,7 +261,7 @@ const Leaderboard = () => {
                         )}
 
                         {/* Full Rankings Table */}
-                        <div className="px-4 lg:px-6 pb-4 lg:pb-6">
+                        <div className="pb-6">
                             <Card className="border-none shadow-md bg-card">
                                 <CardHeader className="flex flex-col sm:flex-row items-center justify-between pb-2 gap-4">
                                     <CardTitle className="text-lg font-medium">

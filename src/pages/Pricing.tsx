@@ -95,8 +95,8 @@ export default function Pricing() {
                         <Card
                             key={plan.name}
                             className={`flex flex-col relative ${plan.popular
-                                    ? 'border-indigo-600 shadow-xl scale-105 z-10'
-                                    : 'border-slate-200 shadow-sm hover:shadow-md transition-shadow'
+                                ? 'border-indigo-600 shadow-xl lg:scale-105 z-10'
+                                : 'border-slate-200 shadow-sm hover:shadow-md transition-shadow'
                                 }`}
                         >
                             {plan.popular && (
@@ -128,10 +128,10 @@ export default function Pricing() {
                             <CardFooter>
                                 <Button
                                     className={`w-full ${plan.name === "Free" && subscriptionType === 'free'
-                                            ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-default'
-                                            : plan.popular
-                                                ? 'bg-indigo-600 hover:bg-indigo-700'
-                                                : ''
+                                        ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-default'
+                                        : plan.popular
+                                            ? 'bg-indigo-600 hover:bg-indigo-700'
+                                            : ''
                                         }`}
                                     variant={plan.name === "Free" && subscriptionType === 'free' ? "ghost" : "default"}
                                     onClick={() => handleSubscribe(plan.name)}
