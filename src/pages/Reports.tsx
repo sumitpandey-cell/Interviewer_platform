@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,23 +9,10 @@ import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, Trend
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -46,16 +33,13 @@ interface InterviewSession {
 }
 
 export default function Reports() {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { sessions: cachedSessions, fetchSessions, fetchStats, isCached, deleteInterviewSession, stats } = useOptimizedQueries();
-  const { profile: userProfile, loading: profileLoading } = useUserProfile();
+  const { user } = useAuth();
+  const { sessions: cachedSessions, profile: cachedProfile, fetchSessions, fetchProfile, isCached } = useOptimizedQueries();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filtering and sorting state
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -80,12 +64,17 @@ export default function Reports() {
           console.log('📦 Using cached sessions data');
         }
 
-        // Always fetch stats to ensure rank is up to date
-        if (!isCached.stats || !stats) {
-          await fetchStats();
+        // Use cached profile if available, otherwise fetch
+        let profileData = cachedProfile;
+        if (!isCached.profile || !cachedProfile) {
+          console.log('🔄 Fetching profile data...');
+          profileData = await fetchProfile();
+        } else {
+          console.log('📦 Using cached profile data');
         }
 
         setSessions(sessionsData);
+        setProfile(profileData);
         setHasLoaded(true);
       } catch (err) {
         console.error('Error loading reports data:', err);
@@ -96,7 +85,7 @@ export default function Reports() {
     };
 
     loadData();
-  }, [user?.id, hasLoaded, cachedSessions, isCached.sessions]);
+  }, [user?.id, hasLoaded, cachedSessions, cachedProfile, isCached.sessions, isCached.profile, fetchSessions, fetchProfile]);
 
   // Sync cached data with local state
   useEffect(() => {
@@ -106,10 +95,10 @@ export default function Reports() {
   }, [cachedSessions, sessions.length]);
 
   useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
+    if (cachedProfile && !profile) {
+      setProfile(cachedProfile);
     }
-  }, [userProfile]);
+  }, [cachedProfile, profile]);
 
 
   // Filtered and sorted sessions - optimized to reduce re-calculations
@@ -173,20 +162,6 @@ export default function Reports() {
     return positions.sort();
   }, [sessions]);
 
-  const handleDelete = async (sessionId: string) => {
-    try {
-      setDeletingId(sessionId);
-      await deleteInterviewSession(sessionId);
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      toast.success("Report deleted successfully");
-    } catch (error) {
-      console.error("Error deleting session:", error);
-      toast.error("Failed to delete report");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -195,18 +170,47 @@ export default function Reports() {
     });
   };
 
-  const renderStars = (score: number | null) => {
-    if (score === null) return <div className="flex gap-1"><Star className="h-4 w-4 text-gray-300" /></div>;
-    const stars = Math.round((score / 100) * 5);
+  const getScoreColor = (score: number | null) => {
+    if (!score) return 'bg-gray-100 text-gray-700';
+    if (score >= 80) return 'bg-green-100 text-green-700';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-red-100 text-red-700';
+  };
+
+  const getStatusBadge = (status: string, score: number | null) => {
+    switch (status) {
+      case 'completed':
+        return score !== null ? (
+          <Badge variant="secondary" className="bg-green-100 text-green-700">
+            Completed
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+            In Progress
+          </Badge>
+        );
+      case 'in_progress':
+        return (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+            In Progress
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+            {status}
+          </Badge>
+        );
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${i < stars ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
-          />
-        ))}
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
     );
   };
 
@@ -216,14 +220,20 @@ export default function Reports() {
     : 0;
   const averageStars = (averageScore / 100) * 5;
 
+  const filteredCompletedSessions = filteredAndSortedSessions.filter(s => s.status === 'completed' && s.score !== null);
+  const filteredAverageScore = filteredCompletedSessions.length > 0
+    ? Math.round(filteredCompletedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / filteredCompletedSessions.length)
+    : 0;
+
   return (
-    <DashboardLayout showTopNav={false}>
-      <div className="p-6 sm:p-8 h-full">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reports Overview</h1>
-            <p className="text-gray-500 mt-1">Aura: Your AI Voice Interviewer.</p>
+            <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
+            <p className="text-muted-foreground">
+              View insights and analysis from your completed interviews
+            </p>
           </div>
 
           <Button asChild className="bg-blue-600 hover:bg-blue-700">
@@ -399,27 +409,37 @@ export default function Reports() {
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <SelectValue placeholder="Date Range" />
                 </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date-desc">Newest First</SelectItem>
-                <SelectItem value="date-asc">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <Select value={positionFilter} onValueChange={setPositionFilter}>
-              <SelectTrigger className="w-auto min-w-[160px] bg-white border-none shadow-sm rounded-xl h-10 px-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Interviewer</span>
-                  <span className="font-medium text-gray-900"><SelectValue placeholder="All" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {uniquePositions.map(position => (
-                  <SelectItem key={position} value={position}>{position}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <div className="flex flex-wrap gap-3 flex-1">
+                  <Input
+                    placeholder="Search by position or type..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full sm:w-64"
+                  />
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={positionFilter} onValueChange={setPositionFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Positions</SelectItem>
+                      {uniquePositions.map(position => (
+                        <SelectItem key={position} value={position}>{position}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full sm:w-48">
