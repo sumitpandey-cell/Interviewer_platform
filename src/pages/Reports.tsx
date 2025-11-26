@@ -343,109 +343,107 @@ export default function Reports() {
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-auto min-w-[140px] bg-white border-none shadow-sm rounded-xl h-10 px-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Rating</span>
-                  <span className="font-medium text-gray-900"><SelectValue placeholder="All" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="score-desc">Highest</SelectItem>
-                <SelectItem value="score-asc">Lowest</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Reports Table */}
-        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="font-bold text-lg text-gray-900">All Interview Reports</h3>
-          </div>
-
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-b border-gray-100">
-                  <TableHead className="w-[300px] pl-6 text-base text-gray-500 font-medium">Interviewee</TableHead>
-                  <TableHead className="text-base text-gray-500 font-medium">Date</TableHead>
-                  <TableHead className="text-base text-gray-500 font-medium">Status</TableHead>
-                  <TableHead className="text-base text-gray-500 font-medium">Duration</TableHead>
-                  <TableHead className="text-base text-gray-500 font-medium">Rating</TableHead>
-                  <TableHead className="text-right pr-6 text-base text-gray-500 font-medium"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedSessions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-gray-500">
-                      No reports found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAndSortedSessions.map((session) => (
-                    <TableRow
-                      key={session.id}
-                      className="hover:bg-gray-50/50 transition-colors border-b border-gray-50"
-                    >
-                      <TableCell className="pl-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border border-gray-200">
-                            <AvatarImage src={getAvatarUrl(
-                              profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture,
-                              user?.id || user?.email || 'user',
-                              'avataaars',
-                              user?.user_metadata?.picture
-                            )} />
-                            <AvatarFallback>
-                              {getInitials(profile?.full_name || user?.user_metadata?.full_name) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-gray-900 text-base">
-                              {profile?.full_name || user?.user_metadata?.full_name || "User"}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {session.position}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600 font-medium text-base">
-                        {formatDate(session.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                          ${session.status === 'completed'
-                            ? 'bg-green-50 text-green-700'
-                            : session.status === 'success'
-                              ? 'bg-yellow-50 text-yellow-700'
-                              : 'bg-blue-50 text-blue-700'}
-                        `}>
-                          {session.status === 'completed' ? 'Completed' : session.status === 'success' ? 'Success' : 'In Progress'}
+        {sessions.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Interview Reports Yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Complete your first interview to see detailed reports and analytics here.
+              </p>
+              <Button asChild>
+                <Link to="/start-interview">Start Your First Interview</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filteredAndSortedSessions.map((session) => (
+              <Card key={session.id} className="overflow-hidden hover:shadow-md transition-all group border-l-4" style={{ borderLeftColor: session.score && session.score >= 80 ? '#22c55e' : session.score && session.score >= 60 ? '#eab308' : session.score ? '#ef4444' : '#3b82f6' }}>
+                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
+                  {/* Left: Avatar & Main Info */}
+                  <div className="flex items-center gap-4 w-full sm:w-1/3">
+                    <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                      <AvatarImage src={getAvatarUrl(
+                        profile?.avatar_url,
+                        user?.id || user?.email || 'user',
+                        'avataaars',
+                        user?.user_metadata?.picture
+                      )} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                        {getInitials(profile?.full_name) || user?.email?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-base truncate text-foreground">
+                        {session.position}
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                        <span className="capitalize font-medium text-foreground/80">{session.interview_type.replace('_', ' ')}</span>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(session.created_at)}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-gray-600 font-medium text-base">
-                        {session.duration_minutes ? `${session.duration_minutes}m` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {renderStars(session.score)}
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                        <Button
-                          variant="outline"
-                          className="h-9 px-4 rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900 text-gray-600 font-medium"
-                          onClick={() => navigate(`/interview/${session.id}/report`)}
-                        >
-                          Download
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Middle: Status & Metrics */}
+                  <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1 justify-between sm:justify-center border-t sm:border-t-0 sm:border-l sm:border-r border-border/50 py-3 sm:py-0 sm:px-6 my-2 sm:my-0 bg-muted/20 sm:bg-transparent rounded-lg sm:rounded-none">
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(session.status, session.score)}
+                    </div>
+
+                    {session.duration_minutes && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                        <Clock className="h-4 w-4 text-muted-foreground/70" />
+                        <span>{session.duration_minutes}m</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Score & Action */}
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end min-w-[140px]">
+                    {session.score !== null && (
+                      <div className="flex flex-col items-end mr-2">
+                        <span className={`text-lg font-bold leading-none ${session.score >= 80 ? 'text-green-600' :
+                            session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                          {session.score}%
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Score</span>
+                      </div>
+                    )}
+
+                    {session.status === 'completed' && session.score !== null ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        <Link to={`/interview/${session.id}/report`}>
+                          View
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        size="sm"
+                        className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      >
+                        <Link to={`/interview/${session.id}/active`}>
+                          <Play className="h-3.5 w-3.5" />
+                          Resume
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
