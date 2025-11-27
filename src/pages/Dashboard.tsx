@@ -284,7 +284,7 @@ export default function Dashboard() {
         {/* Interview List Section */}
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Top 5 Interviews</h3>
+            <h3 className="text-lg font-bold text-gray-900">Recent Interviews</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -299,28 +299,28 @@ export default function Dashboard() {
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b border-gray-100">
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Role</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Date</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Type</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Duration</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Status</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm pl-4">Role</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm hidden sm:table-cell">Date</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Type</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm hidden lg:table-cell">Duration</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Status</th>
                   <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Feedback</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm text-right">Action</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm hidden xl:table-cell">Feedback</th>
+                  <th className="pb-4 font-medium text-gray-500 text-sm text-right pr-4">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
                   [...Array(3)].map((_, i) => (
                     <tr key={i}>
-                      <td className="py-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
-                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="py-4 pl-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
+                      <td className="py-4 hidden sm:table-cell"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4 hidden md:table-cell"><Skeleton className="h-4 w-32" /></td>
+                      <td className="py-4 hidden lg:table-cell"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-4 hidden md:table-cell"><Skeleton className="h-6 w-20 rounded-full" /></td>
                       <td className="py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
+                      <td className="py-4 hidden xl:table-cell"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4 pr-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
                     </tr>
                   ))
                 ) : sessions?.length === 0 ? (
@@ -335,11 +335,11 @@ export default function Dashboard() {
                 ) : (
                   sessions
                     ?.filter(s => s.status === 'completed' && s.score !== null)
-                    .sort((a, b) => (b.score || 0) - (a.score || 0))
-                    .slice(0, 5)
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .slice(0, 7)
                     .map((session) => (
                       <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
-                        <td className="py-4">
+                        <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
                               {(session.position || 'General').substring(0, 2).toUpperCase()}
@@ -347,19 +347,19 @@ export default function Dashboard() {
                             <span className="font-medium text-gray-900">{session.position || 'General Interview'}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-gray-500 text-sm">
+                        <td className="py-4 text-gray-500 text-sm hidden sm:table-cell">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-gray-900 text-sm font-medium capitalize">
+                        <td className="py-4 text-gray-900 text-sm font-medium capitalize hidden md:table-cell">
                           {session.interview_type?.replace('_', ' ') || 'General'}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm">
+                        <td className="py-4 text-gray-500 text-sm hidden lg:table-cell">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 hidden md:table-cell">
                           <Badge
                             variant="secondary"
                             className="font-normal px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#C8E6C9]"
@@ -374,7 +374,7 @@ export default function Dashboard() {
                             {session.score}%
                           </span>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 hidden xl:table-cell">
                           <div className="flex items-center gap-3">
                             {renderStars(session.score)}
                             <div className="flex gap-1 ml-2 border-l pl-3 border-gray-200">
@@ -383,11 +383,11 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 text-right">
+                        <td className="py-4 text-right pr-4">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-6"
+                            className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
                             onClick={() => navigate(`/interview/${session.id}/report`)}
                           >
                             Report

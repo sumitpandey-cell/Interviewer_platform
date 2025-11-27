@@ -39,6 +39,11 @@ interface CacheState {
   profileLastFetch: number | null;
   profileCacheValid: boolean;
 
+  // Streak cache
+  streak: number | null;
+  streakLastFetch: number | null;
+  streakCacheValid: boolean;
+
   // Individual session cache
   sessionDetails: Record<string, InterviewSession>;
   sessionDetailsLastFetch: Record<string, number>;
@@ -51,6 +56,8 @@ interface CacheState {
   invalidateStats: () => void;
   setProfile: (profile: { full_name: string | null; avatar_url: string | null }) => void;
   invalidateProfile: () => void;
+  setStreak: (streak: number) => void;
+  invalidateStreak: () => void;
   setSessionDetail: (sessionId: string, session: InterviewSession) => void;
   invalidateSessionDetail: (sessionId: string) => void;
   invalidateAllCache: () => void;
@@ -59,6 +66,7 @@ interface CacheState {
   isSessionsCacheValid: () => boolean;
   isStatsCacheValid: () => boolean;
   isProfileCacheValid: () => boolean;
+  isStreakCacheValid: () => boolean;
   isSessionDetailCacheValid: (sessionId: string) => boolean;
 
   // Event tracking for cache invalidation
@@ -85,6 +93,10 @@ export const useCacheStore = create<CacheState>()(
       profile: null,
       profileLastFetch: null,
       profileCacheValid: false,
+
+      streak: null,
+      streakLastFetch: null,
+      streakCacheValid: false,
 
       sessionDetails: {},
       sessionDetailsLastFetch: {},
@@ -124,6 +136,17 @@ export const useCacheStore = create<CacheState>()(
         profile: null
       }),
 
+      setStreak: (streak) => set({
+        streak,
+        streakLastFetch: Date.now(),
+        streakCacheValid: true
+      }),
+
+      invalidateStreak: () => set({
+        streakCacheValid: false,
+        streak: null
+      }),
+
       setSessionDetail: (sessionId, session) => set((state) => ({
         sessionDetails: { ...state.sessionDetails, [sessionId]: session },
         sessionDetailsLastFetch: { ...state.sessionDetailsLastFetch, [sessionId]: Date.now() },
@@ -150,10 +173,12 @@ export const useCacheStore = create<CacheState>()(
         sessionsCacheValid: false,
         statsCacheValid: false,
         profileCacheValid: false,
+        streakCacheValid: false,
         sessionDetailsCacheValid: {},
         sessions: [],
         stats: null,
         profile: null,
+        streak: null,
         sessionDetails: {},
         sessionDetailsLastFetch: {},
       }),
@@ -173,8 +198,13 @@ export const useCacheStore = create<CacheState>()(
 
       isProfileCacheValid: () => {
         const state = get();
-        if (!state.profileCacheValid || !state.profileLastFetch) return false;
         return Date.now() - state.profileLastFetch < CACHE_DURATION;
+      },
+
+      isStreakCacheValid: () => {
+        const state = get();
+        if (!state.streakCacheValid || !state.streakLastFetch) return false;
+        return Date.now() - state.streakLastFetch < CACHE_DURATION;
       },
 
       isSessionDetailCacheValid: (sessionId) => {
@@ -236,6 +266,10 @@ export const useCacheStore = create<CacheState>()(
         sessionsCacheValid: false, // Always invalidate on app restart
         statsLastFetch: state.statsLastFetch,
         statsCacheValid: false, // Always invalidate on app restart
+        profileLastFetch: state.profileLastFetch,
+        profileCacheValid: false,
+        streakLastFetch: state.streakLastFetch,
+        streakCacheValid: false,
         sessionDetailsLastFetch: state.sessionDetailsLastFetch,
         sessionDetailsCacheValid: {}, // Always invalidate on app restart
       }),

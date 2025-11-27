@@ -9,6 +9,7 @@ import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award, Settings as S
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -139,99 +140,141 @@ const Leaderboard = () => {
         user.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const YourProgressCard = () => (
+        <Card className="bg-[#1A1F2C] text-white border-none overflow-hidden relative h-full min-h-[320px] flex flex-col items-center justify-center p-6 shadow-xl">
+            {/* Background effects */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10" />
+
+            <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg">Your Progress</h3>
+                    <Badge className="bg-white/10 text-white hover:bg-white/20 border-none px-3 py-1">
+                        7 Day Streak
+                    </Badge>
+                </div>
+
+                {/* Circular Progress */}
+                {/* Circular Progress */}
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                        <circle
+                            cx="80"
+                            cy="80"
+                            r="70"
+                            stroke="currentColor"
+                            strokeWidth="12"
+                            fill="transparent"
+                            className="text-white/10"
+                        />
+                        <circle
+                            cx="80"
+                            cy="80"
+                            r="70"
+                            stroke="currentColor"
+                            strokeWidth="12"
+                            fill="transparent"
+                            strokeDasharray={439.82}
+                            strokeDashoffset={439.82 * 0.25} // 75% progress
+                            className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-3xl sm:text-4xl font-bold">300</span>
+                    </div>
+                </div>
+
+                <div className="text-sm text-gray-300">
+                    Next Badge: <span className="text-white font-medium">Mentor</span>
+                </div>
+            </div>
+        </Card>
+    );
+
     const TopPlayerCard = ({ user, rank }: { user: LeaderboardUser; rank: number }) => {
         const isFirst = rank === 1;
-        const isSecond = rank === 2;
-        const isThird = rank === 3;
-
-        let borderColor = "border-border";
-        let glowColor = "";
-        let icon = null;
-
-        if (isFirst) {
-            borderColor = "border-yellow-500";
-            glowColor = "shadow-yellow-500/20";
-            icon = <Trophy className="h-6 w-6 text-yellow-500 fill-yellow-500" />;
-        } else if (isSecond) {
-            borderColor = "border-slate-400";
-            glowColor = "shadow-slate-400/20";
-            icon = <Medal className="h-6 w-6 text-slate-400" />;
-        } else if (isThird) {
-            borderColor = "border-amber-700";
-            glowColor = "shadow-amber-700/20";
-            icon = <Medal className="h-6 w-6 text-amber-700" />;
-        }
 
         return (
             <div className={cn(
-                "relative flex flex-col items-center transition-all duration-300 overflow-visible",
-                isFirst ? "z-20 sm:mb-8" : "mt-0"
+                "relative flex flex-col items-center transition-all duration-300",
+                isFirst ? "-mt-8 sm:-mt-12 z-10" : "mt-0"
             )}>
                 {isFirst && (
-                    <div className="absolute -top-10 sm:-top-14 left-1/2 -translate-x-1/2 z-30">
-                        <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-yellow-500 fill-yellow-500 animate-bounce drop-shadow-md" />
+                    <div className="absolute -top-8 sm:-top-12 left-1/2 -translate-x-1/2 z-20">
+                        <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-yellow-500 fill-yellow-500 animate-bounce drop-shadow-lg" />
                     </div>
                 )}
 
                 <Card className={cn(
-                    "relative overflow-hidden hover:shadow-lg transition-all flex flex-col",
-                    isFirst ? "w-[130px] sm:w-[300px] border-2" : "w-[110px] sm:w-[280px] border",
-                    // Height handling: auto on mobile to fit stacked content, fixed/min on desktop
-                    isFirst ? "min-h-[260px] sm:h-[340px]" : "min-h-[220px] sm:h-[300px]",
-                    borderColor,
-                    glowColor
+                    "relative overflow-visible border-none shadow-xl transition-all flex flex-col items-center",
+                    // Responsive width and height
+                    isFirst
+                        ? "w-[140px] h-[240px] sm:w-[260px] sm:h-[340px] ring-2 sm:ring-4 ring-yellow-100 dark:ring-yellow-900/30"
+                        : "w-[110px] h-[200px] sm:w-[220px] sm:h-[280px]",
+                    "bg-white dark:bg-gray-800 rounded-2xl sm:rounded-[2rem]"
                 )}>
                     <div className={cn(
-                        "absolute inset-0 opacity-10 bg-gradient-to-b",
-                        isFirst ? "from-yellow-500 to-transparent" :
-                            isSecond ? "from-slate-400 to-transparent" :
-                                "from-amber-700 to-transparent"
-                    )} />
+                        "absolute top-2 right-2 sm:top-2 sm:right-4 font-black select-none opacity-20",
+                        // Responsive font size for rank number
+                        "text-3xl sm:text-5xl",
+                        rank === 1 ? "text-yellow-500" :
+                            rank === 2 ? "text-slate-400" :
+                                "text-amber-700"
+                    )}>
+                        #{rank}
+                    </div>
 
-                    <CardContent className="flex flex-col items-center justify-between h-full p-3 sm:p-6 space-y-2 sm:space-y-4">
-                        <div className="relative mt-2 sm:mt-0">
-                            <Avatar className={cn(
-                                "border-4",
-                                isFirst ? "h-16 w-16 sm:h-24 sm:w-24 border-yellow-500" : "h-12 w-12 sm:h-20 sm:w-20 border-muted",
-                                borderColor
-                            )}>
-                                <AvatarImage src={getAvatarUrl(
-                                    user.avatarUrl,
-                                    user.userId || user.fullName || 'user',
-                                    'avataaars',
-                                    user.oauthPicture
-                                )} />
-                                <AvatarFallback className="text-xl font-bold">
-                                    {user.fullName?.charAt(0) || "U"}
-                                </AvatarFallback>
-                            </Avatar>
+                    <CardContent className="flex flex-col items-center justify-center h-full p-3 sm:p-6 w-full z-10">
+                        <div className="relative mb-3 sm:mb-6">
                             <div className={cn(
-                                "absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white shadow-md text-xs sm:text-base",
-                                isFirst ? "bg-yellow-500" : isSecond ? "bg-slate-400" : "bg-amber-700"
+                                "rounded-full p-1",
+                                isFirst ? "bg-gradient-to-b from-yellow-400 to-yellow-200" : "bg-gray-100 dark:bg-gray-700"
                             )}>
-                                {rank}
+                                <Avatar className={cn(
+                                    "border-2 sm:border-4 border-white dark:border-gray-800",
+                                    // Responsive avatar size
+                                    isFirst ? "h-16 w-16 sm:h-28 sm:w-28" : "h-12 w-12 sm:h-20 sm:w-20"
+                                )}>
+                                    <AvatarImage src={getAvatarUrl(
+                                        user.avatarUrl,
+                                        user.userId || user.fullName || 'user',
+                                        'avataaars',
+                                        user.oauthPicture
+                                    )} />
+                                    <AvatarFallback className="text-sm sm:text-xl font-bold">
+                                        {user.fullName?.charAt(0) || "U"}
+                                    </AvatarFallback>
+                                </Avatar>
                             </div>
+                            {isFirst && (
+                                <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md whitespace-nowrap border-2 border-white dark:border-gray-800">
+                                    Top 1
+                                </div>
+                            )}
                         </div>
 
-                        <div className="text-center space-y-1 w-full">
-                            <h3 className="font-bold text-xs sm:text-lg truncate w-full px-1">
-                                {user.fullName}
+                        <div className="text-center space-y-0.5 sm:space-y-1 mb-4 sm:mb-8 w-full">
+                            <h3 className={cn(
+                                "font-bold text-gray-900 dark:text-white truncate w-full px-1",
+                                // Responsive text size
+                                isFirst ? "text-sm sm:text-xl" : "text-xs sm:text-lg"
+                            )}>
+                                {user.fullName?.split(' ')[0]}
                             </h3>
-                            <div className="flex items-center justify-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-muted-foreground">
-                                {icon}
-                                <span>Rank {rank}</span>
-                            </div>
+                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
+                                {user.interviewCount} Interviews
+                            </p>
                         </div>
 
-                        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 sm:gap-4 w-full pt-2 sm:pt-4 border-t mt-auto">
-                            <div className="text-center">
-                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase font-semibold">Score</p>
-                                <p className="text-sm sm:text-lg font-bold text-primary">{user.bayesianScore.toFixed(1)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase font-semibold">Interviews</p>
-                                <p className="text-sm sm:text-lg font-bold">{user.interviewCount}</p>
-                            </div>
+                        <div className="mt-auto text-center">
+                            <p className={cn(
+                                "font-black text-gray-900 dark:text-white tracking-tight",
+                                // Responsive score size
+                                isFirst ? "text-2xl sm:text-4xl" : "text-xl sm:text-3xl"
+                            )}>
+                                {user.bayesianScore.toFixed(1)}
+                            </p>
+                            <p className="text-[8px] sm:text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold mt-1">Score</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -241,55 +284,15 @@ const Leaderboard = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-8">
-                {/* Header Section with Controls */}
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                            Leaderboard
-                        </h1>
-                        <p className="text-gray-500 text-sm">Compete with others to reach the top!</p>
-                    </div>
-
-                    {/* Header Controls */}
-                    <div className="flex items-center gap-2">
-                        <NotificationBell />
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
-                                    <Avatar className="h-8 w-8 border border-gray-200">
-                                        <AvatarImage src={getAvatarUrl(
-                                            profile?.avatar_url || user?.user_metadata?.avatar_url,
-                                            user?.id || 'user',
-                                            'avataaars'
-                                        )} />
-                                        <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
-                                        {profile?.full_name?.split(' ')[0] || "User"}
-                                    </span>
-                                    <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                                    <SettingsIcon className="mr-2 h-4 w-4" />
-                                    Settings
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={signOut} className="text-red-600">
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Log out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <ThemeToggle />
-                    </div>
+            <div className="space-y-8 pb-8">
+                {/* Header Section */}
+                <div className="flex flex-col items-start justify-start text-left space-y-2 mb-8">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                        Global Standings
+                    </h1>
+                    <p className="text-gray-500 text-sm sm:text-lg max-w-2xl">
+                        Compete, grow, and see where you rank among the best.
+                    </p>
                 </div>
 
                 {loading ? (
@@ -307,102 +310,144 @@ const Leaderboard = () => {
                     </Card>
                 ) : (
                     <>
-                        {/* Top 3 Podium Section */}
-                        {users.length > 0 && !searchQuery && (
-                            <div className="flex flex-row items-end justify-center gap-2 sm:gap-6 py-4 mt-12 sm:mt-0 overflow-x-auto pb-8 no-scrollbar px-4">
-                                {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
-                                <TopPlayerCard user={users[0]} rank={1} />
-                                {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
+                        {/* Top Section Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-end">
+                            {/* Your Progress Card */}
+                            <div className="col-span-1 h-full w-full">
+                                <YourProgressCard />
                             </div>
-                        )}
 
-                        {/* Full Rankings Table */}
-                        <div className="bg-white rounded-3xl p-6 shadow-sm">
-                            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-                                <h3 className="text-lg font-bold text-gray-900">
-                                    {searchQuery ? "Search Results" : "All Rankings"}
-                                </h3>
-
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        placeholder="Search users..."
-                                        className="pl-9 bg-gray-50 border-gray-200"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
+                            {/* Podium Section */}
+                            <div className="col-span-1 lg:col-span-3 w-full overflow-x-visible mt-16 lg:mt-0">
+                                <div className="flex flex-row items-end justify-center gap-2 sm:gap-8 h-full pb-4 px-2">
+                                    {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
+                                    <TopPlayerCard user={users[0]} rank={1} />
+                                    {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="overflow-x-auto">
+                        {/* Filters & Search */}
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar px-2">
+                                <Select>
+                                    <SelectTrigger className="w-[160px] bg-gray-100 border-none text-gray-700 font-medium h-9">
+                                        <SelectValue placeholder="Filter by Role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Roles</SelectItem>
+                                        <SelectItem value="frontend">Frontend Dev</SelectItem>
+                                        <SelectItem value="backend">Backend Dev</SelectItem>
+                                        <SelectItem value="fullstack">Full Stack</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 whitespace-nowrap">
+                                    Timeframe (Monthly)
+                                </button>
+                            </div>
+
+                            <div className="relative w-full md:w-80">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Sort by (Score-High to Low)"
+                                    className="pl-10 bg-gray-50 border-none"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Full Rankings List */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white px-2">All Rankings</h3>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="border-b border-gray-100 hover:bg-transparent">
-                                            <TableHead className="w-[80px] text-center font-medium text-gray-500 text-sm">Rank</TableHead>
-                                            <TableHead className="font-medium text-gray-500 text-sm">User</TableHead>
-                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Score</TableHead>
-                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Interviews</TableHead>
-                                            <TableHead className="text-right font-medium text-gray-500 text-sm">Badge</TableHead>
+                                        <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                                            <TableHead className="w-[80px] text-center font-semibold text-gray-600">Rank</TableHead>
+                                            <TableHead className="font-semibold text-gray-600">User</TableHead>
+                                            <TableHead className="text-center font-semibold text-gray-600">Score</TableHead>
+                                            <TableHead className="text-center font-semibold text-gray-600">Interviews</TableHead>
+                                            <TableHead className="text-center font-semibold text-gray-600">Badge</TableHead>
+                                            <TableHead className="text-right font-semibold text-gray-600 pr-6">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
-                                    <TableBody className="divide-y divide-gray-50">
-                                        {filteredUsers.map((user, index) => {
-                                            // Calculate actual rank based on original list
-                                            const actualRank = users.findIndex(u => u.userId === user.userId) + 1;
+                                    <TableBody>
+                                        {filteredUsers.map((leaderboardUser, index) => {
+                                            const actualRank = users.findIndex(u => u.userId === leaderboardUser.userId) + 1;
+                                            const isTop3 = actualRank <= 3;
+                                            const isCurrentUser = leaderboardUser.userId === user?.id;
 
                                             return (
                                                 <TableRow
-                                                    key={user.userId}
-                                                    className="group hover:bg-gray-50/50 transition-colors"
+                                                    key={leaderboardUser.userId}
+                                                    className={cn(
+                                                        "hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-none",
+                                                        isCurrentUser && "bg-indigo-50/60 dark:bg-indigo-900/20 border-l-4 border-l-indigo-500"
+                                                    )}
                                                 >
-                                                    <TableCell className="text-center font-medium text-gray-500 py-4">
-                                                        #{actualRank}
+                                                    <TableCell className="text-center py-4">
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-full flex items-center justify-center mx-auto font-bold text-sm",
+                                                            actualRank === 1 ? "bg-yellow-100 text-yellow-700" :
+                                                                actualRank === 2 ? "bg-slate-100 text-slate-700" :
+                                                                    actualRank === 3 ? "bg-amber-100 text-amber-700" :
+                                                                        "bg-gray-100 text-gray-600"
+                                                        )}>
+                                                            {actualRank}
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-10 w-10 border border-gray-100">
+                                                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
                                                                 <AvatarImage src={getAvatarUrl(
-                                                                    user.avatarUrl,
-                                                                    user.userId || user.fullName || 'user',
+                                                                    leaderboardUser.avatarUrl,
+                                                                    leaderboardUser.userId || leaderboardUser.fullName || 'user',
                                                                     'avataaars',
-                                                                    user.oauthPicture
+                                                                    leaderboardUser.oauthPicture
                                                                 )} />
-                                                                <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
+                                                                <AvatarFallback>{getInitials(leaderboardUser.fullName)}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex flex-col">
-                                                                <span className="font-medium text-gray-900">{user.fullName}</span>
-                                                                <span className="text-xs text-gray-400">ID: {user.userId.slice(0, 8)}...</span>
+                                                                <span className="font-bold text-gray-900 dark:text-white">{leaderboardUser.fullName}</span>
+                                                                <span className="text-xs text-gray-400">ID: {leaderboardUser.userId.slice(0, 8)}</span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right font-bold text-gray-900 py-4">
-                                                        {user.bayesianScore.toFixed(1)}
+                                                    <TableCell className="text-center font-bold text-gray-900 dark:text-white py-4 text-lg">
+                                                        {leaderboardUser.bayesianScore.toFixed(0)}
                                                     </TableCell>
-                                                    <TableCell className="text-right text-gray-500 py-4">
-                                                        {user.interviewCount}
+                                                    <TableCell className="text-center text-gray-500 py-4">
+                                                        {leaderboardUser.interviewCount} Interviews
                                                     </TableCell>
-                                                    <TableCell className="text-right py-4">
-                                                        {actualRank <= 3 ? (
+                                                    <TableCell className="text-center py-4">
+                                                        {isTop3 ? (
                                                             <Badge variant="secondary" className={cn(
-                                                                "ml-auto w-fit",
-                                                                actualRank === 1 ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
-                                                                    actualRank === 2 ? "bg-slate-100 text-slate-700 hover:bg-slate-100" :
-                                                                        "bg-orange-100 text-orange-800 hover:bg-orange-100"
+                                                                "mx-auto",
+                                                                actualRank === 1 ? "bg-yellow-100 text-yellow-700" :
+                                                                    actualRank === 2 ? "bg-slate-100 text-slate-700" :
+                                                                        "bg-amber-100 text-amber-700"
                                                             )}>
                                                                 Top {actualRank}
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="ml-auto w-fit text-gray-500 font-normal border-gray-200">
-                                                                Member
+                                                            <Badge variant="outline" className="mx-auto text-gray-500 border-gray-200">
+                                                                Mentor
                                                             </Badge>
                                                         )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right py-4 pr-6">
+                                                        <button className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-200">
+                                                            Challenge
+                                                        </button>
                                                     </TableCell>
                                                 </TableRow>
                                             );
                                         })}
                                         {filteredUsers.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                                     No users found matching "{searchQuery}"
                                                 </TableCell>
                                             </TableRow>
