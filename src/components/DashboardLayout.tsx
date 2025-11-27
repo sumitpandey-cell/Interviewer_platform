@@ -14,6 +14,7 @@ import {
   User,
   Flame,
   Trophy,
+  BellRing,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -89,11 +90,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
+  // Check if user is admin
+  const adminEmails = import.meta.env.VITE_ADMIN_EMAILS?.split(',') || [];
+  const isAdmin = adminEmails.includes(user?.email || '');
+
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Reports", href: "/reports", icon: BarChart3 },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
     { name: "Templates", href: "/templates", icon: FileText },
+    ...(isAdmin ? [{ name: "Admin Notifications", href: "/admin/notifications", icon: BellRing }] : []),
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
@@ -168,10 +174,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setMobileMenuOpen(false)}
               className={`
                 group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                ${
-                  isActive(item.href)
-                    ? "bg-white/10 text-white shadow-lg shadow-black/20"
-                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                ${isActive(item.href)
+                  ? "bg-white/10 text-white shadow-lg shadow-black/20"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }
                 ${sidebarCollapsed ? "justify-center px-2" : ""}
               `}
