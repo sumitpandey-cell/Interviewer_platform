@@ -14,6 +14,7 @@ import {
   User,
   Flame,
   Trophy,
+  BellRing,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -115,11 +116,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
+  // Check if user is admin
+  const adminEmails = import.meta.env.VITE_ADMIN_EMAILS?.split(',') || [];
+  const isAdmin = adminEmails.includes(user?.email || '');
+
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Reports", href: "/reports", icon: BarChart3 },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
     { name: "Templates", href: "/templates", icon: FileText },
+    ...(isAdmin ? [{ name: "Admin Notifications", href: "/admin/notifications", icon: BellRing }] : []),
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
