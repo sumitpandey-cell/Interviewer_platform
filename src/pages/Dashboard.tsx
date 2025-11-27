@@ -248,7 +248,7 @@ export default function Dashboard() {
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.totalInterviews || 28}</span>
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.totalInterviews || 0}</span>
               )}
             </div>
 
@@ -257,7 +257,7 @@ export default function Dashboard() {
               {loading ? (
                 <Skeleton className="h-10 w-24" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{formatTime(stats?.timePracticed || 2535)}</span>
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{formatTime(stats?.timePracticed || 0)}</span>
               )}
             </div>
 
@@ -266,7 +266,7 @@ export default function Dashboard() {
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">#{stats?.rank || 12}</span>
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">#{stats?.rank || 0}</span>
               )}
             </div>
 
@@ -275,7 +275,7 @@ export default function Dashboard() {
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.averageScore || 85}%</span>
+                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.averageScore || 0}%</span>
               )}
             </div>
           </div>
