@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useSubscription } from "@/hooks/use-subscription";
 import { supabase } from "@/integrations/supabase/client";
+import { useCacheStore } from "@/stores/use-cache-store";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -32,7 +33,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { remaining_minutes, plan_name } = useSubscription();
-  const [streak, setStreak] = useState(0);
+
+  // Use global store for streak to prevent flickering on navigation
+  const {
+    streak: cachedStreak,
+    setStreak,
+    isStreakCacheValid
+  } = useCacheStore();
+
+  // Local state for immediate display if needed, but primarily rely on cache
+  const [streak, setLocalStreak] = useState(cachedStreak || 0);
+
+  // Sync local streak with cache
+  useEffect(() => {
+    if (cachedStreak !== null) {
+      setLocalStreak(cachedStreak);
+    }
+  }, [cachedStreak]);
 
   // Use optimized queries for profile data
   const { profile, fetchProfile, isCached } = useOptimizedQueries();
@@ -47,6 +64,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (!user) return;
+
+    // If cache is valid, don't refetch
+    if (isStreakCacheValid() && cachedStreak !== null) {
+      return;
+    }
 
     const fetchStreak = async () => {
       const { data } = await supabase
@@ -68,16 +90,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           lastActivity.setHours(0, 0, 0, 0);
         }
 
+        let currentStreak = 0;
         if (lastActivity && lastActivity < yesterday) {
-          setStreak(0);
+          currentStreak = 0;
         } else {
-          setStreak(data.streak_count || 0);
+          currentStreak = data.streak_count || 0;
         }
+
+        setStreak(currentStreak);
+        setLocalStreak(currentStreak);
       }
     };
 
     fetchStreak();
-  }, [user]);
+  }, [user, isStreakCacheValid, cachedStreak, setStreak]);
 
   // Initialize sidebar state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -115,14 +141,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         fixed lg:sticky top-0 left-0 z-50 lg:z-0 h-screen border-none
         transition-all duration-300 ease-in-out
         ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        ${sidebarCollapsed ? "lg:w-18" : "lg:w-60"}
+        ${sidebarCollapsed ? "lg:w-20" : "lg:w-72"}
         bg-sidebar text-sidebar-foreground border-r border-sidebar-border
         flex flex-col
       `}
       >
         {/* Logo Section */}
-        <div className="h-20 flex items-center px-6 flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <div className={`h-20 flex items-center flex-shrink-0 ${sidebarCollapsed ? "px-2 justify-center" : "px-6"}`}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
+                <img
+                  src="/logo.png"
+                  alt="Aura"
+                  className="relative h-8 w-8 object-contain"
+                />
+              </div>
+              <span className="text-xl font-bold text-white tracking-tight">
+                Aura
+              </span>
+            </div>
+          )}
+
+          {sidebarCollapsed && (
             <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
               <img
@@ -131,12 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="relative h-8 w-8 object-contain"
               />
             </div>
-            {!sidebarCollapsed && (
-              <span className="text-xl font-bold text-white tracking-tight">
-                Aura
-              </span>
-            )}
-          </div>
+          )}
 
           {/* Mobile Close */}
           <button
@@ -149,7 +186,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Collapse Toggle */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex ml-auto p-2 hover:bg-white/10 rounded-lg text-white transition-colors"
+            className={`hidden lg:flex p-2 hover:bg-white/10 rounded-lg text-white transition-colors ${sidebarCollapsed ? "" : "ml-auto"}`}
           >
             {sidebarCollapsed ? (
               <ChevronRight className="h-5 w-5" />
@@ -168,10 +205,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setMobileMenuOpen(false)}
               className={`
                 group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                ${
-                  isActive(item.href)
-                    ? "bg-white/10 text-white shadow-lg shadow-black/20"
-                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                ${isActive(item.href)
+                  ? "bg-white/10 text-white shadow-lg shadow-black/20"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }
                 ${sidebarCollapsed ? "justify-center px-2" : ""}
               `}
@@ -257,7 +293,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col min-w-0 bg-background lg:rounded-l-[2rem] rounded-none overflow-hidden ml-0">
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto bg-background pt-16 lg:pt-8">
-          <div className="max-w-7xl mx-auto ">{children}</div>
+          <div
+            key={location.pathname}
+            className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ease-in-out"
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

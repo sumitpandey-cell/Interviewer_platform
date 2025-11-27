@@ -335,10 +335,10 @@ export default function Templates() {
           </p>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
             <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white border border-gray-100 rounded-2xl overflow-hidden">
-              <CardContent className="p-6 flex flex-col h-full">
+              <CardContent className="p-8 flex flex-col h-full">
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
@@ -374,10 +374,10 @@ export default function Templates() {
                 </div>
 
                 {/* Duration and Button */}
-                <div className="flex items-center gap-3 pt-2 mt-auto">
+                <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
                   <span className="text-2xl font-bold text-gray-900">30m</span>
                   <Button
-                    className="flex-1 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                    className="w-auto px-8 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
                     onClick={() => startInterviewWithTemplate(template)}
                     disabled={loadingTemplate === template.id}
                   >

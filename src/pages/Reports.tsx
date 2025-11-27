@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -369,6 +370,114 @@ export default function Reports() {
           </div>
         )}
 
+        {/* Charts & Analysis Section */}
+        {completedSessions.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Trend Analysis */}
+            <Card className="col-span-1 lg:col-span-2 border-none shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Trend Analysis</h3>
+                    <p className="text-sm text-muted-foreground">Average Score Over Time</p>
+                  </div>
+                </div>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sessions
+                      .filter(s => s.status === 'completed' && s.score !== null)
+                      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                      .slice(-10)
+                      .map(s => ({
+                        date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        score: s.score,
+                      }))}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        cursor={{ stroke: '#3B82F6', strokeWidth: 2 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#3B82F6"
+                        strokeWidth={3}
+                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Performance by Skill */}
+            <Card className="col-span-1 border-none shadow-sm">
+              <CardContent className="p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900">Performance by Type</h3>
+                  <p className="text-sm text-muted-foreground">Average Score by Category</p>
+                </div>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={Object.entries(sessions.reduce((acc, s) => {
+                      if (s.status === 'completed' && s.score !== null) {
+                        const type = s.interview_type || 'General';
+                        if (!acc[type]) acc[type] = { total: 0, count: 0 };
+                        acc[type].total += s.score;
+                        acc[type].count++;
+                      }
+                      return acc;
+                    }, {} as Record<string, { total: number; count: number }>))
+                      .map(([name, data]) => ({
+                        name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
+                        score: Math.round(data.total / data.count)
+                      }))}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        dy={10}
+                      />
+                      <YAxis
+                        hide
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        cursor={{ fill: '#F3F4F6' }}
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Bar
+                        dataKey="score"
+                        fill="#3B82F6"
+                        radius={[4, 4, 0, 0]}
+                        barSize={40}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+
+          </div>
+        )}
+
         {sessions.length === 0 ? (
           <Card className="border-none shadow-md">
             <CardContent className="p-12 text-center">
@@ -472,19 +581,19 @@ export default function Reports() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left border-b border-gray-100">
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Position</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Date</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Type</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Duration</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Status</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm pl-4">Position</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm hidden sm:table-cell">Date</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Type</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm hidden lg:table-cell">Duration</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Status</th>
                       <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm text-right">Action</th>
+                      <th className="pb-4 font-medium text-gray-500 text-sm text-right pr-4">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredAndSortedSessions.map((session) => (
                       <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
-                        <td className="py-4">
+                        <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
                               {session.position.substring(0, 2).toUpperCase()}
@@ -492,19 +601,19 @@ export default function Reports() {
                             <span className="font-medium text-gray-900">{session.position}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-gray-500 text-sm">
+                        <td className="py-4 text-gray-500 text-sm hidden sm:table-cell">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm capitalize">
+                        <td className="py-4 text-gray-500 text-sm capitalize hidden md:table-cell">
                           {session.interview_type.replace('_', ' ')}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm">
+                        <td className="py-4 text-gray-500 text-sm hidden lg:table-cell">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 hidden md:table-cell">
                           {getStatusBadge(session.status, session.score)}
                         </td>
                         <td className="py-4">
@@ -518,13 +627,13 @@ export default function Reports() {
                             <span className="text-gray-400 text-sm">-</span>
                           )}
                         </td>
-                        <td className="py-4 text-right">
+                        <td className="py-4 text-right pr-4">
                           {session.status === 'completed' && session.score !== null ? (
                             <Button
                               asChild
                               variant="outline"
                               size="sm"
-                              className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-6"
+                              className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
                             >
                               <Link to={`/interview/${session.id}/report`}>
                                 View Report
@@ -534,7 +643,7 @@ export default function Reports() {
                             <Button
                               asChild
                               size="sm"
-                              className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-6"
+                              className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
                             >
                               <Link to={`/interview/${session.id}/active`}>
                                 Continue
