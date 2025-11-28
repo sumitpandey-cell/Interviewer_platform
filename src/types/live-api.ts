@@ -17,8 +17,12 @@ export type LiveConfig = {
   };
   tools?: Array<{ googleSearch: {} } | { codeExecution: {} }>;
   // Add transcription support
-  inputAudioTranscription?: {};
-  outputAudioTranscription?: {};
+  inputAudioTranscription?: {
+    languageCode?: string;
+  };
+  outputAudioTranscription?: {
+    languageCode?: string;
+  };
 };
 
 export type LiveIncomingMessage =

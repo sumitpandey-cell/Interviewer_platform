@@ -233,9 +233,13 @@ export default function InterviewRoom() {
                     systemInstruction: {
                         parts: [{ text: systemInstruction }]
                     },
-                    // Add input and output audio transcription
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {}
+                    // Add input and output audio transcription with explicit English language
+                    inputAudioTranscription: {
+                        languageCode: "en-US"
+                    },
+                    outputAudioTranscription: {
+                        languageCode: "en-US"
+                    }
                 });
                 startTimeRef.current = Date.now();
                 console.log('Connection established successfully');

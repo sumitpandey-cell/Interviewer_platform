@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotificationStore } from '@/stores/use-notification-store';
+import { useNotificationStore, type Notification } from '@/stores/use-notification-store';
 import { toast } from 'sonner';
 
 export function useNotifications() {
@@ -42,7 +42,7 @@ export function useNotifications() {
         return;
       }
 
-      setNotifications(data || []);
+      setNotifications((data || []) as Notification[]);
     } catch (err) {
       console.error('Error in fetchNotifications:', err);
       setError('Failed to load notifications');
@@ -141,7 +141,7 @@ export function useNotifications() {
 
       // If sending to current user, add to local state
       if (userId === user?.id) {
-        addNotification(data);
+        addNotification(data as Notification);
       }
 
       toast.success('Notification sent successfully');
@@ -216,7 +216,7 @@ export function useNotifications() {
         },
         (payload) => {
           console.log('New notification received:', payload);
-          addNotification(payload.new as any);
+          addNotification(payload.new as Notification);
           toast.info('You have a new notification');
         }
       )
