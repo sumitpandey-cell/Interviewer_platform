@@ -160,6 +160,16 @@ const templates = [
     skills: ["Recruitment", "Employee Relations", "Compliance"],
     difficulty: "Intermediate"
   },
+  {
+    id: "coding-round",
+    title: "Coding Round",
+    icon: Code2,
+    description: "Real-time coding challenge with automated test cases and performance analysis.",
+    color: "text-blue-600",
+    interviewType: "Coding",
+    skills: ["Algorithms", "Data Structures", "Problem Solving"],
+    difficulty: "Hard"
+  },
 ];
 
 export default function Templates() {
@@ -208,6 +218,11 @@ export default function Templates() {
   const startInterviewWithTemplate = async (template: typeof templates[0]) => {
     if (!user) {
       toast.error("Please log in to start an interview");
+      return;
+    }
+
+    if (template.id === "coding-round") {
+      navigate("/coding-round");
       return;
     }
 

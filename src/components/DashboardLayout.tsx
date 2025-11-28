@@ -15,6 +15,7 @@ import {
   Flame,
   Trophy,
   BellRing,
+  Code,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,9 +27,10 @@ import { useCacheStore } from "@/stores/use-cache-store";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, fullWidth = false }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -124,6 +126,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Reports", href: "/reports", icon: BarChart3 },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+    { name: "Coding Round", href: "/coding-round", icon: Code },
     { name: "Templates", href: "/templates", icon: FileText },
     ...(isAdmin ? [{ name: "Admin Notifications", href: "/admin/notifications", icon: BellRing }] : []),
     { name: "Settings", href: "/settings", icon: Settings },
@@ -298,7 +301,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 bg-background lg:rounded-l-[2rem] rounded-none overflow-hidden ml-0">
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto bg-background pt-16 lg:pt-8">
+        <main className={`flex-1 overflow-y-auto bg-background pt-16 ${fullWidth ? 'lg:pt-0 p-0' : 'lg:pt-8 p-4 lg:p-8'}`}>
           <div
             key={location.pathname}
             className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ease-in-out"

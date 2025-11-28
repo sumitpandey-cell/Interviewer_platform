@@ -21,6 +21,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import CodingRound from "./pages/CodingRound";
 
 const queryClient = new QueryClient();
 
@@ -143,6 +144,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Pricing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coding-round"
+              element={
+                <ProtectedRoute>
+                  <CodingRound />
                 </ProtectedRoute>
               }
             />
