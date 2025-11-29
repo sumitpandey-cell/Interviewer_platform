@@ -1,3 +1,0 @@
-ALTER TABLE interview_sessions
-ADD COLUMN IF NOT EXISTS feedback JSONB,
-ADD COLUMN IF NOT EXISTS transcript JSONB;
