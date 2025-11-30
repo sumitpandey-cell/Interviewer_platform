@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus, Building2, Github, Twitter, Linkedin, Instagram, Mail, Mic } from "lucide-react";
+import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus, Building2, Github, Twitter, Linkedin, Instagram, Mail, Mic, PlayCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
@@ -295,7 +295,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0B] pt-32 pb-20">
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0B] pt-32 md:pt-40 pb-20">
         {/* Animated Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px]" />
@@ -308,18 +308,23 @@ export default function Landing() {
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="max-w-5xl mx-auto text-center space-y-8"
+            className="max-w-5xl mx-auto text-center"
           >
             {/* Badge */}
-            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg">
-              <div className="h-2 w-2 rounded-full bg-green-400"></div>
-              <span className="text-sm font-medium text-indigo-200">
-                New: AI Voice Intelligence 2.0
+            <motion.div variants={fadeInUp} className="flex flex-col items-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg">
+                <div className="h-2 w-2 rounded-full bg-green-400"></div>
+                <span className="text-sm font-medium text-indigo-200">
+                  New: AI Voice Intelligence 2.0
+                </span>
+              </div>
+              <span className="text-[12px] font-medium text-slate-500 opacity-50">
+                AI that truly understands your voice.
               </span>
             </motion.div>
 
             {/* Heading */}
-            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-wide text-white">
+            <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl lg:text-7xl font-bold leading-snug tracking-wide text-white mb-4">
               Ace Any Interview.
               <br />
               <span className="bg-gradient-to-r from-indigo-400/90 via-purple-400/90 to-pink-400/90 bg-clip-text text-transparent">
@@ -328,12 +333,12 @@ export default function Landing() {
             </motion.h1>
 
             {/* Subheading */}
-            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
-              Practice real interviews with AI scoring, analytics & feedback. Your personal AI interviewer that listens, analyzes, and trains like a hiring manager.
+            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed mb-6">
+              Practice real interviews with AI scoring and feedback — built to train you like a real hiring manager.
             </motion.p>
 
             {/* Mini Text Line with Avatars */}
-            <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3">
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4 mb-8">
               <div className="flex items-center -space-x-3">
                 {[
                   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=80&fit=crop&crop=faces",
@@ -345,21 +350,18 @@ export default function Landing() {
                     key={i}
                     src={src}
                     alt="User"
-                    className="h-10 w-10 rounded-full border-2 border-[#0A0A0B] object-cover"
+                    className="h-8 w-8 rounded-full border-2 border-[#0A0A0B] object-cover"
                   />
                 ))}
-                <div className="flex items-center justify-center h-10 w-10 rounded-full border-2 border-[#0A0A0B] bg-slate-800 text-white hover:bg-slate-700 transition-colors">
-                  <Plus className="h-4 w-4" />
-                </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-indigo-200/80">
-                <span className="flex h-2 w-2 rounded-full bg-green-400"></span>
+                <span className="flex h-1.5 w-1.5 rounded-full bg-green-400"></span>
                 Trusted by 20,000+ candidates
               </div>
             </motion.div>
 
             {/* CTA Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-8 justify-center items-center mb-12">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   size="lg"
@@ -379,7 +381,10 @@ export default function Landing() {
                   className="border-slate-700 text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-8 h-14 text-lg font-semibold bg-transparent"
                   asChild
                 >
-                  <Link to="#demo">Watch Demo</Link>
+                  <Link to="#demo">
+                    <PlayCircle className="mr-2 h-5 w-5" />
+                    Watch Demo
+                  </Link>
                 </Button>
               </motion.div>
             </motion.div>
@@ -387,19 +392,19 @@ export default function Landing() {
             {/* Dashboard Mockup */}
             <motion.div
               variants={scaleIn}
-              className="mt-16 relative mx-auto max-w-5xl"
+              className="relative mx-auto max-w-5xl"
             >
               {/* Dynamic Glow Behind Mockup */}
               <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] -z-10 opacity-40 blur-3xl"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] -z-10 opacity-50 blur-3xl"
                 style={{
-                  background: "radial-gradient(circle at 50% 50%, rgba(128, 90, 213, 0.25), transparent 70%)"
+                  background: "radial-gradient(circle at 50% 50%, rgba(128, 90, 213, 0.35), transparent 70%)"
                 }}
               ></div>
 
               {/* Strong Ambient Glow */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[2.5rem] blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000"></div>
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[2.5rem] blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-1000"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
 
               <div className="relative rounded-2xl bg-[#0f1117] border border-white/10 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/5 group">
 
@@ -426,7 +431,7 @@ export default function Landing() {
                   <img
                     src="/dashboard-preview.png"
                     alt="Dashboard Preview"
-                    className="w-full h-auto object-cover opacity-95 hover:opacity-100 transition-opacity duration-500"
+                    className="w-full h-auto object-cover opacity-100 brightness-110 transition-all duration-500"
                   />
                   {/* Overlay Gradient for depth */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-transparent opacity-20 pointer-events-none"></div>
@@ -883,15 +888,29 @@ export default function Landing() {
                 </div>
 
                 {/* Logo Area */}
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative shadow-lg shadow-indigo-500/20">
                   <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <svg viewBox="0 0 24 24" className="w-8 h-8 relative z-10"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
                 </div>
 
                 <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">Google</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
                   Master the art of "Googleyness", dynamic programming, and scalable system design.
                 </p>
+
+                <div className="flex flex-col gap-1 mb-8">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                    <span>Difficulty:</span>
+                    <div className="flex text-yellow-500">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-3 w-3 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-xs font-medium text-green-400">
+                    Avg selection rate improvement: +23%
+                  </div>
+                </div>
 
                 <div className="space-y-4 mb-8">
                   {[
@@ -912,6 +931,7 @@ export default function Landing() {
                     <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                   </Link>
                 </Button>
+                <p className="text-xs text-center text-slate-500 mt-3">~45 mins guided practice</p>
               </div>
             </motion.div>
 
@@ -921,15 +941,29 @@ export default function Landing() {
 
               <div className="relative h-full bg-[#0f1117] rounded-[1.9rem] p-8 overflow-hidden">
                 {/* Logo Area */}
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative shadow-lg shadow-orange-500/20">
                   <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8 relative z-10"><path d="M13.6 15.6c-.9.5-2.5.9-4.1.4-1.9-.6-3.1-2.6-2.8-4.6.2-1.3 1-2.4 2.2-2.9 1.6-.6 3.4-.1 4.5 1.1.2.2.2.6 0 .8-.2.2-.5.2-.7 0-.9-1-2.3-1.4-3.6-.9-1 .4-1.6 1.3-1.8 2.4-.2 1.6.8 3.2 2.4 3.7 1.3.4 2.6.1 3.4-.4.2-.1.5-.1.7.1.1.3.1.6-.2.7zm5.5-5.4h-1.6v4.6c0 .6-.4 1.1-1 1.1s-1-.5-1-1.1v-4.6h-1.6v4.7c0 1.4 1.1 2.6 2.5 2.6s2.6-1.1 2.6-2.6v-4.7z" /></svg>
                 </div>
 
                 <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-orange-300 transition-colors">Amazon</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
                   Deep dive into the 16 Leadership Principles and survive the Bar Raiser.
                 </p>
+
+                <div className="flex flex-col gap-1 mb-8">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                    <span>Difficulty:</span>
+                    <div className="flex text-yellow-500">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-3 w-3 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-xs font-medium text-green-400">
+                    Avg selection rate improvement: +23%
+                  </div>
+                </div>
 
                 <div className="space-y-4 mb-8">
                   {[
@@ -950,6 +984,7 @@ export default function Landing() {
                     <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                   </Link>
                 </Button>
+                <p className="text-xs text-center text-slate-500 mt-3">~45 mins guided practice</p>
               </div>
             </motion.div>
 
@@ -959,15 +994,29 @@ export default function Landing() {
 
               <div className="relative h-full bg-[#0f1117] rounded-[1.9rem] p-8 overflow-hidden">
                 {/* Logo Area */}
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative shadow-lg shadow-blue-500/20">
                   <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <svg viewBox="0 0 24 24" className="w-8 h-8 relative z-10"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" fill="#F25022" /><path d="M11.4 24H0V12.6h11.4V24z" fill="#00A4EF" /><path d="M24 24H12.6V12.6H24V24z" fill="#7FBA00" /><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#F25022" /><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900" /></svg>
                 </div>
 
                 <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">Microsoft</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
                   Prepare for technical rounds, OOP design, and behavioral questions.
                 </p>
+
+                <div className="flex flex-col gap-1 mb-8">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                    <span>Difficulty:</span>
+                    <div className="flex text-yellow-500">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-3 w-3 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-xs font-medium text-green-400">
+                    Avg selection rate improvement: +23%
+                  </div>
+                </div>
 
                 <div className="space-y-4 mb-8">
                   {[
@@ -988,6 +1037,7 @@ export default function Landing() {
                     <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                   </Link>
                 </Button>
+                <p className="text-xs text-center text-slate-500 mt-3">~45 mins guided practice</p>
               </div>
             </motion.div>
           </motion.div>
