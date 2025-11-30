@@ -32,6 +32,7 @@ interface InterviewSession {
     status: string;
     created_at: string;
     duration_minutes: number | null;
+    config?: any; // JSONB field for storing interview configuration
     feedback: any;
     transcript: any;
 }
@@ -406,9 +407,19 @@ export default function InterviewReport() {
     const transcriptData = instantTranscript.length > 0 ? instantTranscript : (session?.transcript || []);
 
     // Debug transcript data
-    console.log('Instant transcript from Zustand:', instantTranscript);
-    console.log('DB transcript from session:', session?.transcript);
-    console.log('Final transcript data used:', transcriptData);
+    console.log('=== TRANSCRIPT DEBUG INFO ===');
+    console.log('Instant transcript from Zustand:', instantTranscript.length, 'messages');
+    instantTranscript.forEach((msg, idx) => {
+        console.log(`  [${idx}] ${msg.sender}: ${msg.text?.substring(0, 30)}...`);
+    });
+    console.log('DB transcript from session:', session?.transcript?.length || 0, 'messages');
+    if (session?.transcript) {
+        session.transcript.forEach((msg: any, idx: number) => {
+            console.log(`  [${idx}] ${msg.sender}: ${msg.text?.substring(0, 30)}...`);
+        });
+    }
+    console.log('Final transcript data used:', transcriptData.length, 'messages');
+    console.log('=============================');
 
     const reportData = {
         candidateName: user?.user_metadata?.full_name || "Candidate",
@@ -425,15 +436,29 @@ export default function InterviewReport() {
             { name: "Cultural Fit", score: 0, feedback: "Pending..." }
         ],
         actionPlan: feedbackData.actionPlan || ["Wait for full AI report generation."],
-        // Ensure transcript format is consistent
-        transcript: transcriptData.length > 0 ? transcriptData.map((msg: any, index: number) => ({
-            id: msg.id || index,
-            sender: msg.sender,
-            text: msg.text,
-            timestamp: msg.timestamp || "Just now"
-        })) : [
-            { id: 1, sender: "ai", text: "No transcript available. The interview may not have contained any recorded conversation.", timestamp: "-" },
-        ]
+        // Ensure transcript format is consistent and filter AI internal thoughts
+        transcript: transcriptData.length > 0
+            ? transcriptData
+                .filter((msg: any) => msg && msg.sender && msg.text && msg.text.trim()) // Filter out invalid messages
+                .map((msg: any, index: number) => {
+                    let cleanedText = msg.text.trim();
+
+                    // Remove AI internal thoughts (e.g., **Thinking**, **Analysis**, etc.)
+                    if (msg.sender === 'ai') {
+                        cleanedText = cleanedText.replace(/\*\*[^*]+\*\*\s*/g, '');
+                    }
+
+                    return {
+                        id: msg.id || index,
+                        sender: msg.sender,
+                        text: cleanedText,
+                        timestamp: msg.timestamp || "Just now"
+                    };
+                })
+                .filter((msg: any) => msg.text.trim()) // Remove messages that became empty after filtering
+            : [
+                { id: 1, sender: "ai", text: "No transcript available. The interview may not have contained any recorded conversation.", timestamp: "-" },
+            ]
     };
 
     return (
@@ -850,13 +875,18 @@ export default function InterviewReport() {
                             <div className="lg:col-span-2">
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <div className="flex items-center justify-between">
-                                            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                                Interview Transcript
-                                                <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600">
-                                                    {reportData.transcript.length} messages
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                    Interview Transcript
+                                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600">
+                                                        {reportData.transcript.length} messages
+                                                    </span>
+                                                </CardTitle>
+                                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${instantTranscript.length > 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                    {instantTranscript.length > 0 ? '📍 Live Session' : '💾 Saved Session'}
                                                 </span>
-                                            </CardTitle>
+                                            </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -870,11 +900,20 @@ export default function InterviewReport() {
                                     </CardHeader>
                                     <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
                                         {reportData.transcript.length === 1 && reportData.transcript[0].text.includes("No transcript available") ? (
-                                            // Empty state
+                                            // Empty state with helpful info
                                             <div className="text-center py-12 text-slate-500">
                                                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-slate-300" />
                                                 <p className="text-lg font-medium">No conversation recorded</p>
-                                                <p className="text-sm">The interview transcript is not available or the session may have been too short.</p>
+                                                <p className="text-sm mb-4">The interview transcript is not available or the session may have been too short.</p>
+                                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left text-xs text-amber-800 mt-6">
+                                                    <p className="font-medium mb-2">💡 Why might the transcript be missing?</p>
+                                                    <ul className="list-disc pl-5 space-y-1">
+                                                        <li>The interview session ended before any conversation was recorded</li>
+                                                        <li>There was a connection issue during the interview</li>
+                                                        <li>The transcript is still being processed (refresh in a few seconds)</li>
+                                                        <li>The interview was paused for a coding challenge and not resumed</li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         ) : (
                                             // Actual transcript messages

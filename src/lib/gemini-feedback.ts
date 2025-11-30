@@ -20,8 +20,22 @@ export interface FeedbackData {
 }
 
 export async function generateFeedback(transcript: Message[], position: string, interviewType: string): Promise<FeedbackData> {
-    console.log("*(*(*(*(*(*(**((",transcript);
-    const transcriptText = transcript.map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`).join('\n');
+    console.log("*(*(*(*(*(*(**((", transcript);
+    // Filter out internal thoughts and empty lines
+    const transcriptText = transcript
+        .map(msg => {
+            // Remove internal thoughts (lines starting with * or () and bold headers)
+            let cleanText = msg.text.replace(/\*\*[^*]+\*\*\s*/g, ''); // Remove bold headers like **Title**
+
+            cleanText = cleanText
+                .split('\n')
+                .filter(line => !line.trim().startsWith('*') && !line.trim().startsWith('('))
+                .join('\n');
+            return { ...msg, text: cleanText };
+        })
+        .filter(msg => msg.text.trim().length > 0)
+        .map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`)
+        .join('\n');
 
     const prompt = `
     You are an expert technical interviewer and career coach. Analyze the following interview transcript for a ${position} position (${interviewType} interview).
@@ -32,23 +46,35 @@ export async function generateFeedback(transcript: Message[], position: string, 
     ${transcriptText}
     
     Based on the transcript, provide a comprehensive feedback report.
-    
+
+    CRITICAL INSTRUCTIONS FOR ACCURACY:
+    1. **Internal Thoughts**: Ignore any text that looks like system logs or internal AI thoughts (e.g., "*Anticipating...*"). Focus ONLY on the spoken conversation.
+    2. **Short/Aborted Interviews**: If the interview is very short (< 5 turns) or the candidate aborts early, DO NOT hallucinate skills. 
+       - Set the "Executive Summary" to clearly state that the interview was too short to fully assess the candidate.
+       - Give neutral scores (e.g., 0 or 50) with feedback explicitly stating "Insufficient data".
+    3. **Skipped Questions**: If a candidate skips a question (e.g., "I'd like to skip this"), do NOT penalize them heavily. 
+       - Mark that specific skill as "Not Assessed" or give a neutral score (e.g. 50).
+       - Calculate the overall score based primarily on the questions they DID answer.
+       - Do NOT give a failing grade (e.g. < 40) solely because of one skipped question if other answers were good.
+    4. **Tone**: Be constructive. Even if the candidate failed or quit, offer encouraging advice on how to prepare for next time.
+
+    ANALYSIS TASKS:
     1. Analyze the Candidate's responses for technical accuracy, depth of knowledge, and problem-solving approach.
     2. Analyze the Candidate's communication style, clarity, and confidence.
     3. Evaluate how well the Candidate answered the specific questions asked by the AI.
     
     Provide the output in the following JSON format:
     {
-        "executiveSummary": "A professional executive summary of the candidate's performance, highlighting key takeaways.",
-        "strengths": ["List of 3-5 distinct key strengths demonstrated by the candidate"],
-        "improvements": ["List of 3-5 specific areas where the candidate needs improvement"],
+        "executiveSummary": "A professional executive summary. If short/aborted, state 'Insufficient data to provide a complete assessment.'",
+        "strengths": ["List of 3-5 distinct key strengths (or 'N/A - Insufficient Data' if too short)"],
+        "improvements": ["List of 3-5 specific areas for improvement (or 'N/A - Insufficient Data' if too short)"],
         "skills": [
-            { "name": "Technical Knowledge", "score": 0-100, "feedback": "Specific feedback on technical accuracy and depth" },
-            { "name": "Communication", "score": 0-100, "feedback": "Feedback on clarity, conciseness, and articulation" },
-            { "name": "Problem Solving", "score": 0-100, "feedback": "Feedback on approach to problems and logical thinking" },
-            { "name": "Cultural Fit", "score": 0-100, "feedback": "Feedback on professional demeanor and attitude" }
+            { "name": "Technical Knowledge", "score": 0-100, "feedback": "Specific feedback. If skipped/short, say 'Insufficient data'." },
+            { "name": "Communication", "score": 0-100, "feedback": "Feedback on clarity. If short, assess what was heard or say 'Insufficient data'." },
+            { "name": "Problem Solving", "score": 0-100, "feedback": "Feedback. If coding question skipped, say 'Skipped coding challenge'." },
+            { "name": "Cultural Fit", "score": 0-100, "feedback": "Feedback on demeanor." }
         ],
-        "actionPlan": ["List of 3-5 actionable, specific steps the candidate can take to improve"]
+        "actionPlan": ["List of 3-5 actionable steps (e.g., 'Practice coding problems', 'Review system design basics')"]
     }
     
     IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting (like \`\`\`json) or any other text.

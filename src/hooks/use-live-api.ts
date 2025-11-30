@@ -3,6 +3,11 @@ import { AudioRecorder } from '../lib/audio-recorder';
 import { AudioStreamer } from '../lib/audio-streamer';
 import { LiveConfig, LiveIncomingMessage, LiveOutgoingMessage } from '../types/live-api';
 
+// Extend LiveConfig to support transcript callback
+export interface ExtendedLiveConfig extends LiveConfig {
+    onTranscriptFragment?: (sender: 'ai' | 'user', text: string) => void;
+}
+
 const HOST = 'generativelanguage.googleapis.com';
 const URI = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
 
@@ -13,15 +18,34 @@ export function useLiveAPI(apiKey: string) {
     const wsRef = useRef<WebSocket | null>(null);
     const audioRecorderRef = useRef<AudioRecorder | null>(null);
     const audioStreamerRef = useRef<AudioStreamer | null>(null);
+    const transcriptCallbackRef = useRef<((sender: 'ai' | 'user', text: string) => void) | null>(null);
 
-    const connect = useCallback(async (config: LiveConfig) => {
+    const connect = useCallback(async (config: ExtendedLiveConfig) => {
+        // Store the transcript callback
+        transcriptCallbackRef.current = config.onTranscriptFragment || null;
         if (!apiKey) {
             console.error("API Key is required");
             return;
         }
 
+        // Prevent duplicate connections
+        if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+            console.log("Connection already exists or is in progress, skipping...");
+            return;
+        }
+
+        // Clean up any existing connection
+        if (wsRef.current) {
+            console.log("Cleaning up previous connection...");
+            wsRef.current.close();
+            wsRef.current = null;
+        }
+
         // Initialize audio immediately to satisfy browser autoplay policies
         audioStreamerRef.current = new AudioStreamer();
+        audioStreamerRef.current.addEventListener('queue-empty', () => {
+            window.dispatchEvent(new CustomEvent('ai-audio-stopped'));
+        });
         await audioStreamerRef.current.initialize();
 
         audioRecorderRef.current = new AudioRecorder();
@@ -56,7 +80,6 @@ export function useLiveAPI(apiKey: string) {
                 } else {
                     data = JSON.parse(event.data);
                 }
-                console.log("Received message from server:", data);
             } catch (e) {
                 console.error("Error parsing message", e);
                 console.error("Raw message data:", event.data);
@@ -66,7 +89,7 @@ export function useLiveAPI(apiKey: string) {
             // Handle setup complete - send initial message to trigger AI introduction
             if ('setupComplete' in data) {
                 console.log("Setup complete, sending initial greeting");
-                
+
                 const greetingMessage: LiveOutgoingMessage = {
                     clientContent: {
                         turns: [{
@@ -86,55 +109,72 @@ export function useLiveAPI(apiKey: string) {
             }
 
             if ('serverContent' in data) {
-                const { modelTurn, inputTranscription, turnComplete, interrupted } = data.serverContent;
-                console.log('ServerContent received:', { 
-                    hasModelTurn: !!modelTurn, 
+                const { modelTurn, inputTranscription, outputTranscription, turnComplete, interrupted } = data.serverContent;
+
+                console.log('ServerContent received:', {
+                    hasModelTurn: !!modelTurn,
                     hasInputTranscription: !!inputTranscription,
-                    turnComplete, 
-                    interrupted,
-                    inputTranscriptionText: inputTranscription?.text || 'none'
-                });
-                
-                // Handle interruption
+                    hasOutputTranscription: !!outputTranscription,
+                    inputTranscriptionText: inputTranscription?.text || 'none',
+                    outputTranscriptionText: outputTranscription?.text || 'none',
+                    turnComplete,
+                    interrupted
+                });// Handle interruption
                 if (interrupted) {
-                    console.log('Conversation interrupted');
+                    console.log('🛑 Conversation interrupted');
                 }
-                
-                // Handle AI text responses - dispatch immediately for accumulation
+
+                // Handle AI text responses - use callback for direct processing
                 if (modelTurn) {
-                    console.log('ModelTurn parts:', modelTurn.parts);
+                    console.log('🤖 ModelTurn received with', modelTurn.parts.length, 'parts');
                     for (const part of modelTurn.parts) {
+                        console.log('Part type:', {
+                            hasText: !!part.text,
+                            hasAudio: !!part.inlineData,
+                            audioType: part.inlineData?.mimeType
+                        });
+
                         if (part.text) {
-                            console.log('=== DISPATCHING AI FRAGMENT ===');
-                            console.log('Fragment:', JSON.stringify(part.text));
-                            window.dispatchEvent(new CustomEvent('ai-transcript-fragment', {
-                                detail: { text: part.text, sender: 'ai' }
-                            }));
+                            console.log('📝 AI Transcript Fragment:', part.text.substring(0, 50) + '...');
+                            // Invoke callback directly if available
+                            if (transcriptCallbackRef.current) {
+                                transcriptCallbackRef.current('ai', part.text);
+                            }
                         }
                         if (part.inlineData && part.inlineData.mimeType.startsWith('audio/pcm')) {
-                            console.log('Processing audio data');
+                            console.log('🔊 Processing audio data');
                             const audioData = base64ToArrayBuffer(part.inlineData.data);
                             audioStreamerRef.current?.addPCM16(audioData);
                         }
                     }
                 }
-                
-                // Handle user speech transcription - dispatch immediately for accumulation
+
+                // Handle user speech transcription - use callback for direct processing
                 if (inputTranscription?.text) {
                     const text = inputTranscription.text;
                     if (text) {
-                        console.log('=== DISPATCHING USER FRAGMENT ===');
-                        console.log('Fragment:', JSON.stringify(text));
-                        window.dispatchEvent(new CustomEvent('user-transcript-fragment', {
-                            detail: { text, sender: 'user' }
-                        }));
+                        console.log('🎤 User Transcript Fragment:', text.substring(0, 50) + '...');
+                        // Invoke callback directly if available
+                        if (transcriptCallbackRef.current) {
+                            transcriptCallbackRef.current('user', text);
+                        }
                     }
                 }
-                
+
+                // Handle AI audio transcription (speech-to-text of AI's audio output)
+                if (outputTranscription?.text) {
+                    const text = outputTranscription.text;
+                    if (text) {
+                        // Invoke callback directly if available
+                        if (transcriptCallbackRef.current) {
+                            transcriptCallbackRef.current('ai', text);
+                        }
+                    }
+                }
+
                 // Note: turnComplete is now handled by the receiving component's accumulation logic
                 if (turnComplete) {
-                    console.log('=== TURN COMPLETE DETECTED ===');
-                    // No longer need to dispatch here - accumulation is handled in InterviewRoom
+                    console.log('✅ Turn complete');
                 }
             }
         };
@@ -173,6 +213,20 @@ export function useLiveAPI(apiKey: string) {
         setIsRecording(false);
     }, []);
 
+    const pauseRecording = useCallback(() => {
+        if (!audioRecorderRef.current || !isRecording) return;
+        console.log('Pausing audio recording (for coding challenge)');
+        audioRecorderRef.current.stop();
+        setIsRecording(false);
+    }, [isRecording]);
+
+    const resumeRecording = useCallback(async () => {
+        if (!audioRecorderRef.current || isRecording) return;
+        console.log('Resuming audio recording (after coding challenge)');
+        await audioRecorderRef.current.start();
+        setIsRecording(true);
+    }, [isRecording]);
+
     const sendAudioChunk = (data: ArrayBuffer) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
@@ -190,11 +244,39 @@ export function useLiveAPI(apiKey: string) {
         wsRef.current.send(JSON.stringify(message));
     };
 
+    const sendTextMessage = useCallback((text: string) => {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+        const message: LiveOutgoingMessage = {
+            clientContent: {
+                turns: [{
+                    role: "user",
+                    parts: [{ text }]
+                }],
+                turnComplete: true
+            }
+        };
+        wsRef.current.send(JSON.stringify(message));
+    }, []);
+
+    const suspendAudioOutput = useCallback(async () => {
+        await audioStreamerRef.current?.suspend();
+    }, []);
+
+    const resumeAudioOutput = useCallback(async () => {
+        await audioStreamerRef.current?.resume();
+    }, []);
+
     return {
         connect,
         disconnect,
         startRecording,
         stopRecording,
+        pauseRecording,
+        resumeRecording,
+        sendTextMessage,
+        suspendAudioOutput,
+        resumeAudioOutput,
         connected,
         isRecording,
         volume

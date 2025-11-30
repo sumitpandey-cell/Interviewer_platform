@@ -39,6 +39,7 @@ interface InterviewSession {
   created_at: string;
   completed_at: string | null;
   duration_minutes: number | null;
+  config?: any; // JSONB field for storing interview configuration
 }
 
 export default function Reports() {

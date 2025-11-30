@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, User, Sparkles, ChevronRight, ChevronLeft } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, User, Sparkles, ChevronRight, ChevronLeft, Loader2, Code } from "lucide-react";
 import { toast } from "sonner";
 import { useLiveAPI } from "@/hooks/use-live-api";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -12,6 +12,9 @@ import { generateFeedback } from "@/lib/gemini-feedback";
 import { useInterviewStore } from "@/stores/use-interview-store";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useCompanyQuestions } from "@/hooks/use-company-questions";
+import { CompanyQuestion } from "@/types/company-types";
+import { CodingChallengeModal } from "@/components/CodingChallengeModal";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 
@@ -19,32 +22,36 @@ interface SessionData {
     id: string;
     interview_type: string;
     position: string;
+    duration_minutes?: number;
+    config?: {
+        companyInterviewConfig?: {
+            companyTemplateId: string;
+            companyName: string;
+            role: string;
+            experienceLevel: string;
+        };
+        [key: string]: any;
+    };
 }
 
-const generateSystemInstruction = (session: SessionData | null, timeLeftMinutes?: number) => {
+import { loadSystemPrompt, containsCodingKeywords } from "@/lib/prompt-loader";
+
+const generateSystemInstruction = (session: SessionData | null, timeLeftMinutes?: number, companyQuestions?: CompanyQuestion[]) => {
     if (!session) {
         return `You are a Senior Technical Interviewer. Conduct a professional interview.`;
     }
 
     const { interview_type, position } = session;
+    const companyName = (session as any).config?.companyInterviewConfig?.companyName;
 
-    return `
-You are conducting a ${interview_type} interview for the ${position} position.
-
-Your goal is to assess the candidate's abilities based on the following principles:
-1. Code Quality: Look for production-grade code, clear naming, and avoidance of magic numbers.
-2. Error Handling: Ensure they handle failure paths and validate inputs.
-3. Edge Cases: Check if they consider missing inputs, invalid types, concurrency, etc.
-4. Architecture: Look for separation of concerns and appropriate abstraction.
-5. Testing: Ask about test cases for normal flow, boundary conditions, and failure handling.
-6. Documentation: Expect clear explanations of core logic and assumptions.
-
-Conduct the interview in a professional but encouraging tone. Start by introducing yourself as name Aura and asking the candidate to introduce themselves. Then proceed to ask ${interview_type.toLowerCase()} questions relevant to the ${position} position.
-
-IMPORTANT: Your text output must be an exact transcript of your audio output. Do not output internal thoughts, reasoning, or system logs in the text channel. Only output what you speak.
-
-${timeLeftMinutes ? `You have approximately ${timeLeftMinutes} minutes remaining for this interview. Manage your time accordingly.` : ''}
-`.trim();
+    // Use the new prompt loader system
+    return loadSystemPrompt({
+        interviewType: interview_type,
+        position: position,
+        companyName: companyName,
+        timeLeftMinutes: timeLeftMinutes,
+        questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined
+    });
 };
 
 interface Message {
@@ -60,8 +67,8 @@ export default function InterviewRoom() {
 
     // Sanitize API Key
     const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
-    const { connect, disconnect, startRecording, stopRecording, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
-    const { setFeedback, setTranscript, setSaving, setSaveError } = useInterviewStore();
+    const { connect, disconnect, startRecording, stopRecording, pauseRecording, resumeRecording, sendTextMessage, suspendAudioOutput, resumeAudioOutput, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
+    const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion } = useInterviewStore();
     const { startListening, stopListening, hasSupport } = useSpeechRecognition();
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -72,23 +79,52 @@ export default function InterviewRoom() {
     const [sessionLoaded, setSessionLoaded] = useState(false);
     const startTimeRef = useRef<number | null>(null);
     const messageIdRef = useRef(0);
+    const hasConnectedRef = useRef(false); // Track if connection has been initiated
     const { remaining_minutes, recordUsage, type: subscriptionType } = useSubscription();
     const [timeLeft, setTimeLeft] = useState(remaining_minutes * 60);
 
-    // Update timeLeft when remaining_minutes changes
+    // Coding challenge state
+    const [isCodingModalOpen, setIsCodingModalOpen] = useState(false);
+    const [isInterviewPaused, setIsInterviewPaused] = useState(false);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [isEnding, setIsEnding] = useState(false);
+    const [isCodingChallengeAvailable, setIsCodingChallengeAvailable] = useState(false);
+
+    // Fetch company questions if this is a company interview
+    const companyTemplateId = session?.config?.companyInterviewConfig?.companyTemplateId;
+    const { questions: companyQuestions, isLoading: loadingQuestions } = useCompanyQuestions({
+        companyId: companyTemplateId || null,
+        count: 5,
+        role: session?.config?.companyInterviewConfig?.role || null
+    });
+
+    // Initialize timeLeft based on session duration or default to subscription time
     useEffect(() => {
-        setTimeLeft(remaining_minutes * 60);
-    }, [remaining_minutes]);
+        if (session?.duration_minutes) {
+            // Use the duration from the interview session
+            setTimeLeft(session.duration_minutes * 60);
+        } else {
+            // Fallback to subscription remaining time
+            setTimeLeft(remaining_minutes * 60);
+        }
+    }, [session, remaining_minutes]);
 
     // Timer logic
     useEffect(() => {
         const timer = setInterval(() => {
-            setElapsedTime((prev) => prev + 1);
+            // Don't increment elapsed time if interview is paused
+            if (!isInterviewPaused) {
+                setElapsedTime((prev) => prev + 1);
+            }
 
-            if (subscriptionType !== 'paid' || remaining_minutes < 999999) { // Don't count down for unlimited
+            // Count down if session has duration OR if subscription is not unlimited
+            const shouldCountDown = session?.duration_minutes || (subscriptionType !== 'paid' || remaining_minutes < 999999);
+
+            if (shouldCountDown && !isInterviewPaused) {
                 setTimeLeft((prev) => {
                     if (prev <= 1) {
                         clearInterval(timer);
+                        toast.info("Interview time has ended");
                         handleEndCall();
                         return 0;
                     }
@@ -97,7 +133,7 @@ export default function InterviewRoom() {
             }
         }, 1000);
         return () => clearInterval(timer);
-    }, [subscriptionType, remaining_minutes]);
+    }, [subscriptionType, remaining_minutes, session, isInterviewPaused]);
 
     // AI speaking animation based on volume
     useEffect(() => {
@@ -119,13 +155,13 @@ export default function InterviewRoom() {
                 setSession({
                     id: data.id,
                     interview_type: data.interview_type,
-                    position: data.position
+                    position: data.position,
+                    config: data.config // Ensure config is passed
                 });
             } else {
                 setSession(null);
             }
         } catch (error) {
-            console.error("Error fetching session:", error);
             setSession(null);
         } finally {
             setSessionLoaded(true);
@@ -144,7 +180,6 @@ export default function InterviewRoom() {
                         videoRef.current.srcObject = stream;
                     }
                 } catch (err) {
-                    console.error("Error accessing camera:", err);
                     toast.error("Could not access camera");
                     setIsCameraOn(false);
                 }
@@ -164,47 +199,214 @@ export default function InterviewRoom() {
         };
     }, [isCameraOn]);
 
-    // Transcript handling - Set up early before any connections
-    useEffect(() => {
-        const handleTranscriptFragment = (e: CustomEvent) => {
-            const { text, sender } = e.detail;
-            console.log(`Transcript fragment received: ${sender}: ${text}`);
+    // Transcript handling - Use ref to avoid reconnection loops
+    const handleTranscriptFragmentRef = useRef<((sender: 'ai' | 'user', text: string) => void) | null>(null);
 
-            setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.sender === sender) {
+    // Update the ref whenever dependencies change, but don't recreate the function
+    useEffect(() => {
+        handleTranscriptFragmentRef.current = (sender: 'ai' | 'user', text: string) => {
+            // Validate input
+            if (!sender || !text) {
+                console.warn('Invalid transcript fragment received:', { sender, text });
+                return;
+            }
+
+            // Clean AI internal thoughts from display
+            let cleanedText = text;
+            if (sender === 'ai') {
+                // Only remove **Bold markers** but keep the text content
+                cleanedText = cleanedText.replace(/\*\*/g, '');
+
+                // Remove empty lines
+                cleanedText = cleanedText.split('\n')
+                    .filter(line => line.trim())
+                    .join('\n')
+                    .trim();
+            }
+
+            // Skip if text is empty after cleaning
+            if (!cleanedText.trim()) {
+                console.log(`Skipping empty text from ${sender} after filtering`);
+                return;
+            }
+
+
+            // Enhanced coding question detection
+            // Strategy 1: Marker-based detection (Primary & Most Accurate)
+            if (sender === 'ai' && cleanedText.includes('[CODING_CHALLENGE]')) {
+                console.log('✅ Detected coding question via marker [CODING_CHALLENGE]');
+                console.log('Current question index:', currentQuestionIndex);
+                console.log('Total company questions:', companyQuestions.length);
+
+                // Remove the marker from the text to be displayed
+                const textWithoutMarker = cleanedText.replace('[CODING_CHALLENGE]', '').trim();
+
+                // Update the message with clean text if there is any remaining text
+                if (textWithoutMarker) {
+                    setMessages((prev) => {
+                        const lastMessageIndex = prev.length > 0 ? prev.length - 1 : -1;
+                        const lastMessage = prev[lastMessageIndex];
+
+                        if (lastMessage && lastMessage.sender === sender) {
+                            const updated = [...prev.slice(0, -1), { ...lastMessage, text: lastMessage.text + textWithoutMarker }];
+                            console.log(`✅ Appended to AI message. Total messages: ${updated.length}`);
+                            return updated;
+                        } else {
+                            messageIdRef.current += 1;
+                            const newMessage = {
+                                id: messageIdRef.current,
+                                sender,
+                                text: textWithoutMarker,
+                                timestamp: new Date().toISOString()
+                            };
+                            const updated = [...prev, newMessage];
+                            console.log(`✅ Created new AI message. Total messages: ${updated.length}. Message: "${textWithoutMarker.substring(0, 30)}..."`);
+                            return updated;
+                        }
+                    });
+                }
+
+                // Auto-open coding modal after AI finishes speaking
+                // We'll use a small delay to ensure AI has finished speaking
+                if (!isCodingModalOpen && !isInterviewPaused) {
+                    console.log('⏳ Scheduling auto-open of coding modal...');
+
+                    // Strategy: Search through ALL coding questions to find one that hasn't been asked yet
+                    // We'll look for the first coding question starting from currentQuestionIndex
+                    let questionToUse = companyQuestions
+                        .slice(currentQuestionIndex)
+                        .find(q => q.question_type === 'Coding');
+
+                    // If we didn't find one from currentQuestionIndex onwards, it might be that
+                    // the AI is asking questions out of order. Let's search all questions.
+                    if (!questionToUse && companyQuestions.length > 0) {
+                        console.log('⚠️ No coding question found from current index, searching all questions...');
+                        questionToUse = companyQuestions.find(q => q.question_type === 'Coding');
+                    }
+
+                    // If still no question found in company questions, create a generic one
+                    if (!questionToUse) {
+                        console.log('⚠️ No coding question found in company questions, creating generic one');
+                        questionToUse = {
+                            id: 'generic-coding-' + Date.now(),
+                            company_id: 'general',
+                            question_text: textWithoutMarker || 'Please solve the coding problem described by the interviewer.',
+                            question_type: 'Coding',
+                            difficulty: 'Medium',
+                            role: 'General',
+                            experience_level: null,
+                            tags: ['coding', 'general'],
+                            metadata: {},
+                            is_active: true,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        };
+                    }
+
+                    console.log('📝 Selected coding question:', questionToUse.question_text.substring(0, 50) + '...');
+
+                    // Set the question first
+                    setCurrentCodingQuestion(questionToUse);
+
+                    // Wait 2 seconds for AI to finish speaking, then auto-open
+                    setTimeout(() => {
+                        console.log('🚀 Auto-opening coding modal');
+                        setIsCodingModalOpen(true);
+                        setIsInterviewPaused(true);
+                        // Only pause user's microphone, let AI continue speaking
+                        pauseRecording();
+                        toast.success("Coding challenge started! Write your solution below.");
+
+                        // Update question index ONLY if it's from company questions and we found it in the list
+                        const questionIndex = companyQuestions.findIndex(q => q.id === questionToUse!.id);
+                        if (questionIndex !== -1 && questionIndex >= currentQuestionIndex) {
+                            console.log(`Updating question index from ${currentQuestionIndex} to ${questionIndex + 1}`);
+                            setCurrentQuestionIndex(questionIndex + 1);
+                        }
+                    }, 2000); // 2 second delay to let AI finish speaking
+                }
+
+                // We handled the message update manually (or skipped if empty), so we return
+                return;
+            }
+
+            setMessages((prev) => {
+                // Find the last message from the same sender to append to it
+                const lastMessageIndex = prev.length > 0 ? prev.length - 1 : -1;
+                const lastMessage = prev[lastMessageIndex];
+
+                if (lastMessage && lastMessage.sender === sender) {
                     // Append to existing line from same sender
-                    const updated = [...prev.slice(0, -1), { ...last, text: last.text + text }];
-                    console.log('Appended to existing message:', updated);
+                    const updated = [...prev.slice(0, -1), { ...lastMessage, text: lastMessage.text + cleanedText }];
+                    console.log(`✅ Appended to ${sender} message. Total messages: ${updated.length}`);
+                    return updated;
+                } else {
+                    // Create new message line
+                    messageIdRef.current += 1;
+                    const newMessage = {
+                        id: messageIdRef.current,
+                        sender,
+                        text: cleanedText,
+                        timestamp: new Date().toISOString()
+                    };
+                    const updated = [...prev, newMessage];
+                    console.log(`✅ Created new ${sender} message. Total messages: ${updated.length}. Message: "${cleanedText.substring(0, 30)}..."`);
                     return updated;
                 }
-                // Create new message line
-                const newMessage = {
-                    id: messageIdRef.current++,
-                    sender,
-                    text
-                };
-                const newMessages = [...prev, newMessage];
-                console.log('Created new message:', newMessages);
-                return newMessages;
             });
-        };
 
-        console.log('Setting up transcript fragment event listeners');
-        window.addEventListener('ai-transcript-fragment', handleTranscriptFragment as EventListener);
-        window.addEventListener('user-transcript-fragment', handleTranscriptFragment as EventListener);
+            // Strategy 2: Keyword-based detection (Fallback)
+            if (sender === 'ai' && companyQuestions.length > 0 && !isCodingModalOpen && !isInterviewPaused) {
+                if (containsCodingKeywords(cleanedText)) {
+                    // Find the next unasked coding question
+                    const nextCodingQuestion = companyQuestions
+                        .slice(currentQuestionIndex)
+                        .find(q => q.question_type === 'Coding');
 
-        return () => {
-            console.log('Removing transcript fragment event listeners');
-            window.removeEventListener('ai-transcript-fragment', handleTranscriptFragment as EventListener);
-            window.removeEventListener('user-transcript-fragment', handleTranscriptFragment as EventListener);
+                    if (nextCodingQuestion) {
+                        console.log(`Detected coding question via keywords: ${nextCodingQuestion.question_text.substring(0, 50)}...`);
+
+                        // Longer delay for keyword detection to ensure question is fully asked
+                        setTimeout(() => {
+                            if (!isCodingModalOpen) { // Double check
+                                console.log('Opening coding modal (keyword detection)');
+                                setCurrentCodingQuestion(nextCodingQuestion);
+                                setIsCodingModalOpen(true);
+                                setIsInterviewPaused(true);
+
+                                const newIndex = companyQuestions.indexOf(nextCodingQuestion);
+                                if (newIndex !== -1) {
+                                    setCurrentQuestionIndex(newIndex + 1);
+                                }
+
+                                // Only pause user's mic, let AI keep speaking
+                                pauseRecording();
+                            }
+                        }, 3000); // 3s delay for fallback
+                    }
+                }
+            }
         };
+    }, [companyQuestions, currentQuestionIndex, isCodingModalOpen, isInterviewPaused, setCurrentCodingQuestion, pauseRecording, suspendAudioOutput]);
+
+    // Stable callback wrapper that never changes
+    const handleTranscriptFragment = useCallback((sender: 'ai' | 'user', text: string) => {
+        if (handleTranscriptFragmentRef.current) {
+            handleTranscriptFragmentRef.current(sender, text);
+        }
     }, []);
+
 
     // Sync messages to Zustand store for instant access in report page
     useEffect(() => {
-        console.log('Syncing messages to Zustand store:', messages.length, 'messages');
-        setTranscript(messages);
+        if (messages.length > 0) {
+            console.log('🔄 Syncing messages to Zustand store:');
+            console.log(`   Total: ${messages.length} messages`);
+            messages.forEach((msg, idx) => {
+                console.log(`   [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 50)}...`);
+            });
+            setTranscript(messages);
+        }
     }, [messages, setTranscript]);
 
     // Auto-connect on mount after session is loaded
@@ -213,10 +415,35 @@ export default function InterviewRoom() {
             return;
         }
 
+        // Check if this is a company interview
+        const isCompanyInterview = !!session?.config?.companyInterviewConfig?.companyTemplateId;
+
+        // If it is a company interview, we must wait for questions to be loaded.
+        // We proceed only if:
+        // 1. It's NOT a company interview
+        // 2. OR It IS a company interview AND we have questions
+        // 3. OR It IS a company interview AND loading is finished (and we have 0 questions - edge case)
+        if (isCompanyInterview && companyQuestions.length === 0) {
+            console.log('Waiting for company questions to load...');
+            return;
+        }
+
+        // Prevent multiple connections - only connect once
+        if (hasConnectedRef.current) {
+            console.log('Connection already initiated, skipping...');
+            return;
+        }
+
         console.log('Starting connection initialization...');
         const initConnection = async () => {
+            hasConnectedRef.current = true;
+
             try {
-                const systemInstruction = generateSystemInstruction(session, Math.floor(timeLeft / 60));
+                const systemInstruction = generateSystemInstruction(
+                    session,
+                    Math.floor(timeLeft / 60),
+                    companyQuestions.length > 0 ? companyQuestions : undefined
+                );
 
                 await connect({
                     model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
@@ -233,24 +460,29 @@ export default function InterviewRoom() {
                     systemInstruction: {
                         parts: [{ text: systemInstruction }]
                     },
+                    // Enable input transcription for user speech
                     // Add input and output audio transcription
                     inputAudioTranscription: {},
-                    outputAudioTranscription: {}
+                    outputAudioTranscription: {},
+                    onTranscriptFragment: handleTranscriptFragment
                 });
                 startTimeRef.current = Date.now();
                 console.log('Connection established successfully');
             } catch (error) {
                 console.error("Failed to connect to Gemini Live API:", error);
                 toast.error("Failed to connect to AI interviewer. Please check your API key and try again.");
+                hasConnectedRef.current = false; // Reset on error to allow retry
             }
         };
 
         initConnection();
 
         return () => {
+            console.log('Cleaning up connection...');
             disconnect();
+            hasConnectedRef.current = false; // Reset on cleanup
         };
-    }, [sessionLoaded]);
+    }, [sessionLoaded, connect, disconnect, companyQuestions, loadingQuestions, session, handleTranscriptFragment]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -266,94 +498,203 @@ export default function InterviewRoom() {
     };
 
     const handleEndCall = async () => {
-        disconnect();
+        if (isEnding) return;
+        setIsEnding(true);
+        console.log('Ending call...');
+        try {
+            // Stop recording and disconnect
+            if (isRecording) {
+                await stopRecording();
+            }
+            disconnect();
+            stopListening();
 
-        if (sessionId && startTimeRef.current && session) {
-            const durationMinutes = Math.ceil((Date.now() - startTimeRef.current) / 60000);
+            // Calculate actual duration
+            const durationMinutes = Math.floor(elapsedTime / 60);
+
+            // Complete the session
+            if (sessionId) {
+                await completeInterviewSession(sessionId, {
+                    status: 'completed',
+                    duration_minutes: durationMinutes,
+                });
+            }
 
             // Record usage
             await recordUsage(durationMinutes);
 
-            // Immediately redirect to dashboard with progress notification
-            toast.success("Interview completed! Your report is being generated...", {
-                duration: 5000
-            });
+            console.log('🔍 Generating feedback with messages:', messages.length, 'messages');
+            console.log('First 3 messages:', messages.slice(0, 3));
 
-            // Small delay to ensure user sees the completion message
-            setTimeout(() => {
-                navigate('/dashboard', {
-                    state: {
-                        showReportProgress: true,
-                        sessionId: sessionId,
-                        message: "Your interview report is being generated. This may take a few moments."
-                    }
-                });
-            }, 1000);
+            let feedback;
+            let feedbackWithTs;
 
-            // Generate feedback and save asynchronously (fire-and-forget)
-            setTimeout(async () => {
+            try {
+                feedback = await generateFeedback(messages, session.position, session.interview_type);
+                console.log('✅ Feedback generated successfully:', feedback);
+
+                // Attach generated timestamp to feedback for merging/ordering
+                feedbackWithTs = { ...feedback, generatedAt: new Date().toISOString() };
+
+                // Store feedback in Zustand for instant UI display
+                setFeedback(feedbackWithTs as any);
+            } catch (feedbackError) {
+                console.error('❌ Error generating feedback:', feedbackError);
+                // Create fallback feedback
+                feedbackWithTs = {
+                    executiveSummary: "Feedback generation encountered an error.",
+                    strengths: ["Unable to analyze"],
+                    improvements: ["Unable to analyze"],
+                    skills: [
+                        { name: "Technical Knowledge", score: 0, feedback: "Analysis failed" },
+                        { name: "Communication", score: 0, feedback: "Analysis failed" },
+                        { name: "Problem Solving", score: 0, feedback: "Analysis failed" },
+                        { name: "Cultural Fit", score: 0, feedback: "Analysis failed" }
+                    ],
+                    actionPlan: ["Please review transcript manually"],
+                    generatedAt: new Date().toISOString()
+                };
+                setFeedback(feedbackWithTs as any);
+            }
+
+            // Calculate average score
+            const averageScore = Math.round((feedbackWithTs.skills || []).reduce((acc: number, s: any) => acc + (s.score || 0), 0) / ((feedbackWithTs.skills || []).length || 1));
+
+            // Save to database
+            setSaving(true);
+            setSaveError(null);
+
+            const doSaveWithRetry = async (attempt = 1) => {
                 try {
-                    console.log("Messages at end call:", messages);
-                    console.log("Messages count:", messages.length);
+                    console.log(`Saving interview (attempt ${attempt})`);
+                    console.log(`Interview Data:
+                    - Duration: ${durationMinutes} minutes
+                    - Score: ${averageScore}
+                    - Messages: ${messages.length}
+                    - Transcript Messages:`);
 
-                    // Generate feedback
-                    const feedback = await generateFeedback(messages, session.position, session.interview_type);
+                    messages.forEach((msg, idx) => {
+                        console.log(`  [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 40)}...`);
+                    });
 
-                    // Attach generated timestamp to feedback for merging/ordering
-                    const feedbackWithTs = { ...feedback, generatedAt: new Date().toISOString() };
+                    await completeInterviewSession(sessionId!, {
+                        duration_minutes: durationMinutes,
+                        score: averageScore,
+                        transcript: messages,
+                        feedback: feedbackWithTs
+                        , status: 'completed'
+                    });
 
-                    // Store feedback in Zustand for instant UI display
-                    setFeedback(feedbackWithTs as any);
-
-                    // Calculate average score
-                    const averageScore = Math.round((feedbackWithTs.skills || []).reduce((acc: number, s: any) => acc + (s.score || 0), 0) / ((feedbackWithTs.skills || []).length || 1));
-
-                    // Save to database
-                    setSaving(true);
+                    setSaving(false);
                     setSaveError(null);
-
-                    const doSaveWithRetry = async (attempt = 1) => {
-                        try {
-                            console.log(`Saving interview (attempt ${attempt})`);
-
-                            await completeInterviewSession(sessionId!, {
-                                duration_minutes: durationMinutes,
-                                score: averageScore,
-                                transcript: messages,
-                                feedback: feedbackWithTs
-                                , status: 'completed'
-                            });
-
-                            setSaving(false);
-                            setSaveError(null);
-                            console.log('Interview saved successfully');
-                        } catch (err: any) {
-                            console.error(`Save attempt ${attempt} failed:`, err?.message || err);
-                            if (attempt < 3) {
-                                // exponential backoff
-                                const backoff = 1000 * Math.pow(2, attempt - 1);
-                                setTimeout(() => doSaveWithRetry(attempt + 1), backoff);
-                            } else {
-                                setSaving(false);
-                                setSaveError(err?.message || 'Failed to save interview');
-                                console.error('Failed to save interview after multiple attempts');
-                            }
-                        }
-                    };
-
-                    doSaveWithRetry();
-                } catch (error) {
-                    console.error("Error generating feedback:", error);
-                    setSaveError('Failed to generate interview feedback');
+                    console.log('✅ Interview saved successfully');
+                } catch (err: any) {
+                    console.error(`❌ Save attempt ${attempt} failed:`, err?.message || err);
+                    if (attempt < 3) {
+                        // exponential backoff
+                        const backoff = 1000 * Math.pow(2, attempt - 1);
+                        setTimeout(() => doSaveWithRetry(attempt + 1), backoff);
+                    } else {
+                        setSaving(false);
+                        setSaveError(err?.message || 'Failed to save interview');
+                        console.error('Failed to save interview after multiple attempts');
+                    }
                 }
-            }, 100); // Small delay to allow navigation to complete
-        } else {
-            // No session data - just disconnect and go to dashboard
-            toast.info("Interview ended.");
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 1000);
+            };
+
+            doSaveWithRetry();
+
+            toast.success("Interview ended. Generating your report...");
+
+            // Navigate to dashboard with progress indicator
+            navigate('/dashboard', {
+                state: {
+                    showReportProgress: true,
+                    sessionId: sessionId,
+                    message: "Your interview report is being generated. This may take a few moments..."
+                }
+            });
+        } catch (error) {
+            console.error("Error ending call:", error);
+            toast.error("Failed to end interview properly");
+            setIsEnding(false);
         }
+    };
+
+    // Handle coding challenge submission
+    const handleCodingSubmit = (code: string, language: string, timeSpent: number) => {
+        if (!currentCodingQuestion) return;
+
+        console.log('Coding challenge submitted, resuming audio');
+
+        // Save to store
+        addCodingChallenge({
+            id: crypto.randomUUID(),
+            question: currentCodingQuestion.question_text,
+            code,
+            language,
+            timeSpent,
+            submittedAt: new Date().toISOString()
+        });
+
+        // Send code to Aura for examination with context
+        const timeSpentMinutes = Math.floor(timeSpent / 60);
+        const timeSpentSeconds = timeSpent % 60;
+        const timeSpentText = timeSpentMinutes > 0
+            ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''} and ${timeSpentSeconds} second${timeSpentSeconds !== 1 ? 's' : ''}`
+            : `${timeSpentSeconds} second${timeSpentSeconds !== 1 ? 's' : ''}`;
+
+        const codeMessage = `I've completed the coding challenge. Time spent: ${timeSpentText}. Here's my ${language} solution:\n\`\`\`${language}\n${code}\n\`\`\`\n\nPlease review my solution and provide feedback.`;
+
+        // Add to messages
+        setMessages(prev => [...prev, {
+            id: Date.now(),
+            sender: 'user',
+            text: codeMessage,
+            timestamp: new Date().toISOString()
+        }]);
+
+        // Resume interview and audio
+        setIsCodingModalOpen(false);
+        setIsInterviewPaused(false);
+        setCurrentCodingQuestion(null);
+
+        // Resume audio recording and output
+        resumeRecording();
+        resumeAudioOutput();
+
+        // Send the message to Aura
+        sendTextMessage(codeMessage);
+
+        toast.success("Code submitted! Aura will review it now.");
+    };
+
+    // Handle coding challenge abort
+    const handleCodingAbort = () => {
+        console.log('Coding challenge aborted, resuming audio');
+
+        // Notify Aura that the candidate skipped the coding question
+        const abortMessage = "I'd like to skip this coding question and move on to the next part of the interview.";
+
+        setMessages(prev => [...prev, {
+            id: Date.now(),
+            sender: 'user',
+            text: abortMessage,
+            timestamp: new Date().toISOString()
+        }]);
+
+        setIsCodingModalOpen(false);
+        setIsInterviewPaused(false);
+        setCurrentCodingQuestion(null);
+
+        // Resume audio recording and output
+        resumeRecording();
+        resumeAudioOutput();
+
+        // Send the message to Aura
+        sendTextMessage(abortMessage);
+
+        toast.info("Coding challenge skipped. Interview resumed.");
     };
 
     const toggleMic = async () => {
@@ -494,9 +835,10 @@ export default function InterviewRoom() {
                             size="icon"
                             className="h-14 w-14 sm:h-16 sm:w-16 rounded-full shadow-2xl hover:scale-105 transition-transform bg-red-600 hover:bg-red-700 border-2 border-red-500"
                             onClick={handleEndCall}
+                            disabled={isEnding}
                             title="End Interview"
                         >
-                            <PhoneOff className="h-6 w-6 sm:h-8 sm:w-8" />
+                            {isEnding ? <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin" /> : <PhoneOff className="h-6 w-6 sm:h-8 sm:w-8" />}
                         </Button>
 
                         {/* Camera Toggle */}
@@ -515,6 +857,14 @@ export default function InterviewRoom() {
                     </div>
                 </div>
             </div>
+
+            {/* Coding Challenge Modal */}
+            <CodingChallengeModal
+                isOpen={isCodingModalOpen}
+                question={currentCodingQuestion?.question_text || ''}
+                onSubmit={handleCodingSubmit}
+                onAbort={handleCodingAbort}
+            />
         </div>
     );
 }

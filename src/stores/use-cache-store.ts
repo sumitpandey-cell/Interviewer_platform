@@ -11,6 +11,7 @@ interface InterviewSession {
   duration_minutes: number | null;
   completed_at: string | null;
   user_id: string;
+  config?: any; // JSONB field for storing interview configuration
   feedback?: any;
   transcript?: any;
 }
