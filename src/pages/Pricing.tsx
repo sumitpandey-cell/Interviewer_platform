@@ -80,12 +80,12 @@ export default function Pricing() {
 
     return (
         <DashboardLayout>
-            <div className="py-8 px-4 mx-auto max-w-7xl lg:px-6">
-                <div className="mx-auto max-w-2xl text-center mb-16">
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <div className="space-y-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                         Simple, transparent pricing
                     </h2>
-                    <p className="mt-4 text-lg text-slate-600">
+                    <p className="mt-4 text-lg text-muted-foreground">
                         Choose the plan that best fits your interview preparation needs.
                     </p>
                 </div>
@@ -95,12 +95,12 @@ export default function Pricing() {
                         <Card
                             key={plan.name}
                             className={`flex flex-col relative ${plan.popular
-                                ? 'border-indigo-600 shadow-xl lg:scale-105 z-10'
-                                : 'border-slate-200 shadow-sm hover:shadow-md transition-shadow'
+                                ? 'border-primary shadow-xl lg:scale-105 z-10 bg-card'
+                                : 'border-border shadow-sm hover:shadow-md transition-shadow bg-card'
                                 }`}
                         >
                             {plan.popular && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
                                     Most Popular
                                 </div>
                             )}
@@ -110,15 +110,15 @@ export default function Pricing() {
                             </CardHeader>
                             <CardContent className="flex-1">
                                 <div className="mb-6">
-                                    <span className="text-4xl font-bold">{plan.price}</span>
-                                    {plan.period && <span className="text-slate-500">{plan.period}</span>}
+                                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                                    {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
                                 </div>
-                                <div className="mb-6 p-3 bg-slate-50 rounded-lg text-center">
-                                    <span className="font-semibold text-slate-900">{plan.limit}</span>
+                                <div className="mb-6 p-3 bg-muted rounded-lg text-center">
+                                    <span className="font-semibold text-foreground">{plan.limit}</span>
                                 </div>
                                 <ul className="space-y-3">
                                     {plan.features.map((feature) => (
-                                        <li key={feature} className="flex items-start gap-3 text-sm text-slate-600">
+                                        <li key={feature} className="flex items-start gap-3 text-sm text-muted-foreground">
                                             <Check className="h-5 w-5 text-green-500 shrink-0" />
                                             <span>{feature}</span>
                                         </li>
@@ -128,9 +128,9 @@ export default function Pricing() {
                             <CardFooter>
                                 <Button
                                     className={`w-full ${plan.name === "Free" && subscriptionType === 'free'
-                                        ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-default'
+                                        ? 'bg-muted text-muted-foreground hover:bg-muted cursor-default'
                                         : plan.popular
-                                            ? 'bg-indigo-600 hover:bg-indigo-700'
+                                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                                             : ''
                                         }`}
                                     variant={plan.name === "Free" && subscriptionType === 'free' ? "ghost" : "default"}

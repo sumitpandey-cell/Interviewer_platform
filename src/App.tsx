@@ -24,135 +24,149 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/leaderboard"
-              element={
-                <ProtectedRoute>
-                  <Leaderboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/jobs"
-              element={
-                <ProtectedRoute>
-                  <Jobs />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/templates"
-              element={
-                <ProtectedRoute>
-                  <Templates />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/notifications"
-              element={
-                <ProtectedRoute>
-                  <AdminNotifications />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/start-interview"
-              element={
-                <ProtectedRoute>
-                  <StartInterview />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview/:sessionId/setup"
-              element={
-                <ProtectedRoute>
-                  <InterviewSetup />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview/:sessionId/active"
-              element={
-                <ProtectedRoute>
-                  <InterviewRoom />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview/:sessionId/report"
-              element={
-                <ProtectedRoute>
-                  <InterviewReport />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview/:sessionId/complete"
-              element={
-                <ProtectedRoute>
-                  <InterviewComplete />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview/:sessionId"
-              element={
-                <ProtectedRoute>
-                  <InterviewSetup />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/pricing"
-              element={
-                <ProtectedRoute>
-                  <Pricing />
-                </ProtectedRoute>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize theme
+  if (typeof window !== "undefined") {
+    const savedTheme = localStorage.getItem("theme");
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    if (savedTheme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.add("light");
+    }
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute>
+                    <Leaderboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/jobs"
+                element={
+                  <ProtectedRoute>
+                    <Jobs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/templates"
+                element={
+                  <ProtectedRoute>
+                    <Templates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/notifications"
+                element={
+                  <ProtectedRoute>
+                    <AdminNotifications />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/start-interview"
+                element={
+                  <ProtectedRoute>
+                    <StartInterview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId/setup"
+                element={
+                  <ProtectedRoute>
+                    <InterviewSetup />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId/active"
+                element={
+                  <ProtectedRoute>
+                    <InterviewRoom />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId/report"
+                element={
+                  <ProtectedRoute>
+                    <InterviewReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId/complete"
+                element={
+                  <ProtectedRoute>
+                    <InterviewComplete />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId"
+                element={
+                  <ProtectedRoute>
+                    <InterviewSetup />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pricing"
+                element={
+                  <ProtectedRoute>
+                    <Pricing />
+                  </ProtectedRoute>
+                }
+              />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

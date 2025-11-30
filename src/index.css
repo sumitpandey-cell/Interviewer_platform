@@ -54,20 +54,17 @@
   }
 
   .dark {
-    /* Dark Mode - Deep Space Theme (Keep existing dark mode or adjust?) 
-       The image shows a light mode dashboard with a dark sidebar. 
-       I will ensure the dark mode variables are also consistent if the user switches.
-    */
-    --background: 222 47% 11%;
+    /* Premium Dark Mode - Midnight Blue Theme */
+    --background: 224 71% 4%; /* Deep Midnight Blue */
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 47% 11%; /* Slate 900 for cards to pop against background */
     --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 217 91% 60%; /* Vibrant Blue for primary actions */
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -86,13 +83,13 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
 
-    --sidebar-background: 240 10% 3.9%;
+    --sidebar-background: 224 71% 4%; /* Match background */
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 222 47% 11%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }

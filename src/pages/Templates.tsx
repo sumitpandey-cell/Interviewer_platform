@@ -349,8 +349,8 @@ export default function Templates() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-gray-200">
+                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
@@ -358,10 +358,10 @@ export default function Templates() {
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                  <span className="text-sm font-medium text-foreground hidden sm:block">
                     {profile?.full_name?.split(' ')[0] || "User"}
                   </span>
-                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>

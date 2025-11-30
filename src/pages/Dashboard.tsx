@@ -185,10 +185,10 @@ export default function Dashboard() {
         {/* Header Section with Controls */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            <h1 className="text-3xl font-bold text-foreground mb-1">
               Good morning, {profile?.full_name?.split(' ')[0] || "James"}!
             </h1>
-            <p className="text-gray-500 text-sm">Aura: Your AI Voice Interviewer.</p>
+            <p className="text-muted-foreground text-sm">Aura: Your AI Voice Interviewer.</p>
           </div>
 
           {/* Header Controls */}
@@ -197,8 +197,8 @@ export default function Dashboard() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-gray-200">
+                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
@@ -206,10 +206,10 @@ export default function Dashboard() {
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                  <span className="text-sm font-medium text-foreground hidden sm:block">
                     {profile?.full_name?.split(' ')[0] || "User"}
                   </span>
-                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -221,7 +221,7 @@ export default function Dashboard() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
@@ -235,61 +235,61 @@ export default function Dashboard() {
         {/* Top Actions Section */}
         <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-6">
           <Button
-            className="h-auto w-full xl:w-auto px-8 xl:px-16 py-4 text-base bg-black hover:bg-gray-900 text-white rounded-2xl shadow-lg transition-transform hover:scale-105 font-medium"
+            className="h-auto w-full xl:w-auto px-8 xl:px-16 py-4 text-base bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-lg transition-transform hover:scale-105 font-medium"
             onClick={startInterview}
             disabled={loading || subscriptionLoading || !allowed}
           >
             {loading ? "Loading..." : "Start Interview"}
           </Button>
 
-          <div className="grid grid-cols-2 gap-6 md:gap-0 md:flex md:divide-x md:divide-gray-200 xl:ml-auto bg-white rounded-2xl p-6 md:px-8 md:py-5 shadow-sm border border-gray-200">
+          <div className="grid grid-cols-2 gap-6 md:gap-0 md:flex md:divide-x md:divide-border xl:ml-auto bg-card rounded-2xl p-6 md:px-8 md:py-5 shadow-sm border border-border">
             <div className="flex flex-col md:pr-8">
-              <span className="text-sm text-gray-500 mb-1 font-normal">Number of Interviews:</span>
+              <span className="text-sm text-muted-foreground mb-1 font-normal">Number of Interviews:</span>
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.totalInterviews || 0}</span>
+                <span className="text-2xl md:text-4xl font-bold text-foreground">{stats?.totalInterviews || 0}</span>
               )}
             </div>
 
             <div className="flex flex-col md:px-8">
-              <span className="text-sm text-gray-500 mb-1 font-normal">Total Timing:</span>
+              <span className="text-sm text-muted-foreground mb-1 font-normal">Total Timing:</span>
               {loading ? (
                 <Skeleton className="h-10 w-24" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{formatTime(stats?.timePracticed || 0)}</span>
+                <span className="text-2xl md:text-4xl font-bold text-foreground">{formatTime(stats?.timePracticed || 0)}</span>
               )}
             </div>
 
             <div className="flex flex-col md:px-8">
-              <span className="text-sm text-gray-500 mb-1 font-normal">Leaderboard Rank:</span>
+              <span className="text-sm text-muted-foreground mb-1 font-normal">Leaderboard Rank:</span>
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">#{stats?.rank || 0}</span>
+                <span className="text-2xl md:text-4xl font-bold text-foreground">#{stats?.rank || 0}</span>
               )}
             </div>
 
             <div className="flex flex-col md:pl-8">
-              <span className="text-sm text-gray-500 mb-1 font-normal">Average Score:</span>
+              <span className="text-sm text-muted-foreground mb-1 font-normal">Average Score:</span>
               {loading ? (
                 <Skeleton className="h-10 w-16" />
               ) : (
-                <span className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{stats?.averageScore || 0}%</span>
+                <span className="text-2xl md:text-4xl font-bold text-foreground">{stats?.averageScore || 0}%</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Interview List Section */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm">
+        <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Recent Interviews</h3>
+            <h3 className="text-lg font-bold text-foreground">Recent Interviews</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/reports')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               View All →
             </Button>
@@ -298,18 +298,18 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-left border-b border-gray-100">
-                  <th className="pb-4 font-medium text-gray-500 text-sm pl-4">Role</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm hidden sm:table-cell">Date</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Type</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm hidden lg:table-cell">Duration</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Status</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm hidden xl:table-cell">Feedback</th>
-                  <th className="pb-4 font-medium text-gray-500 text-sm text-right pr-4">Action</th>
+                <tr className="text-left border-b border-border">
+                  <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden sm:table-cell">Date</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Type</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden lg:table-cell">Duration</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Status</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden xl:table-cell">Feedback</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {loading ? (
                   [...Array(3)].map((_, i) => (
                     <tr key={i}>
@@ -325,9 +325,9 @@ export default function Dashboard() {
                   ))
                 ) : sessions?.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-gray-500">
+                    <td colSpan={8} className="py-12 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
-                        <FileText className="h-8 w-8 text-gray-300" />
+                        <FileText className="h-8 w-8 text-muted-foreground/50" />
                         <p>No interviews yet</p>
                       </div>
                     </td>
@@ -338,22 +338,22 @@ export default function Dashboard() {
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .slice(0, 7)
                     .map((session) => (
-                      <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
+                      <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
                         <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
-                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
+                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
                               {(session.position || 'General').substring(0, 2).toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-900">{session.position || 'General Interview'}</span>
+                            <span className="font-medium text-foreground">{session.position || 'General Interview'}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-gray-500 text-sm hidden sm:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm hidden sm:table-cell">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-gray-900 text-sm font-medium capitalize hidden md:table-cell">
+                        <td className="py-4 text-foreground text-sm font-medium capitalize hidden md:table-cell">
                           {session.interview_type?.replace('_', ' ') || 'General'}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm hidden lg:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm hidden lg:table-cell">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
@@ -362,14 +362,14 @@ export default function Dashboard() {
                         <td className="py-4 hidden md:table-cell">
                           <Badge
                             variant="secondary"
-                            className="font-normal px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#C8E6C9]"
+                            className="font-normal px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                           >
                             Completed
                           </Badge>
                         </td>
                         <td className="py-4">
-                          <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600' :
-                            (session.score || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+                            (session.score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                             }`}>
                             {session.score}%
                           </span>
@@ -377,9 +377,9 @@ export default function Dashboard() {
                         <td className="py-4 hidden xl:table-cell">
                           <div className="flex items-center gap-3">
                             {renderStars(session.score)}
-                            <div className="flex gap-1 ml-2 border-l pl-3 border-gray-200">
+                            <div className="flex gap-1 ml-2 border-l pl-3 border-border">
                               <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                              <ThumbsDown className="h-4 w-4 text-gray-300" />
+                              <ThumbsDown className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </div>
                         </td>
@@ -387,7 +387,7 @@ export default function Dashboard() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                            className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
                             onClick={() => navigate(`/interview/${session.id}/report`)}
                           >
                             Report

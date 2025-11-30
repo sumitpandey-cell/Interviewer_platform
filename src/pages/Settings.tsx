@@ -188,7 +188,7 @@ export default function Settings() {
         <DashboardLayout>
             <div className="w-full max-w-7xl space-y-8 pb-10 px-4 sm:px-6 lg:px-8">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Settings</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
                     <p className="text-muted-foreground mt-2 text-lg">
                         Manage your account settings and preferences.
                     </p>
@@ -208,8 +208,8 @@ export default function Settings() {
                                         className={cn(
                                             "flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap",
                                             isActive
-                                                ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-sm"
-                                                : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                ? "bg-primary text-primary-foreground shadow-sm"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                         )}
                                     >
                                         <Icon className="h-4 w-4" />
@@ -223,7 +223,7 @@ export default function Settings() {
                     {/* Content Area */}
                     <div className="flex-1 space-y-6">
                         {activeSection === "general" && (
-                            <Card className="border-none shadow-sm bg-white dark:bg-gray-800">
+                            <Card className="border-none shadow-sm bg-card">
                                 <CardHeader>
                                     <CardTitle>Profile Information</CardTitle>
                                     <CardDescription>Update your photo and personal details.</CardDescription>
@@ -232,9 +232,9 @@ export default function Settings() {
                                     <div className="flex flex-col sm:flex-row items-center gap-8">
                                         <div className="relative group">
                                             <Label htmlFor="avatar-upload" className="cursor-pointer block relative">
-                                                <Avatar className="h-24 w-24 border-4 border-white dark:border-gray-700 shadow-xl group-hover:opacity-90 transition-all">
+                                                <Avatar className="h-24 w-24 border-4 border-background shadow-xl group-hover:opacity-90 transition-all">
                                                     <AvatarImage src={getAvatarUrl(avatarUrl, user?.id || 'user')} />
-                                                    <AvatarFallback className="text-3xl bg-indigo-100 text-indigo-600">
+                                                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
                                                         {getInitials(fullName) || "U"}
                                                     </AvatarFallback>
                                                 </Avatar>
@@ -252,9 +252,9 @@ export default function Settings() {
                                             />
                                         </div>
                                         <div className="space-y-1 text-center sm:text-left">
-                                            <h3 className="font-bold text-xl text-gray-900 dark:text-white">{fullName || "User"}</h3>
-                                            <p className="text-sm text-gray-500">{email}</p>
-                                            <p className="text-xs text-indigo-600 font-medium mt-1">Free Plan</p>
+                                            <h3 className="font-bold text-xl text-foreground">{fullName || "User"}</h3>
+                                            <p className="text-sm text-muted-foreground">{email}</p>
+                                            <p className="text-xs text-primary font-medium mt-1">Free Plan</p>
                                         </div>
                                     </div>
 
@@ -276,7 +276,7 @@ export default function Settings() {
                                                 id="email"
                                                 value={email}
                                                 disabled
-                                                className="max-w-md bg-gray-50 dark:bg-gray-900"
+                                                className="max-w-md bg-muted"
                                             />
                                         </div>
                                         <div className="pt-2">
@@ -290,7 +290,7 @@ export default function Settings() {
                         )}
 
                         {activeSection === "notifications" && (
-                            <Card className="border-none shadow-sm bg-white dark:bg-gray-800">
+                            <Card className="border-none shadow-sm bg-card">
                                 <CardHeader>
                                     <CardTitle>Notification Preferences</CardTitle>
                                     <CardDescription>Choose what we communicate to you.</CardDescription>
@@ -354,7 +354,7 @@ export default function Settings() {
 
                         {activeSection === "security" && (
                             <div className="space-y-6">
-                                <Card className="border-none shadow-sm bg-white dark:bg-gray-800">
+                                <Card className="border-none shadow-sm bg-card">
                                     <CardHeader>
                                         <CardTitle>Password</CardTitle>
                                         <CardDescription>Change your password to keep your account secure.</CardDescription>
@@ -395,19 +395,19 @@ export default function Settings() {
                                     </CardContent>
                                 </Card>
 
-                                <Card className="border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 shadow-none">
+                                <Card className="border-destructive/20 bg-destructive/10 shadow-none">
                                     <CardHeader>
-                                        <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+                                        <CardTitle className="text-destructive flex items-center gap-2">
                                             <Trash2 className="h-5 w-5" />
                                             Delete Account
                                         </CardTitle>
-                                        <CardDescription className="text-red-600/80 dark:text-red-400/80">
+                                        <CardDescription className="text-destructive/80">
                                             Permanently delete your account and all of your content.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="flex items-center justify-between">
-                                            <p className="text-sm text-red-600/80 dark:text-red-400/80 max-w-md">
+                                            <p className="text-sm text-destructive/80 max-w-md">
                                                 Once you delete your account, there is no going back. Please be certain.
                                             </p>
                                             <Button variant="destructive" onClick={handleDeleteAccount}>
@@ -420,14 +420,14 @@ export default function Settings() {
                         )}
 
                         {activeSection === "billing" && (
-                            <Card className="border-none shadow-sm bg-white dark:bg-gray-800">
+                            <Card className="border-none shadow-sm bg-card">
                                 <CardHeader>
                                     <CardTitle>Billing & Plans</CardTitle>
                                     <CardDescription>Manage your subscription and payment methods.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="py-12 text-center">
-                                    <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                                        <CreditCard className="h-8 w-8 text-gray-400" />
+                                    <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                        <CreditCard className="h-8 w-8 text-muted-foreground" />
                                     </div>
                                     <h3 className="text-lg font-semibold mb-2">No Active Subscription</h3>
                                     <p className="text-muted-foreground max-w-sm mx-auto mb-6">
