@@ -1,8 +1,46 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus } from "lucide-react";
+import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus, Building2, Github, Twitter, Linkedin, Instagram, Mail, Mic } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
+};
+
+// Section Wrapper for consistent scroll animations
+const SectionWrapper = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => {
+  return (
+    <motion.section
+      id={id}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-100px" }}
+      variants={fadeInUp}
+      className={className}
+    >
+      {children}
+    </motion.section>
+  );
+};
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
@@ -140,8 +178,20 @@ export default function Landing() {
     { value: "4.9/5", label: "User Rating" },
   ];
 
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
+      {/* Scroll Progress Bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 origin-left z-[100]"
+        style={{ scaleX }}
+      />
       {/* Navbar */}
       {/* Navbar */}
       <header
@@ -248,37 +298,42 @@ export default function Landing() {
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0B] pt-32 pb-20">
         {/* Animated Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]" />
           <div className="absolute top-[20%] left-[50%] transform -translate-x-1/2 w-[800px] h-[800px] bg-blue-900/10 rounded-full blur-[100px]"></div>
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-5xl mx-auto text-center space-y-8">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="max-w-5xl mx-auto text-center space-y-8"
+          >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg">
+              <div className="h-2 w-2 rounded-full bg-green-400"></div>
               <span className="text-sm font-medium text-indigo-200">
                 New: AI Voice Intelligence 2.0
               </span>
-            </div>
+            </motion.div>
 
             {/* Heading */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-wide text-white animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
+            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-wide text-white">
               Ace Any Interview.
               <br />
               <span className="bg-gradient-to-r from-indigo-400/90 via-purple-400/90 to-pink-400/90 bg-clip-text text-transparent">
                 Powered by AI.
               </span>
-            </h1>
+            </motion.h1>
 
             {/* Subheading */}
-            <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
               Practice real interviews with AI scoring, analytics & feedback. Your personal AI interviewer that listens, analyzes, and trains like a hiring manager.
-            </p>
+            </motion.p>
 
             {/* Mini Text Line with Avatars */}
-            <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-9 duration-700 delay-250">
+            <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3">
               <div className="flex items-center -space-x-3">
                 {[
                   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=80&fit=crop&crop=faces",
@@ -298,35 +353,42 @@ export default function Landing() {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-indigo-200/80">
-                <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span className="flex h-2 w-2 rounded-full bg-green-400"></span>
                 Trusted by 20,000+ candidates
               </div>
-            </div>
+            </motion.div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
-              <Button
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg font-semibold shadow-lg shadow-blue-500/25 transition-all hover:scale-105"
-                asChild
-              >
-                <Link to="/auth">
-                  Start My Interview
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-slate-700 text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-8 h-14 text-lg font-semibold bg-transparent"
-                asChild
-              >
-                <Link to="#demo">Watch Demo</Link>
-              </Button>
-            </div>
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg font-semibold shadow-lg shadow-blue-500/25 transition-all"
+                  asChild
+                >
+                  <Link to="/auth">
+                    Start My Interview
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-slate-700 text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-8 h-14 text-lg font-semibold bg-transparent"
+                  asChild
+                >
+                  <Link to="#demo">Watch Demo</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
 
             {/* Dashboard Mockup */}
-            <div className="mt-16 relative mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+            <motion.div
+              variants={scaleIn}
+              className="mt-16 relative mx-auto max-w-5xl"
+            >
               {/* Dynamic Glow Behind Mockup */}
               <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] -z-10 opacity-40 blur-3xl"
@@ -371,128 +433,167 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Floating Elements (Decorative) */}
-              <div className="absolute -right-12 -bottom-12 hidden lg:block">
-                <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl max-w-xs transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-green-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">Performance Score</div>
-                      <div className="text-xs text-slate-400">Top 5% of candidates</div>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full w-[92%] bg-green-500 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -left-12 top-1/2 hidden lg:block">
-                <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl max-w-xs transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">Real-time Feedback</div>
-                      <div className="text-xs text-slate-400">AI analysis active</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
       {/* Features Section */}
-      <section id="features" className="py-24 bg-slate-50 relative overflow-hidden">
+      {/* Features Section */}
+      <SectionWrapper id="features" className="py-24 bg-slate-50 relative overflow-hidden">
 
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
+            <motion.h2
+              variants={fadeInUp}
+              className="text-3xl md:text-5xl font-bold text-slate-900 mb-4"
+            >
               Everything you need to ace the interview
-            </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-slate-400 text-lg max-w-2xl mx-auto"
+            >
               Our AI-powered platform provides a comprehensive suite of tools to help you prepare, practice, and perform.
-            </p>
+            </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
             {/* Feature 1: Voice-based AI Interviews (Large Card - Spans 2 cols on desktop) */}
-            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 overflow-hidden relative group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <motion.div variants={fadeInUp} className="md:col-span-2 relative rounded-[2.5rem] overflow-hidden border border-white/40 shadow-2xl group">
+              {/* Main Background Gradient - Ethereal Blue/Purple */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100"></div>
 
-              <div className="flex flex-col md:flex-row items-center gap-8 h-full">
-                <div className="flex-1 z-10">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3">Voice-based AI Interviews.</h3>
-                  <p className="text-slate-600 mb-6">Practice real-time scenarios with instant feedback. Our AI adapts to your responses just like a human interviewer.</p>
-                  <div className="flex items-center gap-2 text-indigo-400 font-medium">
-                    <div className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></div>
-                    Listening now...
-                  </div>
+              {/* Decorative Wave Lines (SVG) */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 800 400" preserveAspectRatio="none">
+                <path d="M0,100 C150,200 350,0 500,100 C650,200 750,100 800,150" fill="none" stroke="url(#wave-gradient-1)" strokeWidth="2" />
+                <path d="M0,150 C200,50 400,250 600,150 C700,100 800,200 800,200" fill="none" stroke="url(#wave-gradient-2)" strokeWidth="2" />
+                <defs>
+                  <linearGradient id="wave-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#60A5FA" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#818CF8" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#C084FC" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="wave-gradient-2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#A78BFA" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#C084FC" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Floating Particles */}
+              {/* Floating Particles */}
+              <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400 rounded-full blur-[1px] opacity-20"></div>
+              <div className="absolute bottom-20 right-1/3 w-3 h-3 bg-purple-400 rounded-full blur-[2px] opacity-20"></div>
+              <div className="absolute top-1/3 right-20 w-1.5 h-1.5 bg-indigo-400 rounded-full blur-[1px] opacity-20"></div>
+
+              {/* Content Container */}
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 p-10 h-full">
+
+                {/* Left Text Content */}
+                <div className="flex-1 text-left space-y-6">
+                  <h3 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
+                    Voice-based <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">AI Interviews.</span>
+                  </h3>
+                  <p className="text-slate-600 text-lg leading-relaxed max-w-md">
+                    Practice real-time scenarios with instant feedback. Our AI adapts to your responses just like a human interviewer.
+                  </p>
                 </div>
 
-                {/* Phone Mockup */}
-                <div className="relative w-[280px] h-[500px] bg-white rounded-[3rem] border-8 border-slate-900 shadow-2xl flex flex-col overflow-hidden transform rotate-3 group-hover:rotate-0 transition-transform duration-500">
-                  {/* Dynamic Island */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-20"></div>
+                {/* Right Visual Content - Phone & Avatar */}
+                <div className="relative w-full md:w-1/2 flex justify-center items-center perspective-1000">
 
-                  {/* Screen Content */}
-                  <div className="flex-1 bg-white relative flex flex-col items-center pt-16 px-6">
-                    <div className="w-full flex justify-between items-center mb-8">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                        <ArrowRight className="h-4 w-4 text-slate-900 rotate-180" />
+
+
+                  {/* Glassmorphism Phone Mockup */}
+                  <div className="relative w-[280px] h-[540px] rounded-[3rem] border-[6px] border-white/60 bg-white/20 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/50 transform rotate-[-6deg] group-hover:rotate-0 transition-transform duration-700">
+                    {/* Reflection */}
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-white/40 to-transparent pointer-events-none z-20"></div>
+
+                    {/* Screen Content */}
+                    <div className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-white/40 to-white/10">
+                      {/* Header */}
+                      <div className="px-6 pt-10 pb-4 flex items-center gap-4 relative z-10">
+                        <div className="h-8 w-8 rounded-full bg-white/40 flex items-center justify-center backdrop-blur-md shadow-sm cursor-pointer hover:bg-white/60 transition-colors">
+                          <ArrowRight className="h-4 w-4 text-slate-700 rotate-180" />
+                        </div>
+                        <span className="font-medium text-slate-800">Start Interview</span>
                       </div>
-                      <span className="text-slate-900 font-medium">Start Interview</span>
-                      <div className="h-8 w-8"></div>
-                    </div>
 
-                    <div className="relative w-40 h-40 mb-12 flex items-center justify-center">
-                      <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-ping"></div>
-                      <div className="absolute inset-4 bg-indigo-500/20 rounded-full blur-xl"></div>
-                      <div className="relative w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg border border-white/20">
-                        <div className="w-12 h-16 flex items-center justify-center gap-1">
-                          <div className="w-1.5 h-8 bg-white rounded-full animate-[bounce_1s_infinite]"></div>
-                          <div className="w-1.5 h-12 bg-white rounded-full animate-[bounce_1.2s_infinite]"></div>
-                          <div className="w-1.5 h-6 bg-white rounded-full animate-[bounce_0.8s_infinite]"></div>
+                      {/* Central Visualization */}
+                      <div className="flex-1 flex flex-col items-center justify-center -mt-8 relative z-10">
+                        <div className="relative w-56 h-56 flex items-center justify-center">
+                          {/* Outer Glow Ring */}
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400/20 via-purple-400/20 to-pink-400/20 blur-xl animate-pulse"></div>
+
+                          {/* Rotating Gradient Border */}
+                          <div className="absolute inset-4 rounded-full p-[2px] bg-gradient-to-tr from-blue-400 via-purple-500 to-pink-500">
+                            <div className="w-full h-full rounded-full bg-white/10 backdrop-blur-sm"></div>
+                          </div>
+
+                          {/* Static Dashed Ring */}
+                          <svg className="absolute inset-0 w-full h-full p-4" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="48" fill="none" stroke="url(#ring-gradient)" strokeWidth="1" strokeDasharray="4 6" strokeLinecap="round" />
+                            <defs>
+                              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#60A5FA" />
+                                <stop offset="100%" stopColor="#C084FC" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+
+                          {/* Center Circle */}
+                          <div className="relative w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center z-20">
+                            <Mic className="h-10 w-10 text-indigo-600" />
+                            <div className="absolute inset-0 rounded-full border border-indigo-100 opacity-20"></div>
+                          </div>
+                        </div>
+
+                        {/* Listening Status */}
+                        <div className="mt-2 text-center space-y-3">
+                          <div className="h-1.5 w-32 bg-slate-200/50 rounded-full mx-auto overflow-hidden backdrop-blur-sm">
+                            <div className="h-full w-1/2 bg-indigo-500 rounded-full animate-[translateX_1.5s_ease-in-out_infinite]"></div>
+                          </div>
+                          <p className="text-slate-700 text-sm font-medium">Listening now...</p>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="w-full space-y-3">
-                      <div className="h-2 bg-slate-100 rounded-full w-3/4 mx-auto"></div>
-                      <div className="h-2 bg-slate-100 rounded-full w-1/2 mx-auto"></div>
-                    </div>
-
-                    {/* Audio Waveform Visualization */}
-                    <div className="mt-auto mb-12 flex items-center justify-center gap-1 h-12 w-full px-4">
-                      {[...Array(20)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-1 bg-gradient-to-t from-indigo-500 to-purple-500 rounded-full"
-                          style={{
-                            height: `${Math.random() * 100}%`,
-                            animation: `pulse 0.5s infinite ${i * 0.05}s alternate`
-                          }}
-                        ></div>
-                      ))}
+                      {/* Bottom Waveform */}
+                      <div className="h-24 w-full flex items-center justify-center gap-1.5 px-8 pb-8 relative z-10">
+                        {[...Array(12)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="w-1.5 rounded-full bg-gradient-to-t from-indigo-500 to-purple-500 shadow-sm"
+                            style={{
+                              height: `${20 + Math.random() * 60}%`,
+                              animation: `pulse 0.8s infinite ${i * 0.1}s alternate`
+                            }}
+                          ></div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 2: Instant Score + Feedback */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
+            <motion.div variants={fadeInUp} className="bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">Instant Score + Feedback.</h3>
               <p className="text-slate-600 text-sm mb-6">Get detailed scoring and actionable tips immediately.</p>
 
-              <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-md">
+              {/* Original Score Visualization */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-md mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm text-slate-500">Recent Interview</span>
                   <div className="flex gap-0.5">
@@ -530,10 +631,60 @@ export default function Landing() {
                   </div>
                 </div>
               </div>
-            </div>
+
+              {/* New Skills Assessment Report */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-md space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="font-bold text-slate-900">Skills Assessment</h4>
+                  <span className="text-xs font-medium text-indigo-400">Report #2401</span>
+                </div>
+
+                {/* Technical Knowledge */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-semibold text-slate-800">Technical Knowledge</span>
+                    <span className="text-indigo-600 font-bold">15%</span>
+                  </div>
+                  <div className="h-2 bg-indigo-50 rounded-full overflow-hidden">
+                    <div className="h-full w-[15%] bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Superficial understanding of core concepts. Significant gaps in backend architecture.
+                  </p>
+                </div>
+
+                {/* Communication */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-semibold text-slate-800">Communication</span>
+                    <span className="text-indigo-600 font-bold">60%</span>
+                  </div>
+                  <div className="h-2 bg-indigo-50 rounded-full overflow-hidden">
+                    <div className="h-full w-[60%] bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Clear and direct articulation. Good at admitting knowledge gaps.
+                  </p>
+                </div>
+
+                {/* Problem Solving */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-semibold text-slate-800">Problem Solving</span>
+                    <span className="text-indigo-600 font-bold">10%</span>
+                  </div>
+                  <div className="h-2 bg-indigo-50 rounded-full overflow-hidden">
+                    <div className="h-full w-[10%] bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Difficulty applying theory to practical scenarios. Needs improvement in diagnosis.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
 
             {/* Feature 3: Skill Templates */}
-            <div className="md:col-span-3 bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
+            <motion.div variants={fadeInUp} className="md:col-span-3 bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
                 <div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Skill Templates.</h3>
@@ -551,22 +702,25 @@ export default function Landing() {
                   { id: "DI", title: "AI/ML Engineer", color: "bg-green-500" },
                   { id: "DE", title: "DevOps Engineer", color: "bg-orange-500" }
                 ].map((template, i) => (
-                  <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 hover:border-indigo-500/50 hover:shadow-md transition-all cursor-pointer group/card">
-                    <div className={`w-10 h-10 rounded-lg ${template.color}/10 flex items-center justify-center mb-4 text-${template.color.split('-')[1]}-600 font-bold`}>
+                  <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 hover:border-indigo-500/50 hover:shadow-md transition-all cursor-pointer group/card relative overflow-hidden">
+                    {/* Left Strip */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-500"></div>
+
+                    <div className={`w-10 h-10 rounded-lg ${template.color}/10 flex items-center justify-center mb-4 text-${template.color.split('-')[1]}-600 font-bold ml-2`}>
                       {template.id}
                     </div>
-                    <h4 className="text-slate-900 font-medium mb-2">{template.title}</h4>
-                    <p className="text-xs text-slate-500 mb-4 line-clamp-2">Comprehensive assessment for {template.title} roles including technical and behavioral questions.</p>
-                    <div className="text-xs font-medium text-indigo-400 group-hover/card:translate-x-1 transition-transform inline-flex items-center">
+                    <h4 className="text-slate-900 font-medium mb-2 ml-2">{template.title}</h4>
+                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 ml-2">Comprehensive assessment for {template.title} roles including technical and behavioral questions.</p>
+                    <div className="text-xs font-medium text-indigo-400 group-hover/card:translate-x-1 transition-transform inline-flex items-center ml-2">
                       Learn more <ArrowRight className="ml-1 h-3 w-3" />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 4: Leaderboard Gamification */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
+            <motion.div variants={fadeInUp} className="bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
               <h3 className="text-xl font-bold text-slate-900 mb-2">Leaderboard Gamification.</h3>
               <p className="text-slate-600 text-sm mb-6">Compete with others and climb the rankings.</p>
 
@@ -607,10 +761,10 @@ export default function Landing() {
                   <span className="text-xs font-bold text-green-600">#1</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 5: Smart Analytics Reports */}
-            <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
+            <motion.div variants={fadeInUp} className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 relative overflow-hidden group hover:border-indigo-500/30 hover:shadow-lg transition-all duration-500">
               <div className="flex flex-col md:flex-row items-center gap-8 h-full">
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-slate-900 mb-3">Smart Analytics Reports.</h3>
@@ -666,11 +820,7 @@ export default function Landing() {
                           className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
                         />
                       ))}
-
-
                     </svg>
-
-
                   </div>
 
                   {/* X Axis */}
@@ -685,16 +835,174 @@ export default function Landing() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </SectionWrapper>
+
+
+
+      {/* Testimonials Section */}
+      {/* Company Templates Section - Creative Redesign */}
+      <SectionWrapper className="pt-32 pb-12 bg-[#0A0A0B] relative overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]"></div>
+        </div>
+
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-indigo-300 text-sm font-medium mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <Building2 className="h-4 w-4" />
+              <span>Premium Company Tracks</span>
             </div>
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+              Crack the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Big Tech</span> Code
+            </h2>
+            <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              Don't practice randomly. Train with the exact questions, patterns, and evaluation criteria used by top tech giants.
+            </p>
+          </div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+          >
+            {/* Google Card */}
+            <motion.div variants={fadeInUp} className="group relative rounded-[2rem] bg-gradient-to-b from-slate-800/50 to-slate-900/50 border border-white/10 p-1 hover:border-indigo-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem]"></div>
+
+              <div className="relative h-full bg-[#0f1117] rounded-[1.9rem] p-8 overflow-hidden">
+                {/* Floating Badge */}
+                <div className="absolute top-6 right-6 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold">
+                  Most Popular
+                </div>
+
+                {/* Logo Area */}
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                  <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 relative z-10"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">Google</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  Master the art of "Googleyness", dynamic programming, and scalable system design.
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  {[
+                    { label: "Algorithm Challenges", color: "text-green-400" },
+                    { label: "System Design", color: "text-blue-400" },
+                    { label: "Googleyness & Leadership", color: "text-yellow-400" }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 group/item">
+                      <div className={`h-1.5 w-1.5 rounded-full ${item.color.replace('text', 'bg')} group-hover/item:scale-150 transition-transform`}></div>
+                      <span className="text-sm text-slate-300 group-hover/item:text-white transition-colors">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl py-6 font-medium group-hover:border-indigo-500/50 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300" asChild>
+                  <Link to="/templates">
+                    Start Practice
+                    <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Amazon Card */}
+            <motion.div variants={fadeInUp} className="group relative rounded-[2rem] bg-gradient-to-b from-slate-800/50 to-slate-900/50 border border-white/10 p-1 hover:border-orange-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem]"></div>
+
+              <div className="relative h-full bg-[#0f1117] rounded-[1.9rem] p-8 overflow-hidden">
+                {/* Logo Area */}
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                  <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8 relative z-10"><path d="M13.6 15.6c-.9.5-2.5.9-4.1.4-1.9-.6-3.1-2.6-2.8-4.6.2-1.3 1-2.4 2.2-2.9 1.6-.6 3.4-.1 4.5 1.1.2.2.2.6 0 .8-.2.2-.5.2-.7 0-.9-1-2.3-1.4-3.6-.9-1 .4-1.6 1.3-1.8 2.4-.2 1.6.8 3.2 2.4 3.7 1.3.4 2.6.1 3.4-.4.2-.1.5-.1.7.1.1.3.1.6-.2.7zm5.5-5.4h-1.6v4.6c0 .6-.4 1.1-1 1.1s-1-.5-1-1.1v-4.6h-1.6v4.7c0 1.4 1.1 2.6 2.5 2.6s2.6-1.1 2.6-2.6v-4.7z" /></svg>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-orange-300 transition-colors">Amazon</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  Deep dive into the 16 Leadership Principles and survive the Bar Raiser.
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  {[
+                    { label: "Leadership Principles", color: "text-orange-400" },
+                    { label: "Bar Raiser Prep", color: "text-red-400" },
+                    { label: "System Design", color: "text-blue-400" }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 group/item">
+                      <div className={`h-1.5 w-1.5 rounded-full ${item.color.replace('text', 'bg')} group-hover/item:scale-150 transition-transform`}></div>
+                      <span className="text-sm text-slate-300 group-hover/item:text-white transition-colors">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl py-6 font-medium group-hover:border-orange-500/50 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300" asChild>
+                  <Link to="/templates">
+                    Start Practice
+                    <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Microsoft Card */}
+            <motion.div variants={fadeInUp} className="group relative rounded-[2rem] bg-gradient-to-b from-slate-800/50 to-slate-900/50 border border-white/10 p-1 hover:border-blue-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem]"></div>
+
+              <div className="relative h-full bg-[#0f1117] rounded-[1.9rem] p-8 overflow-hidden">
+                {/* Logo Area */}
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 relative">
+                  <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 relative z-10"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" fill="#F25022" /><path d="M11.4 24H0V12.6h11.4V24z" fill="#00A4EF" /><path d="M24 24H12.6V12.6H24V24z" fill="#7FBA00" /><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#F25022" /><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900" /></svg>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">Microsoft</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  Prepare for technical rounds, OOP design, and behavioral questions.
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  {[
+                    { label: "Data Structures", color: "text-blue-400" },
+                    { label: "Object-Oriented Design", color: "text-green-400" },
+                    { label: "Culture Fit", color: "text-yellow-400" }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 group/item">
+                      <div className={`h-1.5 w-1.5 rounded-full ${item.color.replace('text', 'bg')} group-hover/item:scale-150 transition-transform`}></div>
+                      <span className="text-sm text-slate-300 group-hover/item:text-white transition-colors">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl py-6 font-medium group-hover:border-blue-500/50 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300" asChild>
+                  <Link to="/templates">
+                    Start Practice
+                    <ArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <div className="mt-12 text-center">
+            <Link to="/templates" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors border-b border-transparent hover:border-white pb-0.5 group">
+              View all 50+ companies
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
         </div>
-      </section>
-
-
+      </SectionWrapper>
 
       {/* Testimonials Section */}
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-24 bg-[#0A0A0B] overflow-hidden">
+      <SectionWrapper id="testimonials" className="pt-12 pb-24 bg-[#0A0A0B] overflow-hidden">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <span className="inline-block py-2 px-4 rounded-full bg-pink-500/10 text-pink-400 text-sm font-semibold border border-pink-500/20 mb-4">
@@ -752,58 +1060,206 @@ export default function Landing() {
             </div>
           </div>
         </div>
-      </section>
+      </SectionWrapper>
 
-      {/* Final CTA Section */}
-      <section className="relative py-24 overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
-
-        {/* Animated Particles */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      {/* Final CTA Section - Creative Dark Gradient Design */}
+      <SectionWrapper className="py-20 bg-gradient-to-br from-slate-900 via-[#0B1120] to-slate-900 relative overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[100px] opacity-40"></div>
+          <div className="absolute bottom-[10%] -left-[10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] opacity-40"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
         </div>
 
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Ready to Ace Your Interview?
-          </h2>
-          <p className="text-xl md:text-2xl text-indigo-100 mb-12 max-w-2xl mx-auto">
-            Join thousands of professionals who've landed their dream jobs with our AI-powered practice platform
-          </p>
-          <Button
-            size="lg"
-            className="bg-white text-indigo-600 hover:bg-indigo-50 rounded-full px-10 h-16 text-xl font-bold shadow-2xl hover:shadow-white/20 transition-all hover:scale-105"
-            asChild
-          >
-            <Link to="/auth">
-              Start Your Free Practice
-              <ArrowRight className="ml-2 h-6 w-6" />
-            </Link>
-          </Button>
-          <p className="text-indigo-200 mt-6 text-sm">
-            No credit card required • 30 minutes free daily
-          </p>
-        </div>
-      </section>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            {/* Text Content */}
+            <div className="space-y-8 relative">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-indigo-300 text-sm font-medium border border-white/10 shadow-sm">
+                <Sparkles className="h-4 w-4" />
+                <span>Limited Time Offer</span>
+              </div>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-12">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2 text-xl font-bold">
-              <Brain className="h-8 w-8 text-indigo-600" />
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Aura
-              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+                Ready to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Ace</span> Your Next Interview?
+              </h2>
+
+              <p className="text-lg text-slate-400 leading-relaxed">
+                Join 50,000+ candidates who are landing offers at Google, Meta, and Amazon. Start your free practice session today.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-6 pt-2">
+                <Button
+                  size="lg"
+                  className="bg-white hover:bg-indigo-50 text-indigo-900 rounded-full px-8 h-14 text-lg font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105"
+                  asChild
+                >
+                  <Link to="/auth">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <div className="flex items-center gap-4 px-2">
+                  <div className="flex -space-x-4">
+                    {[
+                      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
+                      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
+                      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
+                    ].map((src, i) => (
+                      <div key={i} className="w-12 h-12 rounded-full border-2 border-slate-900 shadow-sm overflow-hidden">
+                        <img
+                          src={src}
+                          alt="User"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-sm">
+                    <div className="flex text-yellow-400 mb-0.5">
+                      {[1, 2, 3, 4, 5].map(i => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}
+                    </div>
+                    <span className="text-slate-300 font-semibold">4.9/5 Rating</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-slate-500 text-sm">
-              © 2025 Aura AI Interview Practice. All rights reserved.
+
+            {/* Visual/Interactive Element */}
+            <div className="relative hidden md:block perspective-1000">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl transform rotate-3 scale-95 blur-xl"></div>
+              <div className="relative bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8 transform -rotate-2 hover:rotate-0 transition-all duration-500 group">
+                {/* Mock Interview Card */}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Brain className="h-7 w-7 text-indigo-400" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-white text-xl">System Design</div>
+                      <div className="text-sm text-slate-400">Google • L5 Senior</div>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-bold border border-green-500/30">Passed</span>
+                </div>
+
+                <div className="space-y-5 mb-8">
+                  <div className="h-3 bg-white/10 rounded-full w-3/4"></div>
+                  <div className="h-3 bg-white/10 rounded-full w-full"></div>
+                  <div className="h-3 bg-white/10 rounded-full w-5/6"></div>
+                </div>
+
+                <div className="flex items-center justify-between pt-6 border-t border-white/10">
+                  <div className="text-base font-medium text-slate-400">Overall Score</div>
+                  <div className="text-3xl font-bold text-indigo-400">92/100</div>
+                </div>
+              </div>
+
+              {/* Floating Elements */}
+              <div className="absolute -top-8 -right-8 bg-[#0B1120] p-4 rounded-2xl shadow-lg border border-white/10">
+                <Target className="h-8 w-8 text-red-400" />
+              </div>
+              <div className="absolute -bottom-8 -left-8 bg-[#0B1120] p-4 rounded-2xl shadow-lg border border-white/10">
+                <CheckCircle2 className="h-8 w-8 text-green-400" />
+              </div>
             </div>
           </div>
         </div>
-      </footer>
+      </SectionWrapper>
+
+      {/* Footer */}
+      <SectionWrapper className="bg-[#0A0A0B] border-t border-white/10 pt-20 pb-10">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16">
+            {/* Brand Column */}
+            <div className="lg:col-span-2">
+              <Link to="/" className="flex items-center gap-2 text-xl font-bold mb-6">
+                <div className="relative">
+                  <Brain className="h-8 w-8 text-indigo-500" />
+                  <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+                </div>
+                <span className="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">
+                  Aura
+                </span>
+              </Link>
+              <p className="text-slate-400 mb-6 leading-relaxed max-w-sm">
+                The AI-powered interview preparation platform that helps you land your dream job at top tech companies.
+              </p>
+              <div className="flex gap-4">
+                {[Twitter, Github, Linkedin, Instagram].map((Icon, i) => (
+                  <a key={i} href="#" className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-indigo-500 hover:text-white transition-all duration-300">
+                    <Icon className="h-5 w-5" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Links Columns */}
+            <div>
+              <h4 className="text-white font-semibold mb-6">Product</h4>
+              <ul className="space-y-4">
+                {['Features', 'Pricing', 'Testimonials', 'FAQ'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-6">Company</h4>
+              <ul className="space-y-4">
+                {['About Us', 'Careers', 'Blog', 'Contact'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-6">Resources</h4>
+              <ul className="space-y-4">
+                {['Community', 'Help Center', 'Terms of Service', 'Privacy Policy'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Newsletter Column */}
+            <div className="lg:col-span-1">
+              <h4 className="text-white font-semibold mb-6">Stay Updated</h4>
+              <p className="text-slate-400 text-sm mb-4">Subscribe to our newsletter for the latest interview tips.</p>
+              <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600"
+                  />
+                </div>
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                  Subscribe
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-slate-500 text-sm">
+              © 2025 Aura AI. All rights reserved.
+            </p>
+            <div className="flex gap-6 text-sm text-slate-500">
+              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </SectionWrapper>
     </div>
   );
 }
