@@ -385,13 +385,13 @@ export default function Templates() {
         </div>
 
         <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8">
+          <TabsList className="mb-6">
             <TabsTrigger value="general">General Templates</TabsTrigger>
             <TabsTrigger value="company">Company Templates</TabsTrigger>
           </TabsList>
 
           {/* Category Tabs and Search Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Category Tabs */}
             <div className="flex gap-2 items-center overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
               {categories.map((category) => (
@@ -418,9 +418,6 @@ export default function Templates() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
-
-          <TabsContent value="general" className="mt-0 space-y-6">
             {searchTerm && (
               <p className="text-sm text-muted-foreground mb-4">
                 Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
