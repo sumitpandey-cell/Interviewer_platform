@@ -264,8 +264,8 @@ export default function Templates() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-gray-200">
+                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
@@ -273,10 +273,10 @@ export default function Templates() {
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                  <span className="text-sm font-medium text-foreground hidden sm:block">
                     {profile?.full_name?.split(' ')[0] || "User"}
                   </span>
-                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -308,8 +308,8 @@ export default function Templates() {
                 key={category}
                 onClick={() => setActiveCategory(category)}
                 className={`px-6 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${activeCategory === category
-                  ? "bg-black text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card text-muted-foreground border border-border hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
                   }`}
               >
                 {category}
@@ -337,19 +337,19 @@ export default function Templates() {
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white border border-gray-100 rounded-2xl overflow-hidden">
+            <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-card border border-border rounded-2xl overflow-hidden">
               <CardContent className="p-8 flex flex-col h-full">
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                     <template.icon className={`h-6 w-6 ${template.color}`} />
                   </div>
                   <div className="flex-1 min-w-0 space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {template.title}
                     </h3>
                     <div className="flex gap-2 items-center">
-                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 whitespace-nowrap">
+                      <Badge variant="outline" className="text-xs border-border text-muted-foreground whitespace-nowrap">
                         {template.interviewType}
                       </Badge>
                       <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
@@ -362,12 +362,12 @@ export default function Templates() {
                 {/* Skill and Description Labels */}
                 <div className="space-y-2 text-sm mb-4 flex-1">
                   <div className="flex gap-2">
-                    <span className="text-gray-500 font-normal">Skill</span>
-                    <span className="text-gray-900 font-medium">{template.skills[0]}</span>
+                    <span className="text-muted-foreground font-normal">Skill</span>
+                    <span className="text-foreground font-medium">{template.skills[0]}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-gray-500 font-normal">Desc</span>
-                    <span className="text-gray-900 font-medium">
+                    <span className="text-muted-foreground font-normal">Desc</span>
+                    <span className="text-foreground font-medium">
                       {template.description}
                     </span>
                   </div>
@@ -375,9 +375,9 @@ export default function Templates() {
 
                 {/* Duration and Button */}
                 <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
-                  <span className="text-2xl font-bold text-gray-900">30m</span>
+                  <span className="text-2xl font-bold text-foreground">30m</span>
                   <Button
-                    className="w-auto px-8 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                    className="w-auto px-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
                     onClick={() => startInterviewWithTemplate(template)}
                     disabled={loadingTemplate === template.id}
                   >

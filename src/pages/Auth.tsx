@@ -193,27 +193,27 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center gap-3">
         <div className="relative">
           <Brain className="h-14 w-14 text-indigo-600" />
           <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Aura
           </h1>
           <p className="text-xs text-muted-foreground">AI Interview Practice</p>
         </div>
       </div>
 
-      <Card className="w-full max-w-md shadow-xl border-0 bg-white">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-card">
         <CardHeader className="space-y-4">
-          <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+          <div className="flex gap-2 p-1 bg-muted rounded-lg">
             <Button
               type="button"
               variant={!isSignUp ? "default" : "ghost"}
-              className={`flex-1 transition-all ${!isSignUp ? "shadow-sm bg-white text-slate-900 hover:bg-white/90" : "hover:bg-slate-200"}`}
+              className={`flex-1 transition-all ${!isSignUp ? "shadow-sm bg-card text-foreground hover:bg-card/90" : "hover:bg-muted/80"}`}
               onClick={() => switchMode(false)}
             >
               Sign In
@@ -221,7 +221,7 @@ export default function Auth() {
             <Button
               type="button"
               variant={isSignUp ? "default" : "ghost"}
-              className={`flex-1 transition-all ${isSignUp ? "shadow-sm bg-white text-slate-900 hover:bg-white/90" : "hover:bg-slate-200"}`}
+              className={`flex-1 transition-all ${isSignUp ? "shadow-sm bg-card text-foreground hover:bg-card/90" : "hover:bg-muted/80"}`}
               onClick={() => switchMode(true)}
             >
               Sign Up
@@ -244,13 +244,13 @@ export default function Auth() {
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                 <div className="flex flex-col items-center space-y-4 mb-4">
                   <Label htmlFor="avatar-upload" className="cursor-pointer group relative">
-                    <Avatar className="h-24 w-24 border-4 border-slate-100 group-hover:border-indigo-100 transition-colors">
+                    <Avatar className="h-24 w-24 border-4 border-muted group-hover:border-primary/20 transition-colors">
                       <AvatarImage src={avatarPreview || ""} />
-                      <AvatarFallback className="bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-400 transition-colors">
+                      <AvatarFallback className="bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                         <Upload className="h-8 w-8" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute bottom-0 right-0 bg-indigo-600 rounded-full p-1.5 text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1.5 text-primary-foreground shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                       <Upload className="h-3 w-3" />
                     </div>
                   </Label>
@@ -355,7 +355,7 @@ export default function Auth() {
                 />
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full h-11 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground"
                   disabled={signUpForm.formState.isSubmitting}
                 >
                   {signUpForm.formState.isSubmitting ? (
@@ -430,7 +430,7 @@ export default function Auth() {
                 />
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full h-11 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground"
                   disabled={signInForm.formState.isSubmitting}
                 >
                   {signInForm.formState.isSubmitting ? (
@@ -451,7 +451,7 @@ export default function Auth() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">
+              <span className="bg-card px-2 text-muted-foreground">
                 Or continue with
               </span>
             </div>
@@ -460,7 +460,7 @@ export default function Auth() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 mb-6 border hover:bg-gray-50 transition-colors"
+            className="w-full h-11 mb-6 border hover:bg-accent transition-colors"
             onClick={handleGoogleSignIn}
           >
             <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -489,7 +489,7 @@ export default function Auth() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">
+              <span className="bg-card px-2 text-muted-foreground">
                 {isSignUp ? "Already have an account?" : "Don't have an account?"}
               </span>
             </div>
@@ -498,7 +498,7 @@ export default function Auth() {
           <div className="text-center">
             <button
               onClick={() => switchMode(!isSignUp)}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary/90 transition-colors"
             >
               {isSignUp ? "Sign in instead" : "Create a new account"}
             </button>

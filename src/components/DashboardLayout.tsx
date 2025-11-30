@@ -231,20 +231,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="p-4 space-y-4 mt-auto">
           {/* Streak Card */}
           {!sidebarCollapsed ? (
-            <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 shadow-lg relative overflow-hidden group">
+            <div className="bg-sidebar-accent rounded-2xl p-4 border border-sidebar-border shadow-lg relative overflow-hidden group">
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-transparent rounded-lg">
                   <Flame className="h-6 w-6 text-orange-500 fill-orange-500" />
                 </div>
                 <div>
-                  <p className="text-white font-bold text-sm">Streak</p>
-                  <p className="text-xs text-gray-400">{streak} Day Streak</p>
+                  <p className="text-sidebar-foreground font-bold text-sm">Streak</p>
+                  <p className="text-xs text-sidebar-foreground/70">{streak} Day Streak</p>
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex justify-center" title={`${streak} Day Streak`}>
-              <div className="p-2 bg-[#18181b] rounded-lg border border-white/5">
+              <div className="p-2 bg-sidebar-accent rounded-lg border border-sidebar-border">
                 <Flame className="h-5 w-5 text-orange-500 fill-orange-500" />
               </div>
             </div>
@@ -252,16 +252,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Upgrade Card */}
           {!sidebarCollapsed ? (
-            <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 shadow-lg text-center relative overflow-hidden">
+            <div className="bg-sidebar-accent rounded-2xl p-4 border border-sidebar-border shadow-lg text-center relative overflow-hidden">
               <Button
-                className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold rounded-xl mb-3 h-10"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl mb-3 h-10"
                 onClick={() => navigate("/pricing")}
               >
                 Upgrade
               </Button>
-              <div className="text-xs text-gray-400 font-medium">
+              <div className="text-xs text-sidebar-foreground/70 font-medium">
                 Remaining Time:
-                <div className="text-sm font-bold text-white mt-1 font-mono">
+                <div className="text-sm font-bold text-sidebar-foreground mt-1 font-mono">
                   {Math.floor(remaining_minutes / 60)
                     .toString()
                     .padStart(2, "0")}
@@ -277,7 +277,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex justify-center">
               <Button
                 size="icon"
-                className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-xl shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg"
                 onClick={() => navigate("/pricing")}
               >
                 <Sparkles className="h-5 w-5" />

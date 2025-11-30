@@ -268,8 +268,8 @@ export default function Reports() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex bg-white items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-gray-200">
+                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
@@ -277,10 +277,10 @@ export default function Reports() {
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
+                  <span className="text-sm font-medium text-foreground hidden sm:block">
                     {profile?.full_name?.split(' ')[0] || "User"}
                   </span>
-                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -292,7 +292,7 @@ export default function Reports() {
                   <SettingsIcon className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="text-red-600">
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
@@ -305,10 +305,10 @@ export default function Reports() {
 
         {/* Statistics Section */}
         {completedSessions.length > 0 && (
-          <div className="bg-white rounded-2xl px-8 py-5 shadow-sm border border-gray-200">
+          <div className="bg-card rounded-2xl px-8 py-5 shadow-sm border border-border">
             <Tabs defaultValue="overall" className="w-full">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-900">Statistics</h3>
+                <h3 className="text-lg font-bold text-foreground">Statistics</h3>
                 <TabsList className="grid w-[280px] grid-cols-2">
                   <TabsTrigger value="overall">Overall</TabsTrigger>
                   <TabsTrigger value="filtered">Filtered</TabsTrigger>
@@ -316,25 +316,25 @@ export default function Reports() {
               </div>
 
               <TabsContent value="overall" className="mt-0">
-                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-gray-200 md:gap-0">
+                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-border md:gap-0">
                   <div className="flex flex-col md:pr-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Total Interviews</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{sessions.length}</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Total Interviews</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{sessions.length}</span>
                   </div>
 
                   <div className="flex flex-col md:px-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Completed</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{completedSessions.length}</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Completed</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{completedSessions.length}</span>
                   </div>
 
                   <div className="flex flex-col md:px-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Average Score</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{averageScore}%</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Average Score</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{averageScore}%</span>
                   </div>
 
                   <div className="flex flex-col md:pl-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Practice Time</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Practice Time</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">
                       {Math.floor(sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) / 60)}h {sessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) % 60}m
                     </span>
                   </div>
@@ -342,25 +342,25 @@ export default function Reports() {
               </TabsContent>
 
               <TabsContent value="filtered" className="mt-0">
-                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-gray-200 md:gap-0">
+                <div className="grid grid-cols-2 gap-6 md:flex md:divide-x md:divide-border md:gap-0">
                   <div className="flex flex-col md:pr-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Showing</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredAndSortedSessions.length}</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Showing</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{filteredAndSortedSessions.length}</span>
                   </div>
 
                   <div className="flex flex-col md:px-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Completed</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredCompletedSessions.length}</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Completed</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{filteredCompletedSessions.length}</span>
                   </div>
 
                   <div className="flex flex-col md:px-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Average Score</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">{filteredAverageScore}%</span>
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Average Score</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">{filteredAverageScore}%</span>
                   </div>
 
                   <div className="flex flex-col md:pl-8">
-                    <span className="text-sm text-gray-500 mb-1 font-normal">Practice Time</span>
-                    <span className="text-2xl md:text-4xl font-bold text-gray-900">
+                    <span className="text-sm text-muted-foreground mb-1 font-normal">Practice Time</span>
+                    <span className="text-2xl md:text-4xl font-bold text-foreground">
                       {Math.floor(filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) / 60)}h {filteredAndSortedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) % 60}m
                     </span>
                   </div>
@@ -374,11 +374,11 @@ export default function Reports() {
         {completedSessions.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Trend Analysis */}
-            <Card className="col-span-1 lg:col-span-2 border-none shadow-sm">
+            <Card className="col-span-1 lg:col-span-2 border-none shadow-sm bg-card">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">Trend Analysis</h3>
+                    <h3 className="text-lg font-bold text-foreground">Trend Analysis</h3>
                     <p className="text-sm text-muted-foreground">Average Score Over Time</p>
                   </div>
                 </div>
@@ -392,22 +392,22 @@ export default function Reports() {
                         date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                         score: s.score,
                       }))}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis
                         dataKey="date"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         dy={10}
                       />
                       <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         domain={[0, 100]}
                       />
                       <Tooltip
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))' }}
                         cursor={{ stroke: '#3B82F6', strokeWidth: 2 }}
                       />
                       <Line
@@ -425,10 +425,10 @@ export default function Reports() {
             </Card>
 
             {/* Performance by Skill */}
-            <Card className="col-span-1 border-none shadow-sm">
+            <Card className="col-span-1 border-none shadow-sm bg-card">
               <CardContent className="p-6">
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Performance by Type</h3>
+                  <h3 className="text-lg font-bold text-foreground">Performance by Type</h3>
                   <p className="text-sm text-muted-foreground">Average Score by Category</p>
                 </div>
                 <div className="h-[300px] w-full">
@@ -446,12 +446,12 @@ export default function Reports() {
                         name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
                         score: Math.round(data.total / data.count)
                       }))}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#6B7280', fontSize: 12 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         dy={10}
                       />
                       <YAxis
@@ -459,8 +459,8 @@ export default function Reports() {
                         domain={[0, 100]}
                       />
                       <Tooltip
-                        cursor={{ fill: '#F3F4F6' }}
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        cursor={{ fill: 'hsl(var(--muted)/0.5)' }}
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))' }}
                       />
                       <Bar
                         dataKey="score"
@@ -479,10 +479,10 @@ export default function Reports() {
         )}
 
         {sessions.length === 0 ? (
-          <Card className="border-none shadow-md">
+          <Card className="border-none shadow-md bg-card">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Interview Reports Yet</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">No Interview Reports Yet</h3>
               <p className="text-muted-foreground mb-6">
                 Complete your first interview to see detailed reports and analytics here.
               </p>
@@ -498,7 +498,7 @@ export default function Reports() {
               <div className="flex flex-col sm:flex-row gap-4 items-center">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Filters:</span>
+                  <span className="text-sm font-medium text-foreground">Filters:</span>
                 </div>
 
                 <div className="flex flex-wrap gap-3 flex-1">
@@ -506,11 +506,11 @@ export default function Reports() {
                     placeholder="Search by position or type..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full sm:w-64"
+                    className="w-full sm:w-64 bg-background"
                   />
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
+                    <SelectTrigger className="w-full sm:w-40 bg-background">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -521,7 +521,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={positionFilter} onValueChange={setPositionFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
+                    <SelectTrigger className="w-full sm:w-40 bg-background">
                       <SelectValue placeholder="Position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -533,7 +533,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-48">
+                    <SelectTrigger className="w-full sm:w-48 bg-background">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -574,40 +574,40 @@ export default function Reports() {
             <div className="border-t border-border" />
 
             {/* Reports List Section */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold mb-6 text-gray-900">All Interview Reports</h3>
+            <div className="bg-card rounded-3xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left border-b border-gray-100">
-                      <th className="pb-4 font-medium text-gray-500 text-sm pl-4">Position</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm hidden sm:table-cell">Date</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Type</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm hidden lg:table-cell">Duration</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm hidden md:table-cell">Status</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm">Score</th>
-                      <th className="pb-4 font-medium text-gray-500 text-sm text-right pr-4">Action</th>
+                    <tr className="text-left border-b border-border">
+                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Position</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden sm:table-cell">Date</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Type</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden lg:table-cell">Duration</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Status</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-border">
                     {filteredAndSortedSessions.map((session) => (
-                      <tr key={session.id} className="group hover:bg-gray-50/50 transition-colors">
+                      <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
                         <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
                               {session.position.substring(0, 2).toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-900">{session.position}</span>
+                            <span className="font-medium text-foreground">{session.position}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-gray-500 text-sm hidden sm:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm hidden sm:table-cell">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm capitalize hidden md:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm capitalize hidden md:table-cell">
                           {session.interview_type.replace('_', ' ')}
                         </td>
-                        <td className="py-4 text-gray-500 text-sm hidden lg:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm hidden lg:table-cell">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
@@ -618,13 +618,13 @@ export default function Reports() {
                         </td>
                         <td className="py-4">
                           {session.score !== null ? (
-                            <span className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600' :
-                              session.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            <span className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
+                              session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                               }`}>
                               {session.score}%
                             </span>
                           ) : (
-                            <span className="text-gray-400 text-sm">-</span>
+                            <span className="text-muted-foreground text-sm">-</span>
                           )}
                         </td>
                         <td className="py-4 text-right pr-4">
@@ -633,7 +633,7 @@ export default function Reports() {
                               asChild
                               variant="outline"
                               size="sm"
-                              className="rounded-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                              className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
                             >
                               <Link to={`/interview/${session.id}/report`}>
                                 View Report

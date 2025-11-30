@@ -211,7 +211,7 @@ const Leaderboard = () => {
                     isFirst
                         ? "w-[140px] h-[240px] sm:w-[260px] sm:h-[340px] ring-2 sm:ring-4 ring-yellow-100 dark:ring-yellow-900/30"
                         : "w-[110px] h-[200px] sm:w-[220px] sm:h-[280px]",
-                    "bg-white dark:bg-gray-800 rounded-2xl sm:rounded-[2rem]"
+                    "bg-card rounded-2xl sm:rounded-[2rem]"
                 )}>
                     <div className={cn(
                         "absolute top-2 right-2 sm:top-2 sm:right-4 font-black select-none opacity-20",
@@ -228,10 +228,10 @@ const Leaderboard = () => {
                         <div className="relative mb-3 sm:mb-6">
                             <div className={cn(
                                 "rounded-full p-1",
-                                isFirst ? "bg-gradient-to-b from-yellow-400 to-yellow-200" : "bg-gray-100 dark:bg-gray-700"
+                                isFirst ? "bg-gradient-to-b from-yellow-400 to-yellow-200" : "bg-muted"
                             )}>
                                 <Avatar className={cn(
-                                    "border-2 sm:border-4 border-white dark:border-gray-800",
+                                    "border-2 sm:border-4 border-background",
                                     // Responsive avatar size
                                     isFirst ? "h-16 w-16 sm:h-28 sm:w-28" : "h-12 w-12 sm:h-20 sm:w-20"
                                 )}>
@@ -247,7 +247,7 @@ const Leaderboard = () => {
                                 </Avatar>
                             </div>
                             {isFirst && (
-                                <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md whitespace-nowrap border-2 border-white dark:border-gray-800">
+                                <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md whitespace-nowrap border-2 border-background">
                                     Top 1
                                 </div>
                             )}
@@ -255,26 +255,26 @@ const Leaderboard = () => {
 
                         <div className="text-center space-y-0.5 sm:space-y-1 mb-4 sm:mb-8 w-full">
                             <h3 className={cn(
-                                "font-bold text-gray-900 dark:text-white truncate w-full px-1",
+                                "font-bold text-foreground truncate w-full px-1",
                                 // Responsive text size
                                 isFirst ? "text-sm sm:text-xl" : "text-xs sm:text-lg"
                             )}>
                                 {user.fullName?.split(' ')[0]}
                             </h3>
-                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
                                 {user.interviewCount} Interviews
                             </p>
                         </div>
 
                         <div className="mt-auto text-center">
                             <p className={cn(
-                                "font-black text-gray-900 dark:text-white tracking-tight",
+                                "font-black text-foreground tracking-tight",
                                 // Responsive score size
                                 isFirst ? "text-2xl sm:text-4xl" : "text-xl sm:text-3xl"
                             )}>
                                 {user.bayesianScore.toFixed(1)}
                             </p>
-                            <p className="text-[8px] sm:text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold mt-1">Score</p>
+                            <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mt-1">Score</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -287,10 +287,10 @@ const Leaderboard = () => {
             <div className="space-y-8 pb-8">
                 {/* Header Section */}
                 <div className="flex flex-col items-start justify-start text-left space-y-2 mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
                         Global Standings
                     </h1>
-                    <p className="text-gray-500 text-sm sm:text-lg max-w-2xl">
+                    <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl">
                         Compete, grow, and see where you rank among the best.
                     </p>
                 </div>
@@ -328,10 +328,10 @@ const Leaderboard = () => {
                         </div>
 
                         {/* Filters & Search */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card p-2 rounded-xl shadow-sm border border-border">
                             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar px-2">
                                 <Select>
-                                    <SelectTrigger className="w-[160px] bg-gray-100 border-none text-gray-700 font-medium h-9">
+                                    <SelectTrigger className="w-[160px] bg-muted border-none text-foreground font-medium h-9">
                                         <SelectValue placeholder="Filter by Role" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -341,16 +341,16 @@ const Leaderboard = () => {
                                         <SelectItem value="fullstack">Full Stack</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 whitespace-nowrap">
+                                <button className="px-4 py-2 text-sm font-medium text-foreground bg-muted rounded-lg hover:bg-muted/80 whitespace-nowrap">
                                     Timeframe (Monthly)
                                 </button>
                             </div>
 
                             <div className="relative w-full md:w-80">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Sort by (Score-High to Low)"
-                                    className="pl-10 bg-gray-50 border-none"
+                                    className="pl-10 bg-muted border-none text-foreground placeholder:text-muted-foreground"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -359,18 +359,18 @@ const Leaderboard = () => {
 
                         {/* Full Rankings List */}
                         <div className="space-y-4">
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white px-2">All Rankings</h3>
+                            <h3 className="text-xl font-bold text-foreground px-2">All Rankings</h3>
 
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                                            <TableHead className="w-[80px] text-center font-semibold text-gray-600">Rank</TableHead>
-                                            <TableHead className="font-semibold text-gray-600">User</TableHead>
-                                            <TableHead className="text-center font-semibold text-gray-600">Score</TableHead>
-                                            <TableHead className="text-center font-semibold text-gray-600">Interviews</TableHead>
-                                            <TableHead className="text-center font-semibold text-gray-600">Badge</TableHead>
-                                            <TableHead className="text-right font-semibold text-gray-600 pr-6">Action</TableHead>
+                                        <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
+                                            <TableHead className="w-[80px] text-center font-semibold text-muted-foreground">Rank</TableHead>
+                                            <TableHead className="font-semibold text-muted-foreground">User</TableHead>
+                                            <TableHead className="text-center font-semibold text-muted-foreground">Score</TableHead>
+                                            <TableHead className="text-center font-semibold text-muted-foreground">Interviews</TableHead>
+                                            <TableHead className="text-center font-semibold text-muted-foreground">Badge</TableHead>
+                                            <TableHead className="text-right font-semibold text-muted-foreground pr-6">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -383,7 +383,7 @@ const Leaderboard = () => {
                                                 <TableRow
                                                     key={leaderboardUser.userId}
                                                     className={cn(
-                                                        "hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-none",
+                                                        "hover:bg-muted/50 transition-colors border-b border-border last:border-none",
                                                         isCurrentUser && "bg-indigo-50/60 dark:bg-indigo-900/20 border-l-4 border-l-indigo-500"
                                                     )}
                                                 >
@@ -393,14 +393,14 @@ const Leaderboard = () => {
                                                             actualRank === 1 ? "bg-yellow-100 text-yellow-700" :
                                                                 actualRank === 2 ? "bg-slate-100 text-slate-700" :
                                                                     actualRank === 3 ? "bg-amber-100 text-amber-700" :
-                                                                        "bg-gray-100 text-gray-600"
+                                                                        "bg-muted text-muted-foreground"
                                                         )}>
                                                             {actualRank}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                                                            <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
                                                                 <AvatarImage src={getAvatarUrl(
                                                                     leaderboardUser.avatarUrl,
                                                                     leaderboardUser.userId || leaderboardUser.fullName || 'user',
@@ -410,15 +410,15 @@ const Leaderboard = () => {
                                                                 <AvatarFallback>{getInitials(leaderboardUser.fullName)}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex flex-col">
-                                                                <span className="font-bold text-gray-900 dark:text-white">{leaderboardUser.fullName}</span>
-                                                                <span className="text-xs text-gray-400">ID: {leaderboardUser.userId.slice(0, 8)}</span>
+                                                                <span className="font-bold text-foreground">{leaderboardUser.fullName}</span>
+                                                                <span className="text-xs text-muted-foreground">ID: {leaderboardUser.userId.slice(0, 8)}</span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-center font-bold text-gray-900 dark:text-white py-4 text-lg">
+                                                    <TableCell className="text-center font-bold text-foreground py-4 text-lg">
                                                         {leaderboardUser.bayesianScore.toFixed(0)}
                                                     </TableCell>
-                                                    <TableCell className="text-center text-gray-500 py-4">
+                                                    <TableCell className="text-center text-muted-foreground py-4">
                                                         {leaderboardUser.interviewCount} Interviews
                                                     </TableCell>
                                                     <TableCell className="text-center py-4">
@@ -432,7 +432,7 @@ const Leaderboard = () => {
                                                                 Top {actualRank}
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="mx-auto text-gray-500 border-gray-200">
+                                                            <Badge variant="outline" className="mx-auto text-muted-foreground border-border">
                                                                 Mentor
                                                             </Badge>
                                                         )}
