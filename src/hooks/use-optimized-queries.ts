@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCacheStore } from '@/stores/use-cache-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { CompanyTemplate } from '@/types/company-types';
 
 // Add profile caching to the cache store interface
 interface ProfileCache {
@@ -186,10 +187,56 @@ export function useOptimizedQueries() {
     }
   }, [sessionDetails, isSessionDetailCacheValid, setSessionDetail]);
 
+  // Fetch all company templates
+  const fetchCompanyTemplates = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching company templates:', error);
+        toast.error('Failed to load company templates');
+        return [];
+      }
+
+      return (data || []) as CompanyTemplate[];
+    } catch (error) {
+      console.error('Error in fetchCompanyTemplates:', error);
+      return [];
+    }
+  }, []);
+
+  // Fetch company template by slug
+  const fetchCompanyTemplateBySlug = useCallback(async (slug: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('company_templates')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching company template:', error);
+        return null;
+      }
+
+      return data as CompanyTemplate;
+    } catch (error) {
+      console.error('Error in fetchCompanyTemplateBySlug:', error);
+      return null;
+    }
+  }, []);
+
   // Create interview session with cache invalidation
   const createInterviewSession = useCallback(async (sessionData: {
     position: string;
     interview_type: string;
+    duration_minutes?: number;
+    config?: any;
   }) => {
     if (!user?.id) return null;
 
@@ -200,7 +247,9 @@ export function useOptimizedQueries() {
           user_id: user.id,
           position: sessionData.position,
           interview_type: sessionData.interview_type,
+          duration_minutes: sessionData.duration_minutes || 30, // Default to 30 minutes
           status: 'in_progress',
+          config: sessionData.config || {},
           created_at: new Date().toISOString()
         })
         .select()
@@ -346,6 +395,8 @@ export function useOptimizedQueries() {
     fetchStats,
     fetchProfile,
     fetchSessionDetail,
+    fetchCompanyTemplates,
+    fetchCompanyTemplateBySlug,
 
     // CRUD operations with cache invalidation
     createInterviewSession,

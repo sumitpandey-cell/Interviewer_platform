@@ -18,7 +18,7 @@ export type LiveConfig = {
   tools?: Array<{ googleSearch: {} } | { codeExecution: {} }>;
   // Add transcription support
   inputAudioTranscription?: {
-    languageCode?: string;
+    language?: string;
   };
   outputAudioTranscription?: {
     languageCode?: string;
@@ -38,6 +38,9 @@ export type LiveIncomingMessage =
         }[];
       };
       inputTranscription?: {
+        text: string;
+      };
+      outputTranscription?: {
         text: string;
       };
       turnComplete?: boolean;

@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_templates: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          logo_url: string | null
+          industry: string | null
+          description: string | null
+          difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | null
+          common_roles: string[]
+          metadata: Json
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          logo_url?: string | null
+          industry?: string | null
+          description?: string | null
+          difficulty?: 'Beginner' | 'Intermediate' | 'Advanced' | null
+          common_roles?: string[]
+          metadata?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          logo_url?: string | null
+          industry?: string | null
+          description?: string | null
+          difficulty?: 'Beginner' | 'Intermediate' | 'Advanced' | null
+          common_roles?: string[]
+          metadata?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_questions: {
+        Row: {
+          id: string
+          company_id: string
+          question_text: string
+          question_type: 'Technical' | 'Behavioral' | 'System Design' | 'Coding' | 'Case Study'
+          difficulty: 'Easy' | 'Medium' | 'Hard' | null
+          role: string | null
+          experience_level: 'Entry' | 'Mid' | 'Senior' | 'Staff' | 'Principal' | null
+          tags: string[]
+          metadata: Json
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          question_text: string
+          question_type: 'Technical' | 'Behavioral' | 'System Design' | 'Coding' | 'Case Study'
+          difficulty?: 'Easy' | 'Medium' | 'Hard' | null
+          role?: string | null
+          experience_level?: 'Entry' | 'Mid' | 'Senior' | 'Staff' | 'Principal' | null
+          tags?: string[]
+          metadata?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          question_text?: string
+          question_type?: 'Technical' | 'Behavioral' | 'System Design' | 'Coding' | 'Case Study'
+          difficulty?: 'Easy' | 'Medium' | 'Hard' | null
+          role?: string | null
+          experience_level?: 'Entry' | 'Mid' | 'Senior' | 'Staff' | 'Principal' | null
+          tags?: string[]
+          metadata?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_questions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_templates"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       interview_sessions: {
         Row: {
           completed_at: string | null

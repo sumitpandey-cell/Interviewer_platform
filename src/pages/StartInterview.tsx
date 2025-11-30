@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,14 +23,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, Upload, Sparkles, Play, Briefcase, Clock, FileText, Code, User, Monitor } from "lucide-react";
+import { Loader2, Plus, Upload, Sparkles, Play, Briefcase, Clock, FileText, Code, User, Monitor, Building2 } from "lucide-react";
+import { CompanyTemplate } from "@/types/company-types";
+import { useCompanyQuestions } from "@/hooks/use-company-questions";
+import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 
 const formSchema = z.object({
+    interviewMode: z.enum(["general", "company"]),
     interviewType: z.string().min(1, "Interview type is required"),
     position: z.string().min(1, "Position is required"),
+    companyId: z.string().optional(),
+    role: z.string().optional(),
+    experienceLevel: z.string().optional(),
     skills: z.string().optional(),
     duration: z.string().min(1, "Duration is required"),
     jobDescription: z.any().optional(),
@@ -39,20 +48,50 @@ const formSchema = z.object({
 export default function StartInterview() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isLoading, setIsLoading] = useState(false);
     const [skillsList, setSkillsList] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState("");
     const [jobDescriptionType, setJobDescriptionType] = useState<'upload' | 'manual'>('upload');
+    const [interviewMode, setInterviewMode] = useState<'general' | 'company'>(
+        location.state?.isCompanyInterview ? 'company' : 'general'
+    );
+    const [companyTemplate, setCompanyTemplate] = useState<CompanyTemplate | null>(
+        location.state?.companyTemplate || null
+    );
+    const { fetchCompanyTemplates } = useOptimizedQueries();
+    const [companyTemplates, setCompanyTemplates] = useState<CompanyTemplate[]>([]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            interviewMode: interviewMode,
             interviewType: "",
-            position: "",
+            position: companyTemplate?.common_roles?.[0] || "",
+            companyId: companyTemplate?.id || "",
+            role: "",
+            experienceLevel: "",
             skills: "",
             duration: "",
         },
     });
+
+    // Fetch company templates for dropdown
+    useEffect(() => {
+        const loadCompanies = async () => {
+            const templates = await fetchCompanyTemplates();
+            setCompanyTemplates(templates);
+        };
+        loadCompanies();
+    }, [fetchCompanyTemplates]);
+
+    // Update form when company template changes
+    useEffect(() => {
+        if (companyTemplate) {
+            form.setValue('companyId', companyTemplate.id);
+            form.setValue('position', companyTemplate.common_roles?.[0] || '');
+        }
+    }, [companyTemplate, form]);
 
     const handleAddSkill = () => {
         if (skillInput.trim()) {
@@ -70,17 +109,30 @@ export default function StartInterview() {
 
         setIsLoading(true);
         try {
+            const config: any = {
+                skills: skillsList,
+                jobDescription: values.jobDescription || null,
+                duration: parseInt(values.duration)
+            };
+
+            // Add company-specific config if company interview
+            if (values.interviewMode === 'company' && values.companyId) {
+                const selectedCompany = companyTemplates.find(c => c.id === values.companyId) || companyTemplate;
+                config.companyInterviewConfig = {
+                    companyTemplateId: values.companyId,
+                    companyName: selectedCompany?.name || '',
+                    role: values.role || values.position,
+                    experienceLevel: values.experienceLevel || 'Mid'
+                };
+            }
+
             const { data, error } = await supabase.from("interview_sessions").insert({
                 user_id: user.id,
                 interview_type: values.interviewType,
                 position: values.position,
                 duration_minutes: parseInt(values.duration),
                 status: "pending",
-                config: {
-                    skills: skillsList,
-                    jobDescription: values.jobDescription || null,
-                    duration: parseInt(values.duration)
-                }
+                config: config
             }).select();
 
             if (error) throw error;
@@ -115,6 +167,148 @@ export default function StartInterview() {
                     <CardContent className="p-8 sm:p-10">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+                                {/* Interview Mode Selection */}
+                                <FormField
+                                    control={form.control}
+                                    name="interviewMode"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                                    <Sparkles className="h-4 w-4" />
+                                                </div>
+                                                Interview Mode <span className="text-red-500">*</span>
+                                            </FormLabel>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        setInterviewMode(value as 'general' | 'company');
+                                                    }}
+                                                    defaultValue={field.value}
+                                                    className="flex flex-col space-y-2"
+                                                >
+                                                    <div className="flex items-center space-x-3 space-y-0 rounded-lg border border-input p-4 hover:bg-accent transition-colors">
+                                                        <RadioGroupItem value="general" id="general" />
+                                                        <Label htmlFor="general" className="flex-1 cursor-pointer">
+                                                            <div className="font-medium">General Interview</div>
+                                                            <div className="text-sm text-muted-foreground">Practice with domain-based questions</div>
+                                                        </Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-3 space-y-0 rounded-lg border border-input p-4 hover:bg-accent transition-colors">
+                                                        <RadioGroupItem value="company" id="company" />
+                                                        <Label htmlFor="company" className="flex-1 cursor-pointer">
+                                                            <div className="font-medium">Company-Specific Interview</div>
+                                                            <div className="text-sm text-muted-foreground">Practice with real questions from top companies</div>
+                                                        </Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Company Selection - Only for company mode */}
+                                {interviewMode === 'company' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="companyId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                    <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                                        <Building2 className="h-4 w-4" />
+                                                    </div>
+                                                    Select Company <span className="text-red-500">*</span>
+                                                </FormLabel>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        const selected = companyTemplates.find(c => c.id === value);
+                                                        setCompanyTemplate(selected || null);
+                                                    }}
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-background/50 border-input h-12 text-base">
+                                                            <SelectValue placeholder="Choose a company" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {companyTemplates.map((company) => (
+                                                            <SelectItem key={company.id} value={company.id}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span>{company.name}</span>
+                                                                    {company.industry && (
+                                                                        <span className="text-xs text-muted-foreground">• {company.industry}</span>
+                                                                    )}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {/* Role - Only for company mode */}
+                                {interviewMode === 'company' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="role"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                    <div className="p-1.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                                        <User className="h-4 w-4" />
+                                                    </div>
+                                                    Target Role
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Software Engineer, Product Manager" className="bg-background/50 border-input h-12 text-base" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {/* Experience Level - Only for company mode */}
+                                {interviewMode === 'company' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="experienceLevel"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
+                                                    <div className="p-1.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                                        <Briefcase className="h-4 w-4" />
+                                                    </div>
+                                                    Experience Level
+                                                </FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value || "Mid"}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-background/50 border-input h-12 text-base">
+                                                            <SelectValue placeholder="Select experience level" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Entry">Entry Level</SelectItem>
+                                                        <SelectItem value="Mid">Mid Level</SelectItem>
+                                                        <SelectItem value="Senior">Senior Level</SelectItem>
+                                                        <SelectItem value="Staff">Staff Level</SelectItem>
+                                                        <SelectItem value="Principal">Principal Level</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 <FormField
                                     control={form.control}

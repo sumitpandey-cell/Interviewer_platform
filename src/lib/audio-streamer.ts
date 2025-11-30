@@ -1,11 +1,13 @@
-export class AudioStreamer {
+export class AudioStreamer extends EventTarget {
     private audioContext: AudioContext | null = null;
     private isPlaying: boolean = false;
     private sampleRate: number = 24000;
     private scheduledTime: number = 0;
     private gainNode: GainNode | null = null;
+    private activeSources: number = 0;
 
     constructor(sampleRate: number = 24000) {
+        super();
         this.sampleRate = sampleRate;
     }
 
@@ -28,6 +30,15 @@ export class AudioStreamer {
         source.connect(this.gainNode);
 
         const startTime = Math.max(this.scheduledTime, this.audioContext.currentTime);
+
+        source.onended = () => {
+            this.activeSources--;
+            if (this.activeSources === 0) {
+                this.dispatchEvent(new Event('queue-empty'));
+            }
+        };
+
+        this.activeSources++;
         source.start(startTime);
 
         this.scheduledTime = startTime + buffer.duration;
@@ -48,6 +59,13 @@ export class AudioStreamer {
             this.audioContext = null;
             this.gainNode = null;
             this.scheduledTime = 0;
+            this.activeSources = 0;
+        }
+    }
+
+    async suspend() {
+        if (this.audioContext && this.audioContext.state === 'running') {
+            await this.audioContext.suspend();
         }
     }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompanyTemplateCard } from "@/components/CompanyTemplateCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
+import { CompanyTemplate } from "@/types/company-types";
 import { toast } from "sonner";
 import {
   Search,
@@ -25,7 +28,12 @@ import {
   Users,
   Loader2,
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Code,
+  Clock,
+  Briefcase
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -166,9 +174,37 @@ export default function Templates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeTab, setActiveTab] = useState("general");
+  const [companyTemplates, setCompanyTemplates] = useState<CompanyTemplate[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyTemplate | null>(null);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { createInterviewSession, profile } = useOptimizedQueries();
+  const { createInterviewSession, profile, fetchCompanyTemplates } = useOptimizedQueries();
+
+  // Fetch company templates on mount
+  useEffect(() => {
+    const loadCompanyTemplates = async () => {
+      setLoadingCompanies(true);
+      try {
+        const templates = await fetchCompanyTemplates();
+        setCompanyTemplates(templates);
+      } catch (error) {
+        console.error('Error loading company templates:', error);
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    loadCompanyTemplates();
+  }, [fetchCompanyTemplates]);
+
+  // Reset selected company when switching tabs
+  useEffect(() => {
+    if (activeTab === 'general') {
+      setSelectedCompany(null);
+    }
+  }, [activeTab]);
 
   // Categories for filtering
   const categories = ["All", "Popular", "Engineer", "Marketing"];
@@ -246,6 +282,55 @@ export default function Templates() {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Function to start interview with company and role
+  const startCompanyRoleInterview = async (company: CompanyTemplate, role: string) => {
+    if (!user) {
+      toast.error("Please log in to start an interview");
+      return;
+    }
+
+    const templateKey = `${company.id}-${role}`;
+    setLoadingTemplate(templateKey);
+
+    try {
+      // Create interview session directly with 30-minute duration
+      const session = await createInterviewSession({
+        position: role,
+        interview_type: "Technical",
+        duration_minutes: 30,
+        config: {
+          companyInterviewConfig: {
+            companyTemplateId: company.id,
+            companyName: company.name,
+            role: role,
+            experienceLevel: 'Mid'
+          }
+        }
+      });
+
+      if (!session) {
+        throw new Error('Failed to create interview session');
+      }
+
+      toast.success(`Starting ${role} interview at ${company.name}...`);
+      navigate(`/interview/${session.id}/setup`);
+
+    } catch (error: any) {
+      console.error('Error starting company interview:', error);
+      toast.error(error.message || "Failed to start interview");
+    } finally {
+      setLoadingTemplate(null);
+    }
+  };
+
+  // Filter company templates based on search
+  const filteredCompanyTemplates = companyTemplates.filter(template =>
+    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.common_roles.some(role => role.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -299,119 +384,273 @@ export default function Templates() {
           </div>
         </div>
 
-        {/* Category Tabs and Search Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Category Tabs */}
-          <div className="flex gap-2 items-center overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`px-6 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${activeCategory === category
-                  ? "bg-black text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                {category}
-              </button>
-            ))}
+        {/* Main Tabs for General vs Company Templates */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+            <TabsList className="grid w-full md:w-auto grid-cols-2 h-12">
+              <TabsTrigger value="general" className="text-base px-8">
+                General Templates
+              </TabsTrigger>
+              <TabsTrigger value="company" className="text-base px-8">
+                Company Templates
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Search Bar */}
+            <div className="relative w-full md:w-auto">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search templates..."
+                className="pl-10 w-full md:w-80 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full md:w-auto">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by title, skills, or description..."
-              className="pl-10 w-full md:w-80 bg-background"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
+          {/* General Templates Tab */}
+          <TabsContent value="general" className="mt-0">
+            {/* Category Filters for General Templates */}
+            <div className="flex gap-2 items-center overflow-x-auto w-full pb-2 mb-6 no-scrollbar">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-6 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${activeCategory === category
+                    ? "bg-black text-white shadow-md dark:bg-white dark:text-black"
+                    : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+                    }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
 
-        {searchTerm && (
-          <p className="text-sm text-muted-foreground">
-            Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
-          </p>
-        )}
+            {searchTerm && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
+              </p>
+            )}
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTemplates.map((template) => (
-            <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white border border-gray-100 rounded-2xl overflow-hidden">
-              <CardContent className="p-8 flex flex-col h-full">
-                {/* Icon and Title */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                    <template.icon className={`h-6 w-6 ${template.color}`} />
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {filteredTemplates.map((template) => (
+                <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+                  <CardContent className="p-8 flex flex-col h-full">
+                    {/* Icon and Title */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                        <template.icon className={`h-6 w-6 ${template.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {template.title}
+                        </h3>
+                        <div className="flex gap-2 items-center">
+                          <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                            {template.interviewType}
+                          </Badge>
+                          <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
+                            {template.difficulty}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Skill and Description Labels */}
+                    <div className="space-y-2 text-sm mb-4 flex-1">
+                      <div className="flex gap-2">
+                        <span className="text-gray-500 dark:text-gray-500 font-normal">Skill</span>
+                        <span className="text-gray-900 dark:text-white font-medium">{template.skills[0]}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-gray-500 dark:text-gray-500 font-normal">Desc</span>
+                        <span className="text-gray-900 dark:text-white font-medium">
+                          {template.description}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Duration and Button */}
+                    <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white">30m</span>
+                      <Button
+                        className="w-auto px-8 bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                        onClick={() => startInterviewWithTemplate(template)}
+                        disabled={loadingTemplate === template.id}
+                      >
+                        {loadingTemplate === template.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Starting...
+                          </>
+                        ) : (
+                          "Use Template"
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {filteredTemplates.length === 0 && (
+              <div className="text-center py-12">
+                <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No templates found</h3>
+                <p className="text-muted-foreground">
+                  Try adjusting your search term or{" "}
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="text-primary hover:underline"
+                  >
+                    clear the search
+                  </button>{" "}
+                  to see all templates.
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Company Templates Tab */}
+          <TabsContent value="company" className="mt-0">
+            {!selectedCompany ? (
+              <>
+                {/* Step 1: Select Company */}
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Select a Company</h3>
+                  <p className="text-muted-foreground text-sm">Choose a company to see role-specific interview templates</p>
+                </div>
+
+                {searchTerm && (
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Found {filteredCompanyTemplates.length} company{filteredCompanyTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
+                  </p>
+                )}
+
+                {loadingCompanies ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="ml-3 text-muted-foreground">Loading companies...</span>
                   </div>
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {template.title}
-                    </h3>
-                    <div className="flex gap-2 items-center">
-                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 whitespace-nowrap">
-                        {template.interviewType}
-                      </Badge>
-                      <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
-                        {template.difficulty}
-                      </Badge>
+                ) : (
+                  <>
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredCompanyTemplates.map((template) => (
+                        <CompanyTemplateCard
+                          key={template.id}
+                          template={template}
+                          onSelect={(company) => setSelectedCompany(company)}
+                          isLoading={false}
+                        />
+                      ))}
+                    </div>
+
+                    {filteredCompanyTemplates.length === 0 && !loadingCompanies && (
+                      <div className="text-center py-12">
+                        <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No companies found</h3>
+                        <p className="text-muted-foreground">
+                          {searchTerm ? (
+                            <>
+                              Try adjusting your search term or{" "}
+                              <button
+                                onClick={() => setSearchTerm("")}
+                                className="text-primary hover:underline"
+                              >
+                                clear the search
+                              </button>{" "}
+                              to see all companies.
+                            </>
+                          ) : (
+                            "No companies available at this time."
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Step 2: Select Role for Selected Company */}
+                <div className="mb-6">
+                  <button
+                    onClick={() => setSelectedCompany(null)}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Back to companies
+                  </button>
+                  <div className="flex items-center gap-4 mb-2">
+                    {selectedCompany.logo_url && (
+                      <img
+                        src={selectedCompany.logo_url}
+                        alt={`${selectedCompany.name} logo`}
+                        className="w-16 h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-700 p-2"
+                      />
+                    )}
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground">{selectedCompany.name}</h3>
+                      <p className="text-muted-foreground">{selectedCompany.industry}</p>
                     </div>
                   </div>
+                  <p className="text-sm text-muted-foreground">Select a role to start your interview</p>
                 </div>
 
-                {/* Skill and Description Labels */}
-                <div className="space-y-2 text-sm mb-4 flex-1">
-                  <div className="flex gap-2">
-                    <span className="text-gray-500 font-normal">Skill</span>
-                    <span className="text-gray-900 font-medium">{template.skills[0]}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-gray-500 font-normal">Desc</span>
-                    <span className="text-gray-900 font-medium">
-                      {template.description}
-                    </span>
-                  </div>
-                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {selectedCompany.common_roles.map((role, index) => (
+                    <Card key={index} className="flex flex-col h-full hover:shadow-lg transition-all bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden cursor-pointer group">
+                      <CardContent className="p-6 flex flex-col h-full">
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900 dark:to-orange-800 flex items-center justify-center border border-orange-200 dark:border-orange-700">
+                            <Briefcase className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                              {role}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              at {selectedCompany.name}
+                            </p>
+                          </div>
+                        </div>
 
-                {/* Duration and Button */}
-                <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
-                  <span className="text-2xl font-bold text-gray-900">30m</span>
-                  <Button
-                    className="w-auto px-8 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
-                    onClick={() => startInterviewWithTemplate(template)}
-                    disabled={loadingTemplate === template.id}
-                  >
-                    {loadingTemplate === template.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Starting...
-                      </>
-                    ) : (
-                      "Use Template"
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                        <div className="space-y-2 text-sm mb-4 flex-1">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Code className="h-4 w-4" />
+                            <span>Real interview questions</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>30 minutes duration</span>
+                          </div>
+                        </div>
 
-        {filteredTemplates.length === 0 && (
-          <div className="text-center py-12">
-            <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No templates found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search term or{" "}
-              <button
-                onClick={() => setSearchTerm("")}
-                className="text-primary hover:underline"
-              >
-                clear the search
-              </button>{" "}
-              to see all templates.
-            </p>
-          </div>
-        )}
+                        <Button
+                          className="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white rounded-xl py-3 font-medium transition-all group-hover:scale-[1.02]"
+                          onClick={() => startCompanyRoleInterview(selectedCompany, role)}
+                          disabled={loadingTemplate === `${selectedCompany.id}-${role}`}
+                        >
+                          {loadingTemplate === `${selectedCompany.id}-${role}` ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Starting...
+                            </>
+                          ) : (
+                            <>
+                              Start Interview
+                              <ChevronRight className="h-4 w-4 ml-2" />
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
