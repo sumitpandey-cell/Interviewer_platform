@@ -399,8 +399,8 @@ export default function Templates() {
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   className={`px-6 py-2 rounded-full font-medium text-sm transition-all whitespace-nowrap ${activeCategory === category
-                    ? "bg-black text-white shadow-md"
-                    : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    ? "bg-black dark:bg-primary text-white dark:text-primary-foreground shadow-md"
+                    : "bg-white dark:bg-card text-gray-700 dark:text-foreground border border-gray-200 dark:border-border hover:border-gray-300 dark:hover:border-muted-foreground hover:bg-gray-50 dark:hover:bg-accent"
                     }`}
                 >
                   {category}
@@ -429,19 +429,19 @@ export default function Templates() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {filteredTemplates.map((template) => (
-                <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-all bg-white dark:bg-card border border-gray-100 dark:border-border rounded-2xl overflow-hidden">
                   <CardContent className="p-8 flex flex-col h-full">
                     {/* Icon and Title */}
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                        <template.icon className={`h-6 w-6 ${template.color}`} />
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                        <template.icon className={`h-6 w-6 ${template.color} dark:opacity-90`} />
                       </div>
                       <div className="flex-1 min-w-0 space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-foreground">
                           {template.title}
                         </h3>
                         <div className="flex gap-2 items-center">
-                          <Badge variant="outline" className="text-xs border-gray-300 text-gray-700 whitespace-nowrap">
+                          <Badge variant="outline" className="text-xs border-gray-300 dark:border-border text-gray-700 dark:text-foreground whitespace-nowrap">
                             {template.interviewType}
                           </Badge>
                           <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
@@ -454,12 +454,12 @@ export default function Templates() {
                     {/* Skill and Description Labels */}
                     <div className="space-y-2 text-sm mb-4 flex-1">
                       <div className="flex gap-2">
-                        <span className="text-gray-500 font-normal">Skill</span>
-                        <span className="text-gray-900 font-medium">{template.skills[0]}</span>
+                        <span className="text-gray-500 dark:text-muted-foreground font-normal">Skill</span>
+                        <span className="text-gray-900 dark:text-foreground font-medium">{template.skills[0]}</span>
                       </div>
                       <div className="flex gap-2">
-                        <span className="text-gray-500 font-normal">Desc</span>
-                        <span className="text-gray-900 font-medium">
+                        <span className="text-gray-500 dark:text-muted-foreground font-normal">Desc</span>
+                        <span className="text-gray-900 dark:text-foreground font-medium">
                           {template.description}
                         </span>
                       </div>
@@ -467,9 +467,9 @@ export default function Templates() {
 
                     {/* Duration and Button */}
                     <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
-                      <span className="text-2xl font-bold text-gray-900">30m</span>
+                      <span className="text-2xl font-bold text-gray-900 dark:text-foreground">30m</span>
                       <Button
-                        className="w-auto px-8 bg-black hover:bg-gray-900 text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                        className="w-auto px-8 bg-black dark:bg-primary hover:bg-gray-900 dark:hover:bg-primary/90 text-white dark:text-primary-foreground rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
                         onClick={() => startInterviewWithTemplate(template)}
                         disabled={loadingTemplate === template.id}
                       >
