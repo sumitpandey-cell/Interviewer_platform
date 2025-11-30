@@ -15,6 +15,9 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useCompanyQuestions } from "@/hooks/use-company-questions";
 import { CompanyQuestion } from "@/types/company-types";
 import { CodingChallengeModal } from "@/components/CodingChallengeModal";
+import { supabase } from "@/integrations/supabase/client";
+import { usePerformanceStore } from "@/stores/use-performance-store";
+import { createPerformanceContext, shouldAdjustDifficulty } from "@/lib/difficulty-adjuster";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 
@@ -36,7 +39,12 @@ interface SessionData {
 
 import { loadSystemPrompt, containsCodingKeywords } from "@/lib/prompt-loader";
 
-const generateSystemInstruction = (session: SessionData | null, timeLeftMinutes?: number, companyQuestions?: CompanyQuestion[]) => {
+const generateSystemInstruction = (
+    session: SessionData | null,
+    timeLeftMinutes?: number,
+    companyQuestions?: CompanyQuestion[],
+    performanceContext?: string
+) => {
     if (!session) {
         return `You are a Senior Technical Interviewer. Conduct a professional interview.`;
     }
@@ -44,14 +52,14 @@ const generateSystemInstruction = (session: SessionData | null, timeLeftMinutes?
     const { interview_type, position } = session;
     const companyName = (session as any).config?.companyInterviewConfig?.companyName;
 
-    // Use the new prompt loader system
+    // Use the new prompt loader system with performance context
     return loadSystemPrompt({
         interviewType: interview_type,
         position: position,
         companyName: companyName,
         timeLeftMinutes: timeLeftMinutes,
         questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined
-    });
+    }, performanceContext);
 };
 
 interface Message {
@@ -89,6 +97,20 @@ export default function InterviewRoom() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isEnding, setIsEnding] = useState(false);
     const [isCodingChallengeAvailable, setIsCodingChallengeAvailable] = useState(false);
+
+    // Performance tracking
+    const {
+        recordResponse,
+        updateDifficulty,
+        getCurrentPerformance,
+        currentDifficulty,
+        questionsAtCurrentDifficulty,
+        resetPerformance
+    } = usePerformanceStore();
+    const lastUserMessageTimeRef = useRef<number>(Date.now());
+    const currentQuestionTextRef = useRef<string>('');
+    const currentUserResponseRef = useRef<string>(''); // Accumulate full response
+    const questionStartTimeRef = useRef<number>(Date.now()); // When question was asked
 
     // Fetch company questions if this is a company interview
     const companyTemplateId = session?.config?.companyInterviewConfig?.companyTemplateId;
@@ -144,8 +166,10 @@ export default function InterviewRoom() {
     useEffect(() => {
         if (sessionId) {
             fetchSession();
+            // Reset performance tracking for new interview
+            resetPerformance();
         }
-    }, [sessionId]);
+    }, [sessionId, resetPerformance]);
 
     const fetchSession = async () => {
         try {
@@ -209,6 +233,63 @@ export default function InterviewRoom() {
             if (!sender || !text) {
                 console.warn('Invalid transcript fragment received:', { sender, text });
                 return;
+            }
+
+            // Track AI questions for performance analysis
+            if (sender === 'ai' && text.includes('?')) {
+                // New question detected - save previous response if exists
+                if (currentUserResponseRef.current && currentQuestionTextRef.current) {
+                    console.log('📊 Recording performance for completed response...');
+                    const responseTime = Math.floor((lastUserMessageTimeRef.current - questionStartTimeRef.current) / 1000);
+
+                    recordResponse(
+                        currentQuestionIndex,
+                        currentQuestionTextRef.current,
+                        currentUserResponseRef.current,
+                        responseTime,
+                        'General'
+                    );
+
+                    // Check if difficulty should be adjusted
+                    const performance = getCurrentPerformance();
+                    if (performance) {
+                        const adjustment = shouldAdjustDifficulty(
+                            performance,
+                            currentDifficulty,
+                            questionsAtCurrentDifficulty
+                        );
+
+                        if (adjustment.shouldAdjust) {
+                            console.log('🎯 Adjusting difficulty:', {
+                                from: currentDifficulty,
+                                to: adjustment.newDifficulty,
+                                reason: adjustment.reason
+                            });
+                            updateDifficulty(adjustment.newDifficulty);
+                        }
+                    }
+
+                    // Increment question index
+                    setCurrentQuestionIndex(prev => prev + 1);
+                }
+
+                // Start tracking new question
+                currentQuestionTextRef.current = text;
+                currentUserResponseRef.current = '';
+                questionStartTimeRef.current = Date.now();
+                console.log('📝 Captured AI question:', text.substring(0, 50) + '...');
+            }
+
+            // Accumulate user response text
+            if (sender === 'user') {
+                if (!currentUserResponseRef.current) {
+                    // First fragment of response - record start time
+                    lastUserMessageTimeRef.current = Date.now();
+                }
+
+                // Accumulate the response text
+                currentUserResponseRef.current += (currentUserResponseRef.current ? ' ' : '') + text;
+                console.log('👤 Accumulating user response... Total length:', currentUserResponseRef.current.length);
             }
 
             // Clean AI internal thoughts from display
@@ -400,8 +481,6 @@ export default function InterviewRoom() {
     // Sync messages to Zustand store for instant access in report page
     useEffect(() => {
         if (messages.length > 0) {
-            console.log('🔄 Syncing messages to Zustand store:');
-            console.log(`   Total: ${messages.length} messages`);
             messages.forEach((msg, idx) => {
                 console.log(`   [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 50)}...`);
             });
@@ -439,10 +518,17 @@ export default function InterviewRoom() {
             hasConnectedRef.current = true;
 
             try {
+                // Get performance context if available
+                const performance = getCurrentPerformance();
+                const performanceContext = performance
+                    ? createPerformanceContext(performance, currentDifficulty)
+                    : undefined;
+
                 const systemInstruction = generateSystemInstruction(
                     session,
                     Math.floor(timeLeft / 60),
-                    companyQuestions.length > 0 ? companyQuestions : undefined
+                    companyQuestions.length > 0 ? companyQuestions : undefined,
+                    performanceContext
                 );
 
                 await connect({
@@ -523,14 +609,77 @@ export default function InterviewRoom() {
             // Record usage
             await recordUsage(durationMinutes);
 
+            // Get performance data from store
+            const performanceAnalysis = getCurrentPerformance();
+            const performanceHistory = usePerformanceStore.getState().performanceHistory;
+            const totalHintsUsed = usePerformanceStore.getState().totalHintsUsed;
+
+            console.log('📊 Performance data:', {
+                history: performanceHistory.length,
+                currentScore: performanceAnalysis?.currentScore,
+                hintsUsed: totalHintsUsed
+            });
+
+            // Save performance metrics to database
+            if (performanceHistory.length > 0) {
+                console.log('💾 Saving performance metrics to database...');
+                try {
+                    const metricsToSave = performanceHistory.map(metric => ({
+                        session_id: sessionId,
+                        question_index: metric.questionIndex,
+                        question_text: metric.questionText,
+                        response_quality_score: metric.responseQualityScore,
+                        response_time_seconds: metric.responseTimeSeconds,
+                        difficulty_level: metric.difficultyLevel,
+                        hints_used: metric.hintsUsed,
+                        struggle_indicators: metric.struggleIndicators
+                    }));
+
+                    // Use type assertion since performance_metrics table type isn't in generated types yet
+                    const { error: metricsError } = await (supabase as any)
+                        .from('performance_metrics')
+                        .insert(metricsToSave);
+
+                    if (metricsError) {
+                        console.error('❌ Error saving performance metrics:', metricsError);
+                    } else {
+                        console.log('✅ Performance metrics saved:', metricsToSave.length, 'records');
+                    }
+                } catch (err) {
+                    console.error('❌ Exception saving performance metrics:', err);
+                }
+            }
+
             console.log('🔍 Generating feedback with messages:', messages.length, 'messages');
             console.log('First 3 messages:', messages.slice(0, 3));
 
             let feedback;
             let feedbackWithTs;
 
+            // Prepare performance data for feedback
+            const performanceData = performanceAnalysis ? {
+                currentScore: performanceAnalysis.currentScore,
+                trend: performanceAnalysis.trend,
+                difficultyProgression: performanceHistory.map(m => m.difficultyLevel),
+                totalHintsUsed,
+                detailedMetrics: performanceHistory.map(m => ({
+                    questionIndex: m.questionIndex,
+                    questionText: m.questionText,
+                    responseQualityScore: m.responseQualityScore,
+                    responseTimeSeconds: m.responseTimeSeconds,
+                    difficultyLevel: m.difficultyLevel,
+                    hintsUsed: m.hintsUsed,
+                    struggleIndicators: m.struggleIndicators
+                }))
+            } : undefined;
+
             try {
-                feedback = await generateFeedback(messages, session.position, session.interview_type);
+                feedback = await generateFeedback(
+                    messages,
+                    session.position,
+                    session.interview_type,
+                    performanceData
+                );
                 console.log('✅ Feedback generated successfully:', feedback);
 
                 // Attach generated timestamp to feedback for merging/ordering
@@ -577,13 +726,23 @@ export default function InterviewRoom() {
                         console.log(`  [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 40)}...`);
                     });
 
-                    await completeInterviewSession(sessionId!, {
+                    // Prepare session update with performance data
+                    const sessionUpdate: any = {
                         duration_minutes: durationMinutes,
                         score: averageScore,
                         transcript: messages,
-                        feedback: feedbackWithTs
-                        , status: 'completed'
-                    });
+                        feedback: feedbackWithTs,
+                        status: 'completed'
+                    };
+
+                    // Add performance summary if available
+                    if (performanceAnalysis) {
+                        sessionUpdate.average_performance_score = performanceAnalysis.currentScore;
+                        sessionUpdate.total_hints_used = totalHintsUsed;
+                        sessionUpdate.difficulty_progression = performanceHistory.map(m => m.difficultyLevel);
+                    }
+
+                    await completeInterviewSession(sessionId!, sessionUpdate);
 
                     setSaving(false);
                     setSaveError(null);

@@ -265,7 +265,7 @@ export default function InterviewReport() {
         return (
             <DashboardLayout>
                 <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold text-slate-900">Session not found</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Session not found</h2>
                     <Button onClick={() => navigate("/dashboard")} className="mt-4">
                         Back to Dashboard
                     </Button>
@@ -283,13 +283,13 @@ export default function InterviewReport() {
             <DashboardLayout>
                 <div className="space-y-6 overflow-x-hidden max-w-full">
                     {/* Header Section */}
-                    <Card className="border-none shadow-sm bg-white">
+                    <Card className="border-none shadow-sm bg-white dark:bg-slate-800">
                         <CardContent className="p-4 md:p-6 flex flex-col gap-4">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                                 <div className="flex items-center gap-4 min-w-0 flex-1">
                                     <div className="min-w-0 flex-1">
-                                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 truncate">{user?.user_metadata?.full_name || "Candidate"}</h1>
-                                        <p className="text-slate-500 text-base md:text-lg truncate">{session.position}</p>
+                                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 truncate">{user?.user_metadata?.full_name || "Candidate"}</h1>
+                                        <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg truncate">{session.position}</p>
                                     </div>
                                     {sessionId && isCached.sessionDetail(sessionId) && (
                                         <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
@@ -312,8 +312,8 @@ export default function InterviewReport() {
                                     <Clock className="h-8 w-8 text-yellow-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Interview In Progress</h2>
-                                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Interview In Progress</h2>
+                                    <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-md mx-auto">
                                         This interview hasn't been completed yet. Continue your interview to receive detailed feedback and analysis.
                                     </p>
                                 </div>
@@ -339,36 +339,36 @@ export default function InterviewReport() {
                     {/* Interview Details */}
                     <Card className="border-none shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
+                            <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Interview Details</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between text-sm gap-2">
-                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                     <User className="h-4 w-4" />
                                     Candidate:
                                 </div>
-                                <span className="font-medium text-slate-900 truncate">{user?.user_metadata?.full_name || "Candidate"}</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{user?.user_metadata?.full_name || "Candidate"}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm gap-2">
-                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                     <Calendar className="h-4 w-4" />
                                     Started:
                                 </div>
-                                <span className="font-medium text-slate-900 text-right break-words">{new Date(session.created_at).toLocaleString()}</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100 text-right break-words">{new Date(session.created_at).toLocaleString()}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm gap-2">
-                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                     <Briefcase className="h-4 w-4" />
                                     Position:
                                 </div>
-                                <span className="font-medium text-slate-900 truncate">{session.position}</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{session.position}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm gap-2">
-                                <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                     <Bot className="h-4 w-4" />
                                     Type:
                                 </div>
-                                <span className="font-medium text-slate-900 capitalize">{session.interview_type.replace('_', ' ')}</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100 capitalize">{session.interview_type.replace('_', ' ')}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -465,13 +465,13 @@ export default function InterviewReport() {
         <DashboardLayout>
             <div className="space-y-6 overflow-x-hidden max-w-full">
                 {/* Header Section */}
-                <Card className="border-none shadow-sm bg-white">
+                <Card className="border-none shadow-sm bg-white dark:bg-slate-800">
                     <CardContent className="p-4 md:p-6 flex flex-col gap-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                             <div className="flex items-center gap-4 min-w-0 flex-1">
                                 <div className="min-w-0 flex-1">
-                                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 truncate">{reportData.candidateName}</h1>
-                                    <p className="text-slate-500 text-base md:text-lg truncate">{reportData.position}</p>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 truncate">{reportData.candidateName}</h1>
+                                    <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg truncate">{reportData.position}</p>
                                 </div>
                                 {sessionId && isCached.sessionDetail(sessionId) && (
                                     <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
@@ -512,10 +512,10 @@ export default function InterviewReport() {
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-lg md:text-xl font-bold text-slate-900">{reportData.overallScore}%</span>
+                                        <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">{reportData.overallScore}%</span>
                                     </div>
                                 </div>
-                                <div className="text-sm font-medium text-slate-500">Overall Match</div>
+                                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Overall Match</div>
                             </div>
 
                             <div className="flex gap-2">
@@ -558,25 +558,25 @@ export default function InterviewReport() {
                     <TabsList className="bg-transparent p-0 gap-2 mb-6 overflow-x-auto scrollbar-hide flex-nowrap w-full justify-start">
                         <TabsTrigger
                             value="summary"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Summary
                         </TabsTrigger>
                         <TabsTrigger
                             value="skills"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Skills Analysis
                         </TabsTrigger>
                         <TabsTrigger
                             value="video"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Video Playback
                         </TabsTrigger>
                         <TabsTrigger
                             value="transcript"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white text-slate-600 border border-slate-200 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
                         >
                             Full Transcript
                         </TabsTrigger>
@@ -590,10 +590,10 @@ export default function InterviewReport() {
                                 {/* Executive Summary */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Executive Summary</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Executive Summary</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-slate-600 leading-relaxed break-words">
+                                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words">
                                             {reportData.executiveSummary}
                                         </p>
                                     </CardContent>
@@ -603,14 +603,14 @@ export default function InterviewReport() {
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <Card className="border-none shadow-sm">
                                         <CardHeader>
-                                            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                            <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                                                 <span className="text-2xl">👍</span> Key Strengths
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
                                             <ul className="space-y-3">
                                                 {reportData.strengths.map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 break-words">
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300 break-words">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
                                                         <span className="break-words">{item}</span>
                                                     </li>
@@ -621,14 +621,14 @@ export default function InterviewReport() {
 
                                     <Card className="border-none shadow-sm">
                                         <CardHeader>
-                                            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                            <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                                                 <span className="text-2xl">⚠️</span> Areas for Improvement
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
                                             <ul className="space-y-3">
                                                 {reportData.improvements.map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 break-words">
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300 break-words">
                                                         <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                                                         <span className="break-words">{item}</span>
                                                     </li>
@@ -642,17 +642,17 @@ export default function InterviewReport() {
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <Card className="border-none shadow-sm">
                                         <CardHeader>
-                                            <CardTitle className="text-lg font-bold text-slate-900">Skills Assessment</CardTitle>
+                                            <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Skills Assessment</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-6">
                                             {reportData.skills.map((skill, i) => (
                                                 <div key={i} className="space-y-2">
-                                                    <div className="flex justify-between text-sm font-semibold text-slate-900 gap-2">
+                                                    <div className="flex justify-between text-sm font-semibold text-slate-900 dark:text-slate-100 gap-2">
                                                         <span className="break-words flex-1">{skill.name}</span>
                                                         <span className="text-orange-500 flex-shrink-0">{skill.score}%</span>
                                                     </div>
                                                     <Progress value={skill.score} className="h-2 bg-slate-100" indicatorClassName="bg-primary" />
-                                                    <p className="text-xs text-slate-500 break-words">{skill.feedback}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 break-words">{skill.feedback}</p>
                                                 </div>
                                             ))}
                                         </CardContent>
@@ -660,12 +660,12 @@ export default function InterviewReport() {
 
                                     <Card className="border-none shadow-sm">
                                         <CardHeader>
-                                            <CardTitle className="text-lg font-bold text-slate-900">Recommended Action Plan</CardTitle>
+                                            <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Recommended Action Plan</CardTitle>
                                         </CardHeader>
                                         <CardContent>
                                             <ul className="space-y-4">
                                                 {reportData.actionPlan.map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
+                                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
                                                         <div className="h-5 w-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0 mt-0.5">
                                                             <ArrowRight className="h-3 w-3 text-slate-400" />
                                                         </div>
@@ -683,36 +683,36 @@ export default function InterviewReport() {
                                 {/* Interview Details */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Interview Details</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center justify-between text-sm gap-2">
-                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                                 <User className="h-4 w-4" />
                                                 Candidate:
                                             </div>
-                                            <span className="font-medium text-slate-900 truncate">{reportData.candidateName}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{reportData.candidateName}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm gap-2">
-                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                                 <Calendar className="h-4 w-4" />
                                                 Date & Time:
                                             </div>
-                                            <span className="font-medium text-slate-900 text-right break-words">{reportData.date}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100 text-right break-words">{reportData.date}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Bot className="h-4 w-4" />
                                                 AI Agent:
                                             </div>
-                                            <span className="font-medium text-slate-900">AI Agent</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">AI Agent</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm gap-2">
-                                            <div className="flex items-center gap-2 text-slate-500 flex-shrink-0">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-shrink-0">
                                                 <Briefcase className="h-4 w-4" />
                                                 Position:
                                             </div>
-                                            <span className="font-medium text-slate-900 truncate">{reportData.position}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{reportData.position}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -720,13 +720,13 @@ export default function InterviewReport() {
                                 {/* AI Recommendation */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className={`px-4 py-2 rounded-md text-sm font-bold ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                             Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
                                         </div>
-                                        <p className="text-sm text-slate-600 leading-relaxed break-words">
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words">
                                             Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
@@ -743,30 +743,35 @@ export default function InterviewReport() {
                                 {/* Skills Overview Card */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Skills Overview</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Skills Overview</CardTitle>
                                     </CardHeader>
                                     <CardContent className="flex flex-col md:flex-row items-center gap-8">
                                         <div className="h-[300px] w-full md:w-1/2">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={reportData.skills}>
-                                                    <PolarGrid stroke="#e2e8f0" />
-                                                    <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                    <PolarGrid stroke="currentColor" className="text-slate-200 dark:text-slate-700" />
+                                                    <PolarAngleAxis
+                                                        dataKey="name"
+                                                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                                                        className="text-slate-600 dark:text-slate-300"
+                                                    />
                                                     <Radar
                                                         name="Skills"
                                                         dataKey="score"
-                                                        stroke="#0f172a"
-                                                        fill="#0f172a"
+                                                        stroke="currentColor"
+                                                        fill="currentColor"
                                                         fillOpacity={0.2}
+                                                        className="text-primary"
                                                     />
                                                 </RadarChart>
                                             </ResponsiveContainer>
                                         </div>
                                         <div className="w-full md:w-1/2 space-y-4 text-center md:text-left">
                                             <div>
-                                                <div className="text-4xl font-bold text-slate-900 mb-1">{reportData.overallScore}%</div>
-                                                <div className="text-sm text-slate-500">Overall Skill Score</div>
+                                                <div className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-1">{reportData.overallScore}%</div>
+                                                <div className="text-sm text-slate-500 dark:text-slate-400">Overall Skill Score</div>
                                             </div>
-                                            <p className="text-sm text-slate-600 leading-relaxed">
+                                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                                 Detailed skill analysis is pending.
                                             </p>
                                         </div>
@@ -778,17 +783,17 @@ export default function InterviewReport() {
                                     {reportData.skills.map((skill, i) => (
                                         <Card key={i} className="border-none shadow-sm">
                                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                <CardTitle className="text-base font-bold text-slate-900">{skill.name}</CardTitle>
+                                                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">{skill.name}</CardTitle>
                                                 <span className={`text-xs font-bold px-2 py-1 rounded ${skill.score >= 70 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                     {skill.score}%
                                                 </span>
                                             </CardHeader>
                                             <CardContent className="space-y-4 pt-4">
-                                                <p className="text-sm text-slate-600 leading-relaxed min-h-[60px]">
+                                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed min-h-[60px]">
                                                     {skill.feedback}
                                                 </p>
                                                 <div className="pt-4 border-t border-slate-100">
-                                                    <a href="#" className="flex items-center justify-between text-sm text-slate-500 hover:text-primary transition-colors">
+                                                    <a href="#" className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
                                                         Recommended Resources
                                                         <ExternalLink className="h-3 w-3" />
                                                     </a>
@@ -810,36 +815,36 @@ export default function InterviewReport() {
                                 {/* Interview Details */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Interview Details</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <User className="h-4 w-4" />
                                                 Candidate:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.candidateName}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.candidateName}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Calendar className="h-4 w-4" />
                                                 Date & Time:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.date}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.date}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Bot className="h-4 w-4" />
                                                 AI Agent:
                                             </div>
-                                            <span className="font-medium text-slate-900">AI Agent</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">AI Agent</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Briefcase className="h-4 w-4" />
                                                 Position:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.position}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.position}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -847,14 +852,14 @@ export default function InterviewReport() {
                                 {/* AI Recommendation */}
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                             Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
                                             {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                                         </div>
-                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                             Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>
@@ -864,7 +869,7 @@ export default function InterviewReport() {
                     </TabsContent>
                     <TabsContent value="video">
                         <Card>
-                            <CardContent className="p-6 text-center text-slate-500">
+                            <CardContent className="p-6 text-center text-slate-500 dark:text-slate-400">
                                 Video playback content would go here.
                             </CardContent>
                         </Card>
@@ -877,9 +882,9 @@ export default function InterviewReport() {
                                     <CardHeader>
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2">
-                                                <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                                                     Interview Transcript
-                                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600">
+                                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600 dark:text-slate-300">
                                                         {reportData.transcript.length} messages
                                                     </span>
                                                 </CardTitle>
@@ -901,7 +906,7 @@ export default function InterviewReport() {
                                     <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
                                         {reportData.transcript.length === 1 && reportData.transcript[0].text.includes("No transcript available") ? (
                                             // Empty state with helpful info
-                                            <div className="text-center py-12 text-slate-500">
+                                            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                                                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-slate-300" />
                                                 <p className="text-lg font-medium">No conversation recorded</p>
                                                 <p className="text-sm mb-4">The interview transcript is not available or the session may have been too short.</p>
@@ -924,7 +929,7 @@ export default function InterviewReport() {
                                                     </div>
                                                     <div className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                                                         <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.sender === 'ai'
-                                                            ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'
+                                                            ? 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 rounded-tl-none'
                                                             : 'bg-emerald-600 text-white rounded-tr-none'
                                                             }`}>
                                                             {msg.text}
@@ -949,50 +954,50 @@ export default function InterviewReport() {
 
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Interview Details</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Interview Details</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <User className="h-4 w-4" />
                                                 Candidate:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.candidateName}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.candidateName}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Calendar className="h-4 w-4" />
                                                 Date & Time:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.date}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.date}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Bot className="h-4 w-4" />
                                                 AI Agent:
                                             </div>
-                                            <span className="font-medium text-slate-900">AI Agent</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">AI Agent</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2 text-slate-500">
+                                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Briefcase className="h-4 w-4" />
                                                 Position:
                                             </div>
-                                            <span className="font-medium text-slate-900">{reportData.position}</span>
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">{reportData.position}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
 
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900">AI Recommendation</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                             Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
                                             {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                                         </div>
-                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                             Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
                                         </p>
                                     </CardContent>

@@ -110,23 +110,12 @@ export function useLiveAPI(apiKey: string) {
 
             if ('serverContent' in data) {
                 const { modelTurn, inputTranscription, outputTranscription, turnComplete, interrupted } = data.serverContent;
-
-                console.log('ServerContent received:', {
-                    hasModelTurn: !!modelTurn,
-                    hasInputTranscription: !!inputTranscription,
-                    hasOutputTranscription: !!outputTranscription,
-                    inputTranscriptionText: inputTranscription?.text || 'none',
-                    outputTranscriptionText: outputTranscription?.text || 'none',
-                    turnComplete,
-                    interrupted
-                });// Handle interruption
                 if (interrupted) {
                     console.log('🛑 Conversation interrupted');
                 }
 
                 // Handle AI text responses - use callback for direct processing
                 if (modelTurn) {
-                    console.log('🤖 ModelTurn received with', modelTurn.parts.length, 'parts');
                     for (const part of modelTurn.parts) {
                         console.log('Part type:', {
                             hasText: !!part.text,
@@ -142,7 +131,6 @@ export function useLiveAPI(apiKey: string) {
                             }
                         }
                         if (part.inlineData && part.inlineData.mimeType.startsWith('audio/pcm')) {
-                            console.log('🔊 Processing audio data');
                             const audioData = base64ToArrayBuffer(part.inlineData.data);
                             audioStreamerRef.current?.addPCM16(audioData);
                         }
