@@ -46,7 +46,11 @@ const generateSystemInstruction = (
     companyQuestions?: CompanyQuestion[]
 ) => {
     if (!session) {
-        return `You are a Senior Technical Interviewer. Conduct a professional interview in ${selectedLanguage.name}. The candidate will be speaking in ${selectedLanguage.name} (${selectedLanguage.speechCode}).`;
+        return `You are a Senior Technical Interviewer. You are an intelligent AI assistant.
+
+For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").
+
+Conduct a professional interview in ${selectedLanguage.name}. Focus on technical accuracy in transcription.`;
     }
 
     const { interview_type, position } = session;
@@ -62,7 +66,7 @@ const generateSystemInstruction = (
     });
 
     // Add language-specific instructions
-    const languageInstructions = selectedLanguage.code !== 'en' 
+    const languageInstructions = selectedLanguage.code !== 'en'
         ? `\n\nIMPORTANT LANGUAGE INSTRUCTIONS:
 - The candidate will be speaking in ${selectedLanguage.name} (${selectedLanguage.speechCode})
 - You should respond primarily in English, but acknowledge and understand their ${selectedLanguage.name} responses
@@ -70,8 +74,26 @@ const generateSystemInstruction = (
 - Focus on the technical content rather than language perfection
 - If the candidate seems more comfortable in ${selectedLanguage.name}, you may incorporate some key phrases in ${selectedLanguage.name} to make them feel at ease`
         : '';
+`CRITICAL TRANSCRIPTION REQUIREMENTS FOR TECHNICAL INTERVIEWS:
 
-    return basePrompt + languageInstructions;
+**LANGUAGE DETECTION AND TRANSCRIPTION RULES:**
+generate transcript of candidate's speech with these rules:
+- Detect the language spoken by the candidate accurately.
+- If the candidate speaks English or uses technical terms, always transcribe those parts in English script, regardless of their accent.
+- Do not transcribe any language in some other language's script. like माय नेम इज सुमित पांडे एंड आई एम फ्रॉम दिल्ली। transcribing English words in Hindi script or vice versa is not allowed.`
+
+    const fullPrompt = `You are an intelligent AI assistant.
+
+For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").
+
+${basePrompt}${languageInstructions}`;
+
+    console.log('🤖 FULL GENERATED SYSTEM PROMPT:');
+    console.log('=====================================');
+    console.log(fullPrompt);
+    console.log('=====================================');
+
+    return fullPrompt;
 };
 
 interface Message {
@@ -84,12 +106,12 @@ export default function InterviewRoom() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    
+
     // Get language from URL parameters or use default
     const langCode = searchParams.get('lang') || 'en';
     const selectedLanguage = getLanguageByCode(langCode);
     console.log(`🌐 Interview starting with language: ${selectedLanguage.name} (${selectedLanguage.speechCode})`);
-    
+
     const { fetchSessionDetail, completeInterviewSession } = useOptimizedQueries();
 
     // Sanitize API Key
@@ -484,17 +506,15 @@ export default function InterviewRoom() {
                                 prebuiltVoiceConfig: {
                                     voiceName: "Kore"
                                 }
-                            }
+                            },
                         }
                     },
                     systemInstruction: {
                         parts: [{ text: systemInstruction }]
                     },
                     // Enable input and output audio transcription with language configuration
-                    inputAudioTranscription: {
-                    },
-                    outputAudioTranscription: {
-                    },
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {},
                     onTranscriptFragment: handleTranscriptFragment
                 });
                 startTimeRef.current = Date.now();

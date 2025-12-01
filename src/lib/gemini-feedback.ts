@@ -44,17 +44,17 @@ export interface InterviewLengthAnalysis {
 function analyzeInterviewLength(transcript: Message[]): InterviewLengthAnalysis {
     const userMessages = transcript.filter(msg => msg.sender === 'user');
     const aiMessages = transcript.filter(msg => msg.sender === 'ai');
-    
+
     const totalWordCount = transcript.reduce((count, msg) => {
         return count + msg.text.trim().split(/\s+/).length;
     }, 0);
-    
-    const avgUserResponseLength = userMessages.length > 0 
-        ? userMessages.reduce((sum, msg) => sum + msg.text.length, 0) / userMessages.length 
+
+    const avgUserResponseLength = userMessages.length > 0
+        ? userMessages.reduce((sum, msg) => sum + msg.text.length, 0) / userMessages.length
         : 0;
-    
+
     const totalTurns = transcript.length;
-    
+
     let category: InterviewLengthAnalysis['category'];
     if (totalTurns < INTERVIEW_THRESHOLDS.MINIMUM_TURNS) {
         category = 'too-short';
@@ -65,7 +65,7 @@ function analyzeInterviewLength(transcript: Message[]): InterviewLengthAnalysis 
     } else {
         category = 'long';
     }
-    
+
     return {
         totalTurns,
         userTurns: userMessages.length,
@@ -92,25 +92,25 @@ function getTooShortInterviewFeedback(position: string, analysis: InterviewLengt
             "Consider practicing with mock interviews to build confidence"
         ],
         skills: [
-            { 
-                name: "Technical Knowledge", 
-                score: 0, 
-                feedback: "Insufficient interview duration to assess technical capabilities. Please complete a longer session for evaluation." 
+            {
+                name: "Technical Knowledge",
+                score: 0,
+                feedback: "Insufficient interview duration to assess technical capabilities. Please complete a longer session for evaluation."
             },
-            { 
-                name: "Communication", 
-                score: 0, 
-                feedback: "Limited interaction time prevents meaningful assessment of communication skills." 
+            {
+                name: "Communication",
+                score: 0,
+                feedback: "Limited interaction time prevents meaningful assessment of communication skills."
             },
-            { 
-                name: "Problem Solving", 
-                score: 0, 
-                feedback: "No significant problem-solving scenarios were completed during this brief session." 
+            {
+                name: "Problem Solving",
+                score: 0,
+                feedback: "No significant problem-solving scenarios were completed during this brief session."
             },
-            { 
-                name: "Adaptability", 
-                score: 0, 
-                feedback: "Unable to evaluate adaptability due to insufficient interview content." 
+            {
+                name: "Adaptability",
+                score: 0,
+                feedback: "Unable to evaluate adaptability due to insufficient interview content."
             }
         ],
         actionPlan: [
@@ -135,7 +135,7 @@ function getLengthBasedInstructions(category: InterviewLengthAnalysis['category'
     - Be more lenient with scoring (avoid very low scores unless clearly warranted)
     - Focus on what was observed rather than making extensive inferences
     - Suggest areas for further exploration in future interviews`;
-        
+
         case 'medium':
             return `
     SPECIAL INSTRUCTIONS FOR MEDIUM-LENGTH INTERVIEW:
@@ -143,7 +143,7 @@ function getLengthBasedInstructions(category: InterviewLengthAnalysis['category'
     - Include specific examples where available
     - Offer constructive suggestions for improvement
     - Balance strengths and areas for growth`;
-        
+
         case 'long':
             return `
     SPECIAL INSTRUCTIONS FOR COMPREHENSIVE INTERVIEW:
@@ -151,7 +151,7 @@ function getLengthBasedInstructions(category: InterviewLengthAnalysis['category'
     - Include multiple examples from different parts of the interview
     - Offer nuanced scoring that reflects the depth of assessment possible
     - Provide detailed action plan based on thorough evaluation`;
-        
+
         default:
             return '';
     }
@@ -166,17 +166,17 @@ export async function generateFeedback(
     interviewType: string
 ): Promise<FeedbackData> {
     console.log("Analyzing interview transcript:", transcript.length, "messages");
-    
+
     // Analyze interview length before processing
     const lengthAnalysis = analyzeInterviewLength(transcript);
     console.log("Interview analysis:", lengthAnalysis);
-    
+
     // Return early if interview is too short
     if (lengthAnalysis.category === 'too-short') {
         console.log("Interview too short - returning minimal feedback");
         return getTooShortInterviewFeedback(position, lengthAnalysis);
     }
-    
+
     // Filter out internal thoughts and empty lines
     const transcriptText = transcript
         .map(msg => {
@@ -199,53 +199,124 @@ export async function generateFeedback(
     const prompt = `
     You are an expert technical interviewer and career coach. Analyze the following interview transcript for a ${position} position (${interviewType} interview).
 
-    INTERVIEW LENGTH CONTEXT:
-    - Total exchanges: ${lengthAnalysis.totalTurns}
-    - Category: ${lengthAnalysis.category.toUpperCase()} interview
-    - Total words: ${lengthAnalysis.totalWordCount}
-    ${lengthSpecificInstructions}
+TRANSCRIPT:
+${transcriptText}
 
-    The transcript contains a conversation between an AI Interviewer and a User (Candidate).
-    
-    TRANSCRIPT:
-    ${transcriptText}
-    
-    Based on the transcript, provide a comprehensive feedback report.
+INTERVIEW METRICS:
 
-    CRITICAL INSTRUCTIONS FOR ACCURACY:
-    1. **Internal Thoughts**: Ignore any text that looks like system logs or internal AI thoughts (e.g., "*Anticipating...*"). Focus ONLY on the spoken conversation.
-    2. **Interview Length Adaptation**: 
-       - For SHORT interviews (${INTERVIEW_THRESHOLDS.SHORT_INTERVIEW} turns): Provide general feedback with acknowledgment of limited data. Be more lenient with scores.
-       - For MEDIUM interviews (${INTERVIEW_THRESHOLDS.MEDIUM_INTERVIEW} turns): Balanced assessment with moderate detail.
-       - For LONG interviews (${INTERVIEW_THRESHOLDS.LONG_INTERVIEW}+ turns): Detailed, specific feedback with granular scoring.
-    3. **Skipped Questions**: If a candidate skips a question (e.g., "I'd like to skip this"), do NOT penalize them heavily. 
-       - Mark that specific skill as "Not Assessed" or give a neutral score (e.g. 50).
-       - Calculate the overall score based primarily on the questions they DID answer.
-       - Do NOT give a failing grade (e.g. < 40) solely because of one skipped question if other answers were good.
-    4. **Tone**: Be constructive. Even if the candidate failed or quit, offer encouraging advice on how to prepare for next time.
+* Total exchanges: ${lengthAnalysis.totalTurns}
+* Category: ${lengthAnalysis.category.toUpperCase()}
+* Total words: ${lengthAnalysis.totalWordCount}
 
-    ANALYSIS TASKS:
-    1. Analyze the Candidate's responses for technical accuracy, depth of knowledge, and problem-solving approach.
-    2. Analyze the Candidate's communication style, clarity, and confidence.
-    3. Evaluate how well the Candidate answered the specific questions asked by the AI.
-    4. Make your feedback SPECIFIC based on the transcript, not generic.
-    5. Adjust depth of analysis based on interview length - be more forgiving for shorter interviews.
-    
-    Provide the output in the following JSON format:
-    {
-        "executiveSummary": "A comprehensive summary of the interview, adjusted for interview length.",
-        "strengths": ["List 2-5 specific strengths with examples from the interview."],
-        "improvements": ["List 2-5 specific areas for improvement with concrete examples."],
-        "skills": [
-            { "name": "Technical Knowledge", "score": 0-100, "feedback": "Detailed feedback" },
-            { "name": "Communication", "score": 0-100, "feedback": "Feedback on clarity" },
-            { "name": "Problem Solving", "score": 0-100, "feedback": "Feedback on approach" },
-            { "name": "Adaptability", "score": 0-100, "feedback": "How well they adapted" }
-        ],
-        "actionPlan": ["List 2-5 actionable steps that are SPECIFIC to their performance."]
-    }
-    
-    IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting (like \`\`\`json) or any other text.
+CRITICAL: Be EXTREMELY STRICT in scoring. Do not give ANY generous scores without clear evidence.
+
+DETAILED SCORING CRITERIA FOR EACH SKILL:
+
+**TECHNICAL KNOWLEDGE (0-100):**
+- **90-100%**: Deep understanding, explains complex concepts, provides detailed examples, discusses trade-offs
+- **70-89%**: Solid understanding, explains how technologies work, gives specific use cases
+- **50-69%**: Can explain basic concepts, shows understanding beyond just naming technologies
+- **30-49%**: Shows some understanding but with significant gaps or confusion
+- **15-29%**: Very limited knowledge, mostly incorrect or confused explanations
+- **5-14%**: Only lists technology names without ANY explanation or understanding
+- **0-4%**: No technical knowledge demonstrated, completely incorrect, or refuses to answer
+
+**COMMUNICATION (0-100):**
+- **90-100%**: Crystal clear, professional, excellent fluency, well-structured responses
+- **70-89%**: Clear communication, minor language issues don't affect understanding
+- **50-69%**: Generally understandable with some communication gaps
+- **30-49%**: Significant communication barriers, some responses unclear
+- **15-29%**: Frequent communication issues, difficult to follow
+- **5-14%**: Poor communication, language mixing makes responses hard to understand
+- **0-4%**: Cannot communicate effectively, responses are incomprehensible
+
+**PROBLEM SOLVING (0-100):**
+- **90-100%**: Systematic approach, breaks down complex problems, considers multiple solutions
+- **70-89%**: Shows logical thinking, attempts structured problem-solving
+- **50-69%**: Basic problem-solving approach, shows some logical reasoning
+- **30-49%**: Limited problem-solving attempts, struggles with systematic approach
+- **15-29%**: Minimal problem-solving effort, shows confusion
+- **5-14%**: Avoids problem-solving, gives up quickly without real attempt
+- **0-4%**: Immediately gives up on problems, shows no problem-solving skills
+
+**ADAPTABILITY (0-100):**
+- **90-100%**: Seamlessly adapts to different topics, adjusts communication style effectively
+- **70-89%**: Shows good flexibility, handles topic changes well
+- **50-69%**: Some adaptability, adjusts reasonably to different questions
+- **30-49%**: Limited adaptability, prefers staying in comfort zone
+- **15-29%**: Struggles to adapt, rigid responses
+- **5-14%**: Very limited adaptability, uncomfortable with topic changes
+- **0-4%**: Cannot adapt to new topics or questions
+
+ULTRA-STRICT SCORING RULES:
+- **Lists technologies without explanation** = Technical Knowledge: 5-10%
+- **Gives up on first problem without trying** = Problem Solving: 0-5%
+- **Cannot explain basic concepts** = Technical Knowledge: 0-10%
+- **Frequent language mixing that hinders technical discussion** = Communication: 5-15%
+- **Shows no understanding of mentioned technologies** = Technical Knowledge: 0-5%
+- **Immediately abandons problems** ("I leave that") = Problem Solving: 0-5%
+- **Cannot articulate any technical concept clearly** = Technical Knowledge: 0-10%
+
+MANDATORY: If candidate shows ZERO technical explanation ability, score Technical Knowledge 0-5%
+
+INSTRUCTIONS FOR FAIR EVALUATION:
+
+1. Ignore any system logs or AI internal thoughts.
+2. Score only based on what the candidate actually demonstrated.
+
+   * If a skill can’t be evaluated due to lack of data, mark it as: "Not Assessed" or give score 50.
+   * Do NOT penalize missing or skipped answers.
+3. Scale the depth and strictness of analysis according to the transcript length:
+
+   * SHORT (${INTERVIEW_THRESHOLDS.SHORT_INTERVIEW} turns): limited evidence → evaluate with leniency.
+   * MEDIUM (${INTERVIEW_THRESHOLDS.MEDIUM_INTERVIEW} turns): balanced scoring.
+   * LONG (${INTERVIEW_THRESHOLDS.LONG_INTERVIEW}+): detailed and strict.
+4. Normalize scoring by available evidence:
+
+   * Assign high or low scores only when there is enough information.
+   * A short answer cannot earn extreme scores unless quality is clear.
+5. Base feedback and scoring ONLY on:
+
+   * Technical correctness
+   * Explanation quality
+   * Demonstrated reasoning
+   * Communication
+   * Adaptability (when visible)
+
+SCORING RULES (MANDATORY):
+
+* Technical Knowledge
+* Communication
+* Problem Solving
+* Adaptability
+
+For each:
+
+* Score strictly from 0–100, but proportional to observed evidence, not hypothetical expectations.
+* Do not let one weak question dominate the overall judgment if answers elsewhere were strong.
+
+OUTPUT FORMAT (JSON only):
+
+{
+"executiveSummary": "Include specific examples of strong/weak performance and justify overall assessment with evidence. If scores are very low (below 10%), clearly explain why based on transcript.",
+"strengths": ["Be specific about what they did well with examples from transcript - if no strengths observed, state 'Limited technical demonstration in this interview'"],
+"improvements": ["Be specific about gaps observed with examples from transcript - focus on fundamental skills needed"],
+"skills": [
+{ "name": "Technical Knowledge", "score": 0-100, "feedback": "Specific evidence from transcript. If 0-10%: explain exactly what technical knowledge was missing. If listing technologies without explanation, score 5-10% maximum." },
+{ "name": "Communication", "score": 0-100, "feedback": "Specific examples. If language mixing prevents technical discussion, score 5-15% maximum." },
+{ "name": "Problem Solving", "score": 0-100, "feedback": "Specific examples. If candidate gives up immediately without trying, score 0-5% maximum." },
+{ "name": "Adaptability", "score": 0-100, "feedback": "Specific examples. If no evidence of adapting approach or depth, score accordingly." }
+],
+"actionPlan": ["Specific, actionable recommendations focusing on fundamental skill building"]
+}
+
+REMEMBER: Be brutally honest and realistic. A 5% score with constructive feedback is more helpful than an inflated 30% score.
+For the example transcript provided:
+- Technical Knowledge should be 5-10% (only lists "Node.js, Express, MongoDB" with ZERO explanation, cannot explain WebSocket implementation)
+- Communication should be 10-15% (heavy language mixing makes technical discussion incomprehensible)
+- Problem Solving should be 0-5% (immediately gives up: "As my mind was stuck so I leave that" - shows NO problem-solving attempt)
+- Adaptability should be 15-25% (provides basic responses but no evidence of adapting approach or depth)
+
     `;
 
     const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');

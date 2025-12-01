@@ -53,13 +53,17 @@ export function validateFeedback(
 
     // Adjust validation strictness based on interview length
     if (interviewLength === 'short') {
-        // Be more lenient with short interviews
-        if (avgScore > 90 && validated.improvements.length < 1) {
-            console.warn('⚠️ Very high score in short interview - may need more improvements');
+        // Be more strict about score caps for short interviews
+        if (avgScore > 75) {
+            console.warn('⚠️ Score too high for short interview - should be capped at 75% for limited assessment');
+        }
+        
+        if (avgScore > 65 && validated.skills.length < 4) {
+            console.warn('⚠️ High score in short interview with few skills assessed');
         }
         
         // Allow placeholder content for short interviews
-        const allowedPlaceholders = ['insufficient data', 'limited assessment', 'brief session', 'not assessed'];
+        const allowedPlaceholders = ['insufficient data', 'limited assessment', 'brief session', 'not assessed', 'limited questions', 'few questions'];
         const hasAllowedPlaceholders = [
             ...validated.skills.map(s => s.feedback),
             validated.executiveSummary
@@ -71,6 +75,15 @@ export function validateFeedback(
 
         if (hasAllowedPlaceholders) {
             console.log('✅ Short interview contains appropriate limitation language');
+        }
+        
+        // Check if executive summary mentions question count limitation
+        const mentionsQuestionCount = validated.executiveSummary.toLowerCase().includes('question') || 
+                                     validated.executiveSummary.toLowerCase().includes('limited') ||
+                                     validated.executiveSummary.toLowerCase().includes('brief');
+        
+        if (!mentionsQuestionCount) {
+            console.warn('⚠️ Short interview should mention question count limitation in executive summary');
         }
     } else {
         // Standard validation for medium/long interviews
@@ -152,21 +165,28 @@ export function calculateFeedbackQuality(
 
     // Adjust quality expectations based on interview length
     if (interviewLength === 'short') {
-        // More lenient scoring for short interviews
-        if (feedback.executiveSummary.length < 50) score -= 5;  // Reduced penalty
-        if (feedback.strengths.length < 2) score -= 5;
-        if (feedback.improvements.length < 2) score -= 5;
-        if (feedback.actionPlan.length < 2) score -= 5;
+        // More strict scoring for short interviews to encourage proper score capping
+        if (feedback.executiveSummary.length < 50) score -= 15;  // Increased penalty
+        if (feedback.strengths.length < 2) score -= 10;
+        if (feedback.improvements.length < 2) score -= 10;
+        if (feedback.actionPlan.length < 2) score -= 10;
         
-        // Don't penalize for appropriate limitation language
-        const limitationPhrases = ['limited', 'brief', 'short', 'insufficient'];
+        // Check if scores are properly capped for short interviews
+        const avgSkillScore = feedback.skills.reduce((sum, s) => sum + s.score, 0) / feedback.skills.length;
+        if (avgSkillScore > 75) {
+            score -= 20; // Heavy penalty for not respecting score caps
+            console.warn('⚠️ Skills scores not properly capped for short interview');
+        }
+        
+        // Bonus for acknowledging interview limitations
+        const limitationPhrases = ['limited', 'brief', 'short', 'insufficient', 'few questions', 'limited questions'];
         const feedbackText = feedback.executiveSummary.toLowerCase();
         const hasLimitationLanguage = limitationPhrases.some(phrase => 
             feedbackText.includes(phrase)
         );
         
         if (hasLimitationLanguage) {
-            score += 10; // Bonus for acknowledging limitations
+            score += 15; // Increased bonus for acknowledging limitations
         }
         
     } else if (interviewLength === 'medium') {
