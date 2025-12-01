@@ -72,10 +72,7 @@ export function loadCompanyInterviewPrompt(variables: PromptVariables): string {
     return prompt.trim();
 }
 
-/**
- * Main function to load the appropriate system prompt based on interview type
- */
-export function loadSystemPrompt(variables: PromptVariables, performanceContext?: string): string {
+export function loadSystemPrompt(variables: PromptVariables): string {
     // Determine if this is a company-specific interview
     const isCompanyInterview = variables.companyName && variables.questions && variables.questions.length > 0;
 
@@ -86,12 +83,6 @@ export function loadSystemPrompt(variables: PromptVariables, performanceContext?
     } else {
         console.log('Loading general interview prompt');
         basePrompt = loadGeneralInterviewPrompt(variables);
-    }
-
-    // Append performance context if provided
-    if (performanceContext) {
-        basePrompt += '\n\n' + performanceContext;
-        console.log('Added performance context to system prompt');
     }
 
     return basePrompt;

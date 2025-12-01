@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { Card, CardContent } from "@/components/ui/card";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { getPreferredLanguage, getLanguageInstructions, type LanguageOption } from "@/lib/language-config";
 
 interface SessionConfig {
     skills?: string[];
@@ -34,6 +36,7 @@ export default function InterviewSetup() {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(getPreferredLanguage());
     const { allowed, loading: subscriptionLoading } = useSubscription();
 
     useEffect(() => {
@@ -62,6 +65,11 @@ export default function InterviewSetup() {
     };
 
     const toggleMic = () => setIsMicOn(!isMicOn);
+
+    const handleLanguageChange = (language: LanguageOption) => {
+        setSelectedLanguage(language);
+        console.log(`🌐 Language changed to: ${language.name} (${language.speechCode})`);
+    };
 
     const startCamera = async () => {
         try {
@@ -129,13 +137,15 @@ export default function InterviewSetup() {
         }
 
         setIsLoading(true);
+        // Pass language preference to the interview session
+        const languageParam = selectedLanguage.code !== 'en' ? `?lang=${selectedLanguage.code}` : '';
         // Simulate connection or setup delay
         setTimeout(() => {
             setIsLoading(false);
             toast.success("Starting interview session...");
-            // Navigate to the actual interview page
-            navigate(`/interview/${sessionId}/active`);
-            console.log("Starting interview for session:", sessionId);
+            // Navigate to the actual interview page with language parameter
+            navigate(`/interview/${sessionId}/active${languageParam}`);
+            console.log("Starting interview for session:", sessionId, "with language:", selectedLanguage.name);
         }, 1000);
     };
 
@@ -294,6 +304,19 @@ export default function InterviewSetup() {
                                 <p className="text-xs text-red-500 font-medium bg-red-500/10 py-2 rounded-md animate-pulse">Please enable camera access</p>
                             )}
                         </div>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div className="space-y-3 pt-2">
+                        <h3 className="font-semibold text-foreground text-sm uppercase tracking-wider text-center">Interview Language</h3>
+                        <LanguageSelector
+                            selectedLanguage={selectedLanguage}
+                            onLanguageChange={handleLanguageChange}
+                            className="max-w-sm mx-auto"
+                        />
+                        <p className="text-xs text-center text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                            {getLanguageInstructions(selectedLanguage.code)}
+                        </p>
                     </div>
 
                     <div className="space-y-4 pt-2">

@@ -4,92 +4,125 @@ import { z } from 'zod';
  * Feedback Validator
  * 
  * Validates AI-generated feedback to ensure quality and consistency
+ * Updated to handle different interview lengths appropriately
  */
 
 // Define the schema for feedback data
 const SkillSchema = z.object({
     name: z.string().min(1, "Skill name cannot be empty"),
     score: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100"),
-    feedback: z.string().min(10, "Feedback must be at least 10 characters")
+    feedback: z.string().min(5, "Feedback must be at least 5 characters")  // Reduced from 10 to be more lenient
 });
 
+// More flexible schema that adjusts based on interview length
 export const FeedbackSchema = z.object({
     executiveSummary: z.string()
-        .min(50, "Executive summary too short")
+        .min(30, "Executive summary too short")  // Reduced from 50
         .max(2000, "Executive summary too long"),
-    strengths: z.array(z.string().min(5))
+    strengths: z.array(z.string().min(3))  // Reduced from 5
         .min(1, "At least one strength required")
         .max(10, "Too many strengths"),
-    improvements: z.array(z.string().min(5))
+    improvements: z.array(z.string().min(3))  // Reduced from 5
         .min(1, "At least one improvement required")
         .max(10, "Too many improvements"),
     skills: z.array(SkillSchema)
         .min(3, "At least 3 skills required")
         .max(6, "Too many skills"),
-    actionPlan: z.array(z.string().min(10))
+    actionPlan: z.array(z.string().min(5))  // Reduced from 10
         .min(1, "At least one action item required")
         .max(10, "Too many action items")
 });
 
 export type ValidatedFeedback = z.infer<typeof FeedbackSchema>;
 
+// Interview length categories for validation adjustments
+export type InterviewLengthCategory = 'too-short' | 'short' | 'medium' | 'long';
+
 /**
- * Validates feedback data and performs sanity checks
+ * Validates feedback data with length-aware sanity checks
  */
-export function validateFeedback(feedback: unknown): ValidatedFeedback {
+export function validateFeedback(
+    feedback: unknown, 
+    interviewLength: InterviewLengthCategory = 'medium'
+): ValidatedFeedback {
     // Schema validation
     const validated = FeedbackSchema.parse(feedback);
 
-    // Sanity checks
+    // Length-aware sanity checks
     const avgScore = validated.skills.reduce((sum, s) => sum + s.score, 0) / validated.skills.length;
 
-    // Check for inconsistencies
-    if (avgScore > 80 && validated.improvements.length < 2) {
-        console.warn('⚠️ High score but few improvements - may be inconsistent');
+    // Adjust validation strictness based on interview length
+    if (interviewLength === 'short') {
+        // Be more lenient with short interviews
+        if (avgScore > 90 && validated.improvements.length < 1) {
+            console.warn('⚠️ Very high score in short interview - may need more improvements');
+        }
+        
+        // Allow placeholder content for short interviews
+        const allowedPlaceholders = ['insufficient data', 'limited assessment', 'brief session', 'not assessed'];
+        const hasAllowedPlaceholders = [
+            ...validated.skills.map(s => s.feedback),
+            validated.executiveSummary
+        ].some(text =>
+            allowedPlaceholders.some(placeholder =>
+                text.toLowerCase().includes(placeholder)
+            )
+        );
+
+        if (hasAllowedPlaceholders) {
+            console.log('✅ Short interview contains appropriate limitation language');
+        }
+    } else {
+        // Standard validation for medium/long interviews
+        if (avgScore > 80 && validated.improvements.length < 2) {
+            console.warn('⚠️ High score but few improvements - may be inconsistent');
+        }
+
+        if (avgScore < 40 && validated.strengths.length > 3) {
+            console.warn('⚠️ Low score but many strengths - may be inconsistent');
+        }
+
+        // Check for empty or placeholder content in longer interviews
+        const placeholders = ['pending', 'n/a', 'tbd', 'todo'];
+        const hasPlaceholders = [
+            ...validated.strengths,
+            ...validated.improvements,
+            ...validated.actionPlan,
+            validated.executiveSummary
+        ].some(text =>
+            placeholders.some(placeholder =>
+                text.toLowerCase().includes(placeholder)
+            )
+        );
+
+        if (hasPlaceholders) {
+            console.warn('⚠️ Feedback contains placeholder text');
+        }
     }
 
-    if (avgScore < 40 && validated.strengths.length > 3) {
-        console.warn('⚠️ Low score but many strengths - may be inconsistent');
-    }
-
-    // Check for duplicate skills
+    // Check for duplicate skills (applies to all lengths)
     const skillNames = validated.skills.map(s => s.name.toLowerCase());
     const uniqueSkills = new Set(skillNames);
     if (skillNames.length !== uniqueSkills.size) {
         throw new Error('Duplicate skills detected in feedback');
     }
 
-    // Check for empty or placeholder content
-    const placeholders = ['pending', 'n/a', 'tbd', 'todo', 'insufficient data'];
-    const hasPlaceholders = [
-        ...validated.strengths,
-        ...validated.improvements,
-        ...validated.actionPlan,
-        validated.executiveSummary
-    ].some(text =>
-        placeholders.some(placeholder =>
-            text.toLowerCase().includes(placeholder)
-        )
-    );
-
-    if (hasPlaceholders) {
-        console.warn('⚠️ Feedback contains placeholder text');
-    }
-
     return validated;
 }
 
 /**
- * Validates feedback with error recovery
- * Returns validated feedback or throws with detailed error message
+ * Validates feedback with error recovery and interview length context
  */
-export function validateFeedbackSafe(feedback: unknown): {
+export function validateFeedbackSafe(
+    feedback: unknown,
+    interviewLength: InterviewLengthCategory = 'medium'
+): {
     success: boolean;
     data?: ValidatedFeedback;
     error?: string;
 } {
     try {
-        const validated = validateFeedback(feedback);
+        const validated = validateFeedback(feedback, interviewLength);
         return { success: true, data: validated };
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -109,20 +142,54 @@ export function validateFeedbackSafe(feedback: unknown): {
 }
 
 /**
- * Calculates quality score for feedback (0-100)
+ * Calculates quality score for feedback with length awareness (0-100)
  */
-export function calculateFeedbackQuality(feedback: ValidatedFeedback): number {
+export function calculateFeedbackQuality(
+    feedback: ValidatedFeedback,
+    interviewLength: InterviewLengthCategory = 'medium'
+): number {
     let score = 100;
 
-    // Deduct for short content
-    if (feedback.executiveSummary.length < 100) score -= 10;
-    if (feedback.strengths.length < 3) score -= 10;
-    if (feedback.improvements.length < 3) score -= 10;
-    if (feedback.actionPlan.length < 3) score -= 10;
+    // Adjust quality expectations based on interview length
+    if (interviewLength === 'short') {
+        // More lenient scoring for short interviews
+        if (feedback.executiveSummary.length < 50) score -= 5;  // Reduced penalty
+        if (feedback.strengths.length < 2) score -= 5;
+        if (feedback.improvements.length < 2) score -= 5;
+        if (feedback.actionPlan.length < 2) score -= 5;
+        
+        // Don't penalize for appropriate limitation language
+        const limitationPhrases = ['limited', 'brief', 'short', 'insufficient'];
+        const feedbackText = feedback.executiveSummary.toLowerCase();
+        const hasLimitationLanguage = limitationPhrases.some(phrase => 
+            feedbackText.includes(phrase)
+        );
+        
+        if (hasLimitationLanguage) {
+            score += 10; // Bonus for acknowledging limitations
+        }
+        
+    } else if (interviewLength === 'medium') {
+        // Standard scoring for medium interviews
+        if (feedback.executiveSummary.length < 100) score -= 8;
+        if (feedback.strengths.length < 3) score -= 8;
+        if (feedback.improvements.length < 3) score -= 8;
+        if (feedback.actionPlan.length < 3) score -= 8;
+        
+    } else if (interviewLength === 'long') {
+        // More strict scoring for long interviews
+        if (feedback.executiveSummary.length < 150) score -= 10;
+        if (feedback.strengths.length < 4) score -= 10;
+        if (feedback.improvements.length < 4) score -= 10;
+        if (feedback.actionPlan.length < 4) score -= 10;
+        
+        // Bonus for detailed analysis in long interviews
+        if (feedback.skills.every(s => s.feedback.length > 80)) score += 15;
+    }
 
-    // Deduct for generic feedback
+    // Deduct for generic feedback (applies to all lengths)
     const genericPhrases = ['good', 'great', 'excellent', 'needs improvement', 'could be better'];
-    const feedbackText = [
+    const allFeedbackText = [
         feedback.executiveSummary,
         ...feedback.strengths,
         ...feedback.improvements,
@@ -131,14 +198,17 @@ export function calculateFeedbackQuality(feedback: ValidatedFeedback): number {
     ].join(' ').toLowerCase();
 
     const genericCount = genericPhrases.filter(phrase =>
-        feedbackText.includes(phrase)
+        allFeedbackText.includes(phrase)
     ).length;
 
-    score -= Math.min(genericCount * 5, 20);
+    const genericPenalty = interviewLength === 'short' ? 3 : 5; // More lenient for short interviews
+    score -= Math.min(genericCount * genericPenalty, 20);
 
     // Bonus for specific, detailed feedback
     if (feedback.executiveSummary.length > 200) score += 5;
-    if (feedback.skills.every(s => s.feedback.length > 50)) score += 10;
+    
+    const minFeedbackLength = interviewLength === 'short' ? 30 : 50;
+    if (feedback.skills.every(s => s.feedback.length > minFeedbackLength)) score += 10;
 
     return Math.max(0, Math.min(100, score));
 }

@@ -19,34 +19,164 @@ export interface FeedbackData {
     actionPlan: string[];
 }
 
-export interface PerformanceData {
-    currentScore: number;
-    trend: 'improving' | 'stable' | 'declining';
-    difficultyProgression: string[];
-    totalHintsUsed: number;
-    detailedMetrics: Array<{
-        questionIndex: number;
-        questionText: string;
-        responseQualityScore: number;
-        responseTimeSeconds: number;
-        difficultyLevel: string;
-        hintsUsed: number;
-        struggleIndicators: {
-            longPauses: number;
-            clarificationRequests: number;
-            incompleteAnswers: number;
-            uncertaintyPhrases: number;
-        };
-    }>;
+// Interview length thresholds
+const INTERVIEW_THRESHOLDS = {
+    MINIMUM_TURNS: 4, // Minimum meaningful exchanges
+    SHORT_INTERVIEW: 8, // Less than this = short interview
+    MEDIUM_INTERVIEW: 15, // Good length for assessment
+    LONG_INTERVIEW: 25, // Comprehensive interview
+} as const;
+
+export interface InterviewLengthAnalysis {
+    totalTurns: number;
+    userTurns: number;
+    aiTurns: number;
+    avgUserResponseLength: number;
+    totalWordCount: number;
+    category: 'too-short' | 'short' | 'medium' | 'long';
 }
+
+
+
+/**
+ * Analyzes the interview transcript to determine length and quality metrics
+ */
+function analyzeInterviewLength(transcript: Message[]): InterviewLengthAnalysis {
+    const userMessages = transcript.filter(msg => msg.sender === 'user');
+    const aiMessages = transcript.filter(msg => msg.sender === 'ai');
+    
+    const totalWordCount = transcript.reduce((count, msg) => {
+        return count + msg.text.trim().split(/\s+/).length;
+    }, 0);
+    
+    const avgUserResponseLength = userMessages.length > 0 
+        ? userMessages.reduce((sum, msg) => sum + msg.text.length, 0) / userMessages.length 
+        : 0;
+    
+    const totalTurns = transcript.length;
+    
+    let category: InterviewLengthAnalysis['category'];
+    if (totalTurns < INTERVIEW_THRESHOLDS.MINIMUM_TURNS) {
+        category = 'too-short';
+    } else if (totalTurns < INTERVIEW_THRESHOLDS.SHORT_INTERVIEW) {
+        category = 'short';
+    } else if (totalTurns < INTERVIEW_THRESHOLDS.MEDIUM_INTERVIEW) {
+        category = 'medium';
+    } else {
+        category = 'long';
+    }
+    
+    return {
+        totalTurns,
+        userTurns: userMessages.length,
+        aiTurns: aiMessages.length,
+        avgUserResponseLength,
+        totalWordCount,
+        category
+    };
+}
+
+/**
+ * Returns appropriate feedback for interviews that are too short to assess
+ */
+function getTooShortInterviewFeedback(position: string, analysis: InterviewLengthAnalysis): FeedbackData {
+    return {
+        executiveSummary: `This interview session was too brief (${analysis.totalTurns} exchanges) to provide a comprehensive assessment for the ${position} position. A meaningful technical interview typically requires at least ${INTERVIEW_THRESHOLDS.MINIMUM_TURNS} substantial exchanges to evaluate candidate capabilities effectively. We recommend scheduling a longer session to get valuable insights into your technical skills and problem-solving approach.`,
+        strengths: [
+            "Showed up and engaged with the interview process",
+            "Demonstrated willingness to participate in technical assessment"
+        ],
+        improvements: [
+            "Complete a full-length interview session for comprehensive evaluation",
+            "Prepare for longer technical discussions to showcase your abilities",
+            "Consider practicing with mock interviews to build confidence"
+        ],
+        skills: [
+            { 
+                name: "Technical Knowledge", 
+                score: 0, 
+                feedback: "Insufficient interview duration to assess technical capabilities. Please complete a longer session for evaluation." 
+            },
+            { 
+                name: "Communication", 
+                score: 0, 
+                feedback: "Limited interaction time prevents meaningful assessment of communication skills." 
+            },
+            { 
+                name: "Problem Solving", 
+                score: 0, 
+                feedback: "No significant problem-solving scenarios were completed during this brief session." 
+            },
+            { 
+                name: "Adaptability", 
+                score: 0, 
+                feedback: "Unable to evaluate adaptability due to insufficient interview content." 
+            }
+        ],
+        actionPlan: [
+            "Schedule a complete interview session lasting at least 15-20 minutes",
+            "Prepare to engage with multiple technical questions and scenarios",
+            "Practice explaining your thought process clearly during problem-solving",
+            "Review common interview questions for your target position"
+        ]
+    };
+}
+
+/**
+ * Generates length-specific instructions for the AI prompt
+ */
+function getLengthBasedInstructions(category: InterviewLengthAnalysis['category']): string {
+    switch (category) {
+        case 'short':
+            return `
+    SPECIAL INSTRUCTIONS FOR SHORT INTERVIEW:
+    - Acknowledge the limited data available for assessment
+    - Provide more general, encouraging feedback
+    - Be more lenient with scoring (avoid very low scores unless clearly warranted)
+    - Focus on what was observed rather than making extensive inferences
+    - Suggest areas for further exploration in future interviews`;
+        
+        case 'medium':
+            return `
+    SPECIAL INSTRUCTIONS FOR MEDIUM-LENGTH INTERVIEW:
+    - Provide balanced assessment with moderate detail
+    - Include specific examples where available
+    - Offer constructive suggestions for improvement
+    - Balance strengths and areas for growth`;
+        
+        case 'long':
+            return `
+    SPECIAL INSTRUCTIONS FOR COMPREHENSIVE INTERVIEW:
+    - Provide detailed, specific feedback with granular analysis
+    - Include multiple examples from different parts of the interview
+    - Offer nuanced scoring that reflects the depth of assessment possible
+    - Provide detailed action plan based on thorough evaluation`;
+        
+        default:
+            return '';
+    }
+}
+
+// Export the analysis function for use in other parts of the application
+export { analyzeInterviewLength, INTERVIEW_THRESHOLDS };
 
 export async function generateFeedback(
     transcript: Message[],
     position: string,
-    interviewType: string,
-    performanceData?: PerformanceData
+    interviewType: string
 ): Promise<FeedbackData> {
-    console.log("*(*(*(*(*(*(**((", transcript);
+    console.log("Analyzing interview transcript:", transcript.length, "messages");
+    
+    // Analyze interview length before processing
+    const lengthAnalysis = analyzeInterviewLength(transcript);
+    console.log("Interview analysis:", lengthAnalysis);
+    
+    // Return early if interview is too short
+    if (lengthAnalysis.category === 'too-short') {
+        console.log("Interview too short - returning minimal feedback");
+        return getTooShortInterviewFeedback(position, lengthAnalysis);
+    }
+    
     // Filter out internal thoughts and empty lines
     const transcriptText = transcript
         .map(msg => {
@@ -63,98 +193,56 @@ export async function generateFeedback(
         .map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`)
         .join('\n');
 
-    // Add performance context if available
-    let performanceContext = '';
-    if (performanceData) {
-        performanceContext = `\n\nPERFORMANCE METRICS ANALYSIS:\n\n`;
-        performanceContext += `OVERALL SUMMARY:\n`;
-        performanceContext += `- Overall Performance Score: ${performanceData.currentScore}/100\n`;
-        performanceContext += `- Performance Trend: ${performanceData.trend}\n`;
-        performanceContext += `- Difficulty Progression: ${performanceData.difficultyProgression.join(' → ')}\n`;
-        performanceContext += `- Total Hints Used: ${performanceData.totalHintsUsed}\n\n`;
-
-        // Add detailed question-by-question breakdown
-        if (performanceData.detailedMetrics && performanceData.detailedMetrics.length > 0) {
-            performanceContext += `QUESTION-BY-QUESTION BREAKDOWN:\n\n`;
-
-            performanceData.detailedMetrics.forEach((metric, index) => {
-                performanceContext += `Question ${index + 1} [${metric.difficultyLevel.toUpperCase()}]:\n`;
-                performanceContext += `  Question: "${metric.questionText.substring(0, 100)}${metric.questionText.length > 100 ? '...' : ''}"\n`;
-                performanceContext += `  Response Quality Score: ${metric.responseQualityScore}/100\n`;
-                performanceContext += `  Response Time: ${metric.responseTimeSeconds} seconds\n`;
-                performanceContext += `  Hints Used: ${metric.hintsUsed}\n`;
-
-                // Add struggle indicators if any
-                const struggles = [];
-                if (metric.struggleIndicators.longPauses > 0) struggles.push(`${metric.struggleIndicators.longPauses} long pauses`);
-                if (metric.struggleIndicators.clarificationRequests > 0) struggles.push(`${metric.struggleIndicators.clarificationRequests} clarification requests`);
-                if (metric.struggleIndicators.incompleteAnswers > 0) struggles.push(`incomplete answer`);
-                if (metric.struggleIndicators.uncertaintyPhrases > 0) struggles.push(`${metric.struggleIndicators.uncertaintyPhrases} uncertainty phrases`);
-
-                if (struggles.length > 0) {
-                    performanceContext += `  Struggle Indicators: ${struggles.join(', ')}\n`;
-                }
-                performanceContext += `\n`;
-            });
-        }
-
-        performanceContext += `IMPORTANT CONTEXT:\n`;
-        performanceContext += `- This interview used dynamic difficulty adjustment\n`;
-        performanceContext += `- The AI adapted question complexity based on the candidate's real-time performance\n`;
-        performanceContext += `- Use the detailed metrics above to provide specific, actionable feedback for each question area\n`;
-        performanceContext += `- Highlight patterns in performance (e.g., struggled with harder questions, improved over time)\n`;
-    }
+    // Adjust prompt based on interview length
+    const lengthSpecificInstructions = getLengthBasedInstructions(lengthAnalysis.category);
 
     const prompt = `
     You are an expert technical interviewer and career coach. Analyze the following interview transcript for a ${position} position (${interviewType} interview).
+
+    INTERVIEW LENGTH CONTEXT:
+    - Total exchanges: ${lengthAnalysis.totalTurns}
+    - Category: ${lengthAnalysis.category.toUpperCase()} interview
+    - Total words: ${lengthAnalysis.totalWordCount}
+    ${lengthSpecificInstructions}
 
     The transcript contains a conversation between an AI Interviewer and a User (Candidate).
     
     TRANSCRIPT:
     ${transcriptText}
-    ${performanceContext}
     
     Based on the transcript, provide a comprehensive feedback report.
 
     CRITICAL INSTRUCTIONS FOR ACCURACY:
     1. **Internal Thoughts**: Ignore any text that looks like system logs or internal AI thoughts (e.g., "*Anticipating...*"). Focus ONLY on the spoken conversation.
-    2. **Short/Aborted Interviews**: If the interview is very short (< 5 turns) or the candidate aborts early, DO NOT hallucinate skills. 
-       - Set the "Executive Summary" to clearly state that the interview was too short to fully assess the candidate.
-       - Give neutral scores (e.g., 0 or 50) with feedback explicitly stating "Insufficient data".
+    2. **Interview Length Adaptation**: 
+       - For SHORT interviews (${INTERVIEW_THRESHOLDS.SHORT_INTERVIEW} turns): Provide general feedback with acknowledgment of limited data. Be more lenient with scores.
+       - For MEDIUM interviews (${INTERVIEW_THRESHOLDS.MEDIUM_INTERVIEW} turns): Balanced assessment with moderate detail.
+       - For LONG interviews (${INTERVIEW_THRESHOLDS.LONG_INTERVIEW}+ turns): Detailed, specific feedback with granular scoring.
     3. **Skipped Questions**: If a candidate skips a question (e.g., "I'd like to skip this"), do NOT penalize them heavily. 
        - Mark that specific skill as "Not Assessed" or give a neutral score (e.g. 50).
        - Calculate the overall score based primarily on the questions they DID answer.
        - Do NOT give a failing grade (e.g. < 40) solely because of one skipped question if other answers were good.
-    4. **Performance Progression**: If performance metrics are provided, acknowledge the candidate's improvement or decline throughout the interview.
-    5. **Difficulty Adjustment**: If difficulty progression is shown, note how the candidate handled increasing or decreasing complexity.
-    6. **Tone**: Be constructive. Even if the candidate failed or quit, offer encouraging advice on how to prepare for next time.
+    4. **Tone**: Be constructive. Even if the candidate failed or quit, offer encouraging advice on how to prepare for next time.
 
     ANALYSIS TASKS:
     1. Analyze the Candidate's responses for technical accuracy, depth of knowledge, and problem-solving approach.
     2. Analyze the Candidate's communication style, clarity, and confidence.
     3. Evaluate how well the Candidate answered the specific questions asked by the AI.
-    4. **CRITICAL - If detailed performance metrics are provided**:
-       - Reference specific questions by number when providing feedback
-       - Identify patterns (e.g., "struggled with harder questions", "improved as interview progressed", "quick responses but lower quality")
-       - Note which questions had high/low scores and explain why based on the transcript
-       - Mention specific struggle indicators (long pauses, uncertainty phrases, clarification requests)
-       - Acknowledge when hints were used and whether they helped
-       - Comment on how the candidate adapted to difficulty changes
-       - Provide specific, actionable advice based on the question-level data
-    5. Make your feedback SPECIFIC and DATA-DRIVEN using the performance metrics, not generic.
+    4. Make your feedback SPECIFIC based on the transcript, not generic.
+    5. Adjust depth of analysis based on interview length - be more forgiving for shorter interviews.
     
     Provide the output in the following JSON format:
     {
-        "executiveSummary": "A comprehensive summary that references specific performance data. Mention overall score, trend, and key patterns. If performance metrics available, cite specific question numbers and scores.",
-        "strengths": ["List 3-5 specific strengths with examples from the interview. Reference question numbers if metrics available (e.g., 'Strong performance on Question 2 (score: 85/100)')"],
-        "improvements": ["List 3-5 specific areas for improvement with concrete examples. Reference question numbers and metrics (e.g., 'Question 4 showed struggles with X (score: 45/100, 3 uncertainty phrases)')"],
+        "executiveSummary": "A comprehensive summary of the interview, adjusted for interview length.",
+        "strengths": ["List 2-5 specific strengths with examples from the interview."],
+        "improvements": ["List 2-5 specific areas for improvement with concrete examples."],
         "skills": [
-            { "name": "Technical Knowledge", "score": 0-100, "feedback": "Detailed feedback referencing specific questions and scores from metrics" },
-            { "name": "Communication", "score": 0-100, "feedback": "Feedback on clarity, mentioning response times and struggle indicators" },
-            { "name": "Problem Solving", "score": 0-100, "feedback": "Feedback on approach, citing specific questions and difficulty levels handled" },
-            { "name": "Adaptability", "score": 0-100, "feedback": "How well they adapted to difficulty changes (use difficulty progression data)" }
+            { "name": "Technical Knowledge", "score": 0-100, "feedback": "Detailed feedback" },
+            { "name": "Communication", "score": 0-100, "feedback": "Feedback on clarity" },
+            { "name": "Problem Solving", "score": 0-100, "feedback": "Feedback on approach" },
+            { "name": "Adaptability", "score": 0-100, "feedback": "How well they adapted" }
         ],
-        "actionPlan": ["List 3-5 actionable steps that are SPECIFIC to their performance. Reference weak areas from metrics (e.g., 'Practice medium-difficulty system design questions - you scored 40/100 on Question 3')"]
+        "actionPlan": ["List 2-5 actionable steps that are SPECIFIC to their performance."]
     }
     
     IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting (like \`\`\`json) or any other text.
@@ -188,15 +276,15 @@ export async function generateFeedback(
 
         // Validate feedback before returning
         const { validateFeedbackSafe, calculateFeedbackQuality } = await import('./feedback-validator');
-        const validation = validateFeedbackSafe(parsedFeedback);
+        const validation = validateFeedbackSafe(parsedFeedback, lengthAnalysis.category);
 
         if (!validation.success) {
             console.error('❌ Feedback validation failed:', validation.error);
             throw new Error(`Invalid feedback structure: ${validation.error}`);
         }
 
-        const qualityScore = calculateFeedbackQuality(validation.data!);
-        console.log(`✅ Feedback validated successfully (quality: ${qualityScore}/100)`);
+        const qualityScore = calculateFeedbackQuality(validation.data!, lengthAnalysis.category);
+        console.log(`✅ Feedback validated successfully (quality: ${qualityScore}/100, length: ${lengthAnalysis.category})`);
 
         return validation.data! as FeedbackData;
     } catch (error) {

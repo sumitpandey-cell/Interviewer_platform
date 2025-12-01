@@ -16,11 +16,13 @@ export type LiveConfig = {
     }[];
   };
   tools?: Array<{ googleSearch: {} } | { codeExecution: {} }>;
-  // Add transcription support
+  // Add transcription support with explicit language configuration
   inputAudioTranscription?: {
     language?: string;
+    languageCode?: string;
   };
   outputAudioTranscription?: {
+    language?: string;
     languageCode?: string;
   };
 };

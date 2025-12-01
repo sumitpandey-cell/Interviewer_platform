@@ -15,6 +15,8 @@ import imageCompression from 'browser-image-compression';
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
 import { useCacheStore } from "@/stores/use-cache-store";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { getPreferredLanguage, type LanguageOption } from "@/lib/language-config";
 
 type SettingsSection = "general" | "notifications" | "security" | "billing";
 
@@ -28,6 +30,9 @@ export default function Settings() {
     const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
     const [email] = useState(user?.email || "");
     const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || user?.user_metadata?.picture);
+    
+    // Language settings
+    const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(getPreferredLanguage());
 
     // Notification settings
     const [emailNotifications, setEmailNotifications] = useState(true);
@@ -39,6 +44,11 @@ export default function Settings() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    const handleLanguageChange = (language: LanguageOption) => {
+        setSelectedLanguage(language);
+        toast.success(`Language changed to ${language.name}`);
+    };
 
     const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -279,6 +289,31 @@ export default function Settings() {
                                                 className="max-w-md bg-muted"
                                             />
                                         </div>
+                                        
+                                        <Separator />
+                                        
+                                        {/* Language Preferences */}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="text-lg font-medium">Language Preferences</h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Choose your preferred language for interviews
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Interview Language</Label>
+                                                <LanguageSelector
+                                                    selectedLanguage={selectedLanguage}
+                                                    onLanguageChange={handleLanguageChange}
+                                                    className="max-w-md"
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    This language will be used for speech recognition and AI communication during interviews.
+                                                    You can always change this before starting an interview.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
                                         <div className="pt-2">
                                             <Button onClick={handleUpdateProfile} disabled={loading}>
                                                 {loading ? "Saving..." : "Save Changes"}
