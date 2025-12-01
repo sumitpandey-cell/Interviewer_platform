@@ -384,35 +384,16 @@ export default function Templates() {
           </div>
         </div>
 
-        {/* Main Tabs for General vs Company Templates */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-            <TabsList className="grid w-full md:w-auto grid-cols-2 h-12">
-              <TabsTrigger value="general" className="text-base px-8">
-                General Templates
-              </TabsTrigger>
-              <TabsTrigger value="company" className="text-base px-8">
-                Company Templates
-              </TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="general">General Templates</TabsTrigger>
+            <TabsTrigger value="company">Company Templates</TabsTrigger>
+          </TabsList>
 
-            {/* Search Bar */}
-            <div className="relative w-full md:w-auto">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search templates..."
-                className="pl-10 w-full md:w-80 bg-background"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* General Templates Tab */}
-          <TabsContent value="general" className="mt-0 space-y-6">
-
-            {/* Category Filters for General Templates */}
-            <div className="flex gap-2 items-center overflow-x-auto w-full pb-2 mb-6 no-scrollbar">
+          {/* Category Tabs and Search Bar */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Category Tabs */}
+            <div className="flex gap-2 items-center overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
               {categories.map((category) => (
                 <button
                   key={category}
@@ -437,6 +418,9 @@ export default function Templates() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+          </div>
+
+          <TabsContent value="general" className="mt-0 space-y-6">
             {searchTerm && (
               <p className="text-sm text-muted-foreground mb-4">
                 Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
