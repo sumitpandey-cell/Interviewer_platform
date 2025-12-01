@@ -418,6 +418,9 @@ export default function Templates() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+          </div>
+
+          <TabsContent value="general" className="mt-0 space-y-6">
             {searchTerm && (
               <p className="text-sm text-muted-foreground mb-4">
                 Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} matching "{searchTerm}"
