@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus, Building2, Github, Twitter, Linkedin, Instagram, Mail, Mic, PlayCircle } from "lucide-react";
+import { Brain, Target, TrendingUp, MessageSquare, Award, Zap, CheckCircle2, ArrowRight, Sparkles, Users, Clock, Star, Menu, X, Plus, Building2, Github, Twitter, Linkedin, Instagram, Mail, Mic, PlayCircle, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
@@ -324,7 +324,7 @@ export default function Landing() {
             </motion.div>
 
             {/* Heading */}
-            <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl lg:text-7xl font-bold leading-snug tracking-wide text-white mb-4">
+            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-wide text-white mb-6">
               Ace Any Interview.
               <br />
               <span className="bg-gradient-to-r from-indigo-400/90 via-purple-400/90 to-pink-400/90 bg-clip-text text-transparent">
@@ -1052,165 +1052,317 @@ export default function Landing() {
       </SectionWrapper>
 
       {/* Testimonials Section */}
-      <SectionWrapper id="testimonials" className="pt-12 pb-24 bg-[#0A0A0B] overflow-hidden">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="inline-block py-2 px-4 rounded-full bg-pink-500/10 text-pink-400 text-sm font-semibold border border-pink-500/20 mb-4">
-              Testimonials
-            </span>
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              Loved by{" "}
-              <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
-                Thousands
-              </span>
-            </h2>
-            <p className="text-xl text-slate-400">See what our users have to say</p>
-          </div>
-
-          <div
-            className="relative h-[800px] -mx-6 md:mx-0"
-            style={{
-              maskImage: "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
-              WebkitMaskImage: "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
-            }}
-          >
-            <div className="grid md:grid-cols-3 gap-6 h-full">
-              {[0, 1, 2].map((col) => (
-                <div
-                  key={col}
-                  className="space-y-6 animate-scroll-vertical"
-                  style={{ animationDuration: `${(25 + col * 5) * 2}s` }}
-                >
-                  {[...testimonials, ...testimonials, ...testimonials, ...testimonials].map((testimonial, i) => (
-                    <Card
-                      key={`${col}-${i}`}
-                      className="p-6 border border-white/10 shadow-lg bg-[#0f1117] hover:border-indigo-500/30 transition-all"
-                    >
-                      <div className="flex gap-1 mb-4">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-slate-300 mb-6 leading-relaxed">"{testimonial.text}"</p>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          className="h-12 w-12 rounded-full object-cover border-2 border-white/10"
-                        />
-                        <div>
-                          <div className="font-bold text-white">{testimonial.name}</div>
-                          <div className="text-sm text-slate-500">{testimonial.role}</div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
+      <SectionWrapper id="testimonials" className="py-32 bg-[#0A0A0B] relative overflow-hidden">
+        {/* Background Effect - Permanent */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-900/5 rounded-full blur-[100px] animate-pulse delay-1000"></div>
         </div>
-      </SectionWrapper>
-
-      {/* Final CTA Section - Creative Dark Gradient Design */}
-      <SectionWrapper className="py-20 bg-gradient-to-br from-slate-900 via-[#0B1120] to-slate-900 relative overflow-hidden">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[100px] opacity-40"></div>
-          <div className="absolute bottom-[10%] -left-[10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] opacity-40"></div>
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-        </div>
-
         <div className="container mx-auto px-6 relative z-10">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            {/* Text Content */}
-            <div className="space-y-8 relative">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-indigo-300 text-sm font-medium border border-white/10 shadow-sm">
-                <Sparkles className="h-4 w-4" />
-                <span>Limited Time Offer</span>
+          <div className="grid lg:grid-cols-12 gap-12 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-5 space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium">
+                <MessageSquare className="h-4 w-4" />
+                <span>What people say</span>
               </div>
 
               <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
-                Ready to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Ace</span> Your Next Interview?
+                Trusted by thousands of{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                  ambitious professionals
+                </span>{" "}
+                all across the globe.
               </h2>
 
-              <p className="text-lg text-slate-400 leading-relaxed">
-                Join 50,000+ candidates who are landing offers at Google, Meta, and Amazon. Start your free practice session today.
+              <p className="text-lg text-slate-400 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Join a community of developers, product managers, and designers who are acing their interviews with Aura. Real stories, real results.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-6 pt-2">
-                <Button
-                  size="lg"
-                  className="bg-white hover:bg-indigo-50 text-indigo-900 rounded-full px-8 h-14 text-lg font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105"
-                  asChild
-                >
-                  <Link to="/auth">
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <div className="flex items-center gap-4 px-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8 pt-6">
+                {/* Active Users */}
+                <div className="text-center sm:text-left">
+                  <div className="text-3xl font-bold text-white">50K+</div>
+                  <div className="text-sm text-slate-500">Active Users</div>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden sm:block w-px h-12 bg-white/10"></div>
+
+                {/* Rating with Facepile */}
+                <div className="flex items-center gap-4">
+                  {/* Facepile */}
                   <div className="flex -space-x-4">
                     {[
                       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
                       "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
                       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
                     ].map((src, i) => (
-                      <div key={i} className="w-12 h-12 rounded-full border-2 border-slate-900 shadow-sm overflow-hidden">
-                        <img
-                          src={src}
-                          alt="User"
-                          className="w-full h-full object-cover"
-                        />
+                      <div key={i} className="w-12 h-12 rounded-full border-2 border-[#0A0A0B] overflow-hidden">
+                        <img src={src} alt="User" className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
-                  <div className="text-sm">
-                    <div className="flex text-yellow-400 mb-0.5">
-                      {[1, 2, 3, 4, 5].map(i => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}
+
+                  {/* Stars & Rating */}
+                  <div className="space-y-1">
+                    <div className="flex text-yellow-400">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-4 w-4 fill-current" />
+                      ))}
                     </div>
-                    <span className="text-slate-300 font-semibold">4.9/5 Rating</span>
+                    <div className="font-semibold text-white">
+                      4.9/5 <span className="text-slate-500 font-normal">Rating</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Visual/Interactive Element */}
-            <div className="relative hidden md:block perspective-1000">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl transform rotate-3 scale-95 blur-xl"></div>
-              <div className="relative bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8 transform -rotate-2 hover:rotate-0 transition-all duration-500 group">
-                {/* Mock Interview Card */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Brain className="h-7 w-7 text-indigo-400" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-white text-xl">System Design</div>
-                      <div className="text-sm text-slate-400">Google • L5 Senior</div>
-                    </div>
+            {/* Right Scrolling Cards */}
+            <div
+              className="lg:col-span-7 relative h-[700px] overflow-hidden p-6"
+              style={{
+                maskImage: "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
+                WebkitMaskImage: "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)"
+              }}
+            >
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                {/* Column 1 - Scroll Up */}
+                <div className="space-y-4 animate-scroll-vertical">
+                  <div className="text-center md:hidden mb-4">
+                    <span className="text-indigo-400 font-semibold text-sm tracking-wider uppercase">⭐ Student Success Stories</span>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-bold border border-green-500/30">Passed</span>
+                  {[
+                    {
+                      text: "I was super nervous about my campus placements. Aura's system design templates helped me structure my thoughts. The AI's follow-up questions felt just like the real thing!",
+                      name: "Aarav Patel",
+                      role: "Final Year CSE, IIT Bombay",
+                      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+
+                      hero: true,
+                    },
+                    {
+                      text: "The behavioral round prep is underrated. I used the STAR method template and practiced my stories. Nailed my interview at a top fintech.",
+                      name: "Rohan Gupta",
+                      role: "Product Manager at Paytm",
+                      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+
+                    },
+                    {
+                      text: "The technical depth in the AI/ML mock interviews is impressive. It caught me on some edge cases I usually miss. Highly recommend for senior roles.",
+                      name: "Vikram Singh",
+                      role: "Data Scientist at Zomato",
+                      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "I was super nervous about my campus placements. Aura's system design templates helped me structure my thoughts. The AI's follow-up questions felt just like the real thing!",
+                      name: "Aarav Patel",
+                      role: "Final Year CSE, IIT Bombay",
+                      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+
+                      hero: true,
+                    },
+                    {
+                      text: "The behavioral round prep is underrated. I used the STAR method template and practiced my stories. Nailed my interview at a top fintech.",
+                      name: "Rohan Gupta",
+                      role: "Product Manager at Paytm",
+                      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+
+                    },
+                    {
+                      text: "The technical depth in the AI/ML mock interviews is impressive. It caught me on some edge cases I usually miss. Highly recommend for senior roles.",
+                      name: "Vikram Singh",
+                      role: "Data Scientist at Zomato",
+                      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                  ].map((testimonial, i) => (
+                    <Card
+                      key={`col1-${i}`}
+                      className="p-6 border border-white/10 shadow-lg bg-[#141821] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)] hover:border-indigo-500/50 transition-all duration-300 group hover:-rotate-1 hover:scale-[1.02]"
+                    >
+
+                      <p className="text-slate-300 mb-6 leading-relaxed text-sm">"{testimonial.text}"</p>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="h-10 w-10 rounded-full object-cover border-2 border-white/10 group-hover:border-indigo-500/50 transition-colors"
+                        />
+                        <div>
+                          <div className="font-bold text-white text-sm">{testimonial.name}</div>
+                          <div className="text-xs text-slate-500">{testimonial.role}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
 
-                <div className="space-y-5 mb-8">
-                  <div className="h-3 bg-white/10 rounded-full w-3/4"></div>
-                  <div className="h-3 bg-white/10 rounded-full w-full"></div>
-                  <div className="h-3 bg-white/10 rounded-full w-5/6"></div>
+                {/* Column 2 - Scroll Down */}
+                <div className="space-y-4 animate-scroll-vertical-reverse hidden md:block">
+                  {[
+                    {
+                      text: "Switching jobs after 3 years was scary. This tool helped me brush up on DSA. The voice feedback on my communication style was a game changer.",
+                      name: "Priya Sharma",
+                      role: "Software Engineer at Swiggy",
+                      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "I love the daily challenges. It kept me consistent. The code review feature actually pointed out optimization tips I hadn't thought of.",
+                      name: "Sneha Reddy",
+                      role: "Frontend Dev at Razorpay",
+                      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "Explaining design decisions is hard. Aura let me practice my rationale until I sounded confident. The 'why' is so important, and this tool gets it.",
+                      name: "Ananya Iyer",
+                      role: "UI/UX Designer at Cred",
+                      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "Switching jobs after 3 years was scary. This tool helped me brush up on DSA. The voice feedback on my communication style was a game changer.",
+                      name: "Priya Sharma",
+                      role: "Software Engineer at Swiggy",
+                      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "I love the daily challenges. It kept me consistent. The code review feature actually pointed out optimization tips I hadn't thought of.",
+                      name: "Sneha Reddy",
+                      role: "Frontend Dev at Razorpay",
+                      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                    {
+                      text: "Explaining design decisions is hard. Aura let me practice my rationale until I sounded confident. The 'why' is so important, and this tool gets it.",
+                      name: "Ananya Iyer",
+                      role: "UI/UX Designer at Cred",
+                      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=faces",
+                      rating: 5,
+                    },
+                  ].map((testimonial, i) => (
+                    <Card
+                      key={`col2-${i}`}
+                      className="p-6 border border-white/10 shadow-lg bg-[#141821] hover:scale-[1.02] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)] hover:border-indigo-500/50 transition-all duration-300 group hover:rotate-1"
+                    >
+                      <p className="text-slate-300 mb-6 leading-relaxed text-sm">"{testimonial.text}"</p>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="h-10 w-10 rounded-full object-cover border-2 border-white/10 group-hover:border-indigo-500/50 transition-colors"
+                        />
+                        <div>
+                          <div className="font-bold text-white text-sm">{testimonial.name}</div>
+                          <div className="text-xs text-slate-500">{testimonial.role}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionWrapper>
+
+      {/* Final CTA Section - Creative Cosmic Design */}
+      <SectionWrapper id="cta" className="py-10 relative overflow-hidden">
+        {/* Background Grid & Glow */}
+        <div className="absolute inset-0 bg-[#0A0A0B]">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[300px] rounded-full bg-purple-500/20 blur-[80px] animate-pulse delay-700"></div>
+        </div>
+
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-6xl mx-auto text-center relative">
+            {/* Main Card */}
+            <div className="relative p-8 md:p-16 group transition-all duration-500">
+
+              {/* Content */}
+              {/* Content */}
+              <div className="relative z-10 space-y-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-medium backdrop-blur-md">
+                  <Sparkles className="h-3 w-3" />
+                  <span>Join 50,000+ Successful Candidates</span>
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-white/10">
-                  <div className="text-base font-medium text-slate-400">Overall Score</div>
-                  <div className="text-3xl font-bold text-indigo-400">92/100</div>
+                <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight">
+                  Ready to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">Transform</span> <br />
+                  Your Career?
+                </h2>
+
+                <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                  Stop guessing, start improving. Practice with AI that thinks like a hiring manager and land your dream offer at top tech companies.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
+                  <Button
+                    size="lg"
+                    className="h-16 px-10 text-lg bg-white text-black hover:bg-slate-100 hover:scale-105 transition-all duration-300 rounded-full font-bold shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                    asChild
+                  >
+                    <Link to="/auth">
+                      Start Interviewing Now
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-16 px-10 text-lg border-white/10 text-white hover:bg-white/5 hover:border-indigo-500/50 hover:shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] rounded-full font-medium backdrop-blur-sm transition-all duration-300"
+                  >
+                    View Sample Report
+                  </Button>
+                </div>
+
+                {/* Trust Indicators */}
+                <div className="pt-8 flex flex-col items-center gap-6 opacity-60">
+                  <p className="text-sm text-slate-500 font-medium">Practice questions inspired by top tech interviews</p>
+                  <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 grayscale hover:grayscale-0 transition-all duration-500">
+                    {['Google', 'Microsoft', 'Amazon', 'Meta', 'Netflix'].map((company) => (
+                      <span key={company} className="text-lg font-semibold text-white">{company}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Floating Elements */}
-              <div className="absolute -top-8 -right-8 bg-[#0B1120] p-4 rounded-2xl shadow-lg border border-white/10">
-                <Target className="h-8 w-8 text-red-400" />
+              {/* Floating Decorative Elements */}
+              <div className="absolute top-1/4 -left-12 p-4 bg-[#0A0A0B]/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl hidden lg:block animate-float">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">Offer Received</div>
+                    <div className="text-xs text-slate-400">Senior Engineer</div>
+                  </div>
+                </div>
               </div>
-              <div className="absolute -bottom-8 -left-8 bg-[#0B1120] p-4 rounded-2xl shadow-lg border border-white/10">
-                <CheckCircle2 className="h-8 w-8 text-green-400" />
+
+              <div className="absolute bottom-1/4 -right-12 p-4 bg-[#0A0A0B]/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl hidden lg:block animate-float-delayed">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">Top 1% Scorer</div>
+                    <div className="text-xs text-slate-400">System Design</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

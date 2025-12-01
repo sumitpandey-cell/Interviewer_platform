@@ -133,7 +133,19 @@
   }
 
   .animate-scroll-vertical {
-    animation: scroll-vertical linear infinite;
+    animation: scroll-vertical 30s linear infinite;
+  }
+
+  .animate-scroll-vertical-reverse {
+    animation: scroll-vertical-reverse 30s linear infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 3s infinite;
   }
 
   @keyframes scroll-vertical {
@@ -143,6 +155,28 @@
 
     100% {
       transform: translateY(-50%);
+    }
+  }
+
+  @keyframes scroll-vertical-reverse {
+    0% {
+      transform: translateY(-50%);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-20px);
     }
   }
 }
