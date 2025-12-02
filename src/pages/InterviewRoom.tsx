@@ -557,7 +557,7 @@ export default function InterviewRoom() {
                         realtimeInputConfig: {
                             automaticActivityDetection: {
                                 prefixPaddingMs: 300,      // Capture speech onset
-                                silenceDurationMs: 2000     // Require 2 seconds of silence before considering speech complete
+                                silenceDurationMs: 500     // Reduced to 500ms for minimum delay
                             }
                         },
                         // Enable input and output audio transcription with language configuration
