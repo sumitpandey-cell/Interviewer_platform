@@ -13,7 +13,7 @@ import { useInterviewStore } from "@/stores/use-interview-store";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useCompanyQuestions } from "@/hooks/use-company-questions";
-import { getLanguageByCode, getPreferredLanguage, type LanguageOption } from "@/lib/language-config";
+
 import { CompanyQuestion } from "@/types/company-types";
 import { CodingChallengeModal } from "@/components/CodingChallengeModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,17 +42,14 @@ import { PerformanceHistory } from "@/types/performance-types";
 
 const generateSystemInstruction = (
     session: SessionData | null,
-    selectedLanguage: LanguageOption,
-    timeLeftMinutes?: number,
-    companyQuestions?: CompanyQuestion[],
+    timeRemaining: number,
+    companyQuestions?: any[],
     performanceHistory?: PerformanceHistory
-) => {
+): string => {
     if (!session) {
         return `You are a Senior Technical Interviewer. You are an intelligent AI assistant.
 
-For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").
-
-Conduct a professional interview in ${selectedLanguage.name}. Focus on technical accuracy in transcription.`;
+For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").`;
     }
 
     const { interview_type, position } = session;
@@ -66,41 +63,13 @@ Conduct a professional interview in ${selectedLanguage.name}. Focus on technical
         interviewType: interview_type,
         position: position,
         companyName: companyName,
-        timeLeftMinutes: timeLeftMinutes,
+        timeLeftMinutes: timeRemaining,
         questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined,
         skills: skills,
         difficulty: difficulty,
         performanceHistory: performanceHistory,
         jobDescription: jobDescription
     });
-
-    // Add language-specific instructions
-    const languageInstructions = selectedLanguage.code !== 'en'
-        ? `\n\nIMPORTANT LANGUAGE INSTRUCTIONS:
-- The candidate has selected ${selectedLanguage.name} (${selectedLanguage.speechCode}) as their preferred language
-- HOWEVER, they may speak in a mix of English and ${selectedLanguage.name} (code-switching is common in technical interviews)
-- You should be flexible and understand BOTH English and ${selectedLanguage.name}
-- When the candidate speaks English, respond in English
-- When the candidate speaks ${selectedLanguage.name}, you may respond in English but acknowledge their language choice
-- Be patient with language mixing and focus on the technical content
-- CRITICAL: Always transcribe technical terms in English script (e.g., "React", "API", "database") even if spoken with an accent
-
-TRANSCRIPTION RULES:
-1. If candidate speaks English words → transcribe in English script
-2. If candidate speaks ${selectedLanguage.name} words → transcribe in ${selectedLanguage.name} script
-3. If candidate mixes both languages → transcribe each part in its correct script
-4. Technical terms MUST always be in English script regardless of pronunciation
-5. Example: If candidate says "मैं React में काम करता हूं" → transcribe exactly as "मैं React में काम करता हूं" (NOT "मैं रिएक्ट में काम करता हूं")
-
-Your interview questions can be in English - the candidate will understand both languages.`
-        : '';
-    `CRITICAL TRANSCRIPTION REQUIREMENTS FOR TECHNICAL INTERVIEWS:
-
-**LANGUAGE DETECTION AND TRANSCRIPTION RULES:**
-generate transcript of candidate's speech with these rules:
-- Detect the language spoken by the candidate accurately.
-- If the candidate speaks English or uses technical terms, always transcribe those parts in English script, regardless of their accent.
-- Do not transcribe any language in some other language's script. like माय नेम इज सुमित पांडे एंड आई एम फ्रॉम दिल्ली। transcribing English words in Hindi script or vice versa is not allowed.`
 
     const fullPrompt = `You are an intelligent AI assistant conducting a professional technical interview.
 
@@ -109,8 +78,9 @@ CRITICAL TRANSCRIPTION REQUIREMENTS:
 - Detect the language spoken by the candidate accurately
 - Do NOT transcribe one language using another language's script
 - Maintain proper script for each language (English in Latin, Hindi in Devanagari, etc.)
+- SCRIPT CORRECTION RULE: If you receive input that is transliterated (e.g., Hindi meaning written in English script like "Main ghar ja raha hoon"), you MUST mentally convert it to its correct script (e.g., "मैं घर जा रहा हूँ") before processing. Treat the input as if it was written in the correct script.
 
-${basePrompt}${languageInstructions}`;
+${basePrompt}`;
 
     console.log('🤖 FULL GENERATED SYSTEM PROMPT:');
     console.log('=====================================');
@@ -131,10 +101,7 @@ export default function InterviewRoom() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    // Get language from URL parameters or use default
-    const langCode = searchParams.get('lang') || 'en';
-    const selectedLanguage = getLanguageByCode(langCode);
-    console.log(`🌐 Interview starting with language: ${selectedLanguage.name} (${selectedLanguage.speechCode})`);
+
 
     const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats, fetchRecentPerformanceMetrics } = useOptimizedQueries();
 
@@ -146,7 +113,7 @@ export default function InterviewRoom() {
     const browserSpeechWorkingRef = useRef(false);
     const lastBrowserTranscriptTimeRef = useRef(0);
 
-    const { startListening, stopListening, hasSupport, selectedLanguage: speechLanguage } = useSpeechRecognition(selectedLanguage, (text) => {
+    const { startListening, stopListening, hasSupport } = useSpeechRecognition(undefined, (text) => {
         // Mark that browser speech is working
         browserSpeechWorkingRef.current = true;
         lastBrowserTranscriptTimeRef.current = Date.now();
@@ -552,9 +519,8 @@ export default function InterviewRoom() {
                     console.log('📊 No previous interview history found - this is the candidate\'s first interview');
                 }
 
-                const systemInstruction = generateSystemInstruction(
+                const systemInstruction = await generateSystemInstruction(
                     session,
-                    selectedLanguage,
                     Math.floor(timeLeft / 60),
                     companyQuestions.length > 0 ? companyQuestions : undefined,
                     performanceHistory
@@ -999,12 +965,6 @@ export default function InterviewRoom() {
                 <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white px-3 py-2 rounded-full font-medium text-sm shadow-lg">
                     <div className="flex items-center gap-2">
                         <span>You</span>
-                        {selectedLanguage.code !== 'en' && (
-                            <div className="flex items-center gap-1 text-xs opacity-80">
-                                <span>{selectedLanguage.flag}</span>
-                                <span>{selectedLanguage.code.toUpperCase()}</span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

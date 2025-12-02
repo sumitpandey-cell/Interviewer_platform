@@ -226,7 +226,7 @@ INTERVIEW METRICS:
 * Total words: ${lengthAnalysis.totalWordCount}
 ${lengthSpecificInstructions}
 
-CRITICAL: Be EXTREMELY STRICT in scoring. Do not give ANY generous scores without clear evidence.
+CRITICAL: Be EXTREMELY STRICT in scoring for each category and score out of 100 and text feedback should match. Do not give ANY generous scores without clear evidence.
 
 DETAILED SCORING CRITERIA FOR EACH SKILL:
 

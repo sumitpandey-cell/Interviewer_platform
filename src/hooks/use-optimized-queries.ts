@@ -96,7 +96,63 @@ export function useOptimizedQueries() {
         : 0;
       // Only count duration from completed interviews to avoid inflating practice time
       const timePracticed = completedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
-      const rank = totalInterviews > 0 ? Math.max(100 - totalInterviews * 5, 1) : 0;
+
+      // Calculate REAL leaderboard rank using Bayesian scoring (same as Leaderboard page)
+      let rank = 0;
+
+      try {
+        // 1. Fetch all completed interview sessions with scores
+        const { data: allSessions, error: sessionsError } = await supabase
+          .from("interview_sessions")
+          .select("user_id, score")
+          .not("score", "is", null)
+          .eq("status", "completed");
+
+        if (!sessionsError && allSessions) {
+          // 2. Aggregate scores by user
+          const userStats: Record<string, { totalScore: number; count: number }> = {};
+
+          allSessions.forEach((session) => {
+            if (!userStats[session.user_id]) {
+              userStats[session.user_id] = { totalScore: 0, count: 0 };
+            }
+            userStats[session.user_id].totalScore += session.score || 0;
+            userStats[session.user_id].count += 1;
+          });
+
+          // 3. Calculate Weighted Score (same as Leaderboard page)
+          // Formula: avgScore × (1 + log(count) / 10)
+          const rankedUsers = Object.entries(userStats).map(([userId, stats]) => {
+            const avgScore = stats.totalScore / stats.count;
+
+            // Calculate experience multiplier using logarithmic scale
+            const experienceMultiplier = 1 + (Math.log10(stats.count) / 10);
+            const weightedScore = avgScore * experienceMultiplier;
+
+            return {
+              userId,
+              weightedScore,
+            };
+          });
+
+          // 4. Sort by Weighted Score (descending)
+          const sortedUsers = rankedUsers.sort((a, b) => b.weightedScore - a.weightedScore);
+
+          // 5. Find current user's rank
+          const userRankIndex = sortedUsers.findIndex(u => u.userId === user.id);
+          rank = userRankIndex >= 0 ? userRankIndex + 1 : 0;
+
+          console.log('📊 Leaderboard rank calculated:', {
+            totalUsers: sortedUsers.length,
+            userRank: rank,
+            userWeightedScore: sortedUsers[userRankIndex]?.weightedScore
+          });
+        }
+      } catch (rankError) {
+        console.error('Error calculating leaderboard rank:', rankError);
+        // Fallback to 0 if rank calculation fails
+        rank = 0;
+      }
 
       const calculatedStats = {
         totalInterviews,

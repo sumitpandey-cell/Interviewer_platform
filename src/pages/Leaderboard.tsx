@@ -79,20 +79,22 @@ const Leaderboard = () => {
                     userStats[session.user_id].count += 1;
                 });
 
-                // 3. Calculate Bayesian Weighted Average
-                const PRIOR_MEAN = 70;
-                const M = 20;
-
+                // 3. Calculate Weighted Score (rewards both performance and experience)
+                // Formula: avgScore × (1 + log(count) / 10)
+                // This gives a bonus for more interviews while keeping performance as primary factor
                 const rankedUsers = Object.entries(userStats).map(([userId, stats]) => {
                     const avgScore = stats.totalScore / stats.count;
-                    const bayesianScore =
-                        (avgScore * stats.count + PRIOR_MEAN * M) / (stats.count + M);
+
+                    // Calculate experience multiplier using logarithmic scale
+                    // 1 interview: 1.0x, 5 interviews: 1.07x, 10 interviews: 1.10x, 21 interviews: 1.13x
+                    const experienceMultiplier = 1 + (Math.log10(stats.count) / 10);
+                    const weightedScore = avgScore * experienceMultiplier;
 
                     return {
                         userId,
                         interviewCount: stats.count,
                         averageScore: avgScore,
-                        bayesianScore,
+                        bayesianScore: weightedScore, // Keep same property name for compatibility
                     };
                 });
 
@@ -573,20 +575,52 @@ const Leaderboard = () => {
                         <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl">
                             Compete, grow, and see where you rank among the best.
                         </p>
+                        {!loading && users.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                Total Candidates: <span className="font-semibold text-foreground">{users.length}</span>
+                            </p>
+                        )}
                     </div>
-                    {user && users.find(u => u.userId === user.id) && (
-                        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl px-6 py-4 shadow-lg">
-                            <div className="text-right">
-                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Your Score</p>
-                                <p className="text-3xl font-black text-foreground">
-                                    {users.find(u => u.userId === user.id)?.bayesianScore.toFixed(1)}
-                                </p>
+                    {user && users.find(u => u.userId === user.id) && (() => {
+                        const userRank = users.findIndex(u => u.userId === user.id) + 1;
+                        const userScore = users.find(u => u.userId === user.id)?.bayesianScore.toFixed(1);
+
+                        // Debug logging
+                        console.log('Leaderboard Debug:', {
+                            totalUsers: users.length,
+                            currentUserId: user.id,
+                            userRank,
+                            userScore,
+                            allUsers: users.map((u, idx) => ({
+                                rank: idx + 1,
+                                userId: u.userId,
+                                name: u.fullName,
+                                score: u.bayesianScore,
+                                interviews: u.interviewCount
+                            }))
+                        });
+
+                        return (
+                            <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl px-6 py-4 shadow-lg">
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Your Rank</p>
+                                    <p className="text-3xl font-black text-foreground">
+                                        #{userRank}
+                                    </p>
+                                </div>
+                                <div className="h-12 w-px bg-indigo-500/20"></div>
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Your Score</p>
+                                    <p className="text-3xl font-black text-foreground">
+                                        {userScore}
+                                    </p>
+                                </div>
+                                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                                    <Trophy className="h-6 w-6 text-white" />
+                                </div>
                             </div>
-                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                                <Trophy className="h-6 w-6 text-white" />
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                 </div>
 
                 {loading ? (
@@ -749,6 +783,82 @@ const Leaderboard = () => {
                             </div>
                         </div>
                     </>
+                )}
+
+                {/* Scoring Information Footer */}
+                {!loading && users.length > 0 && (
+                    <Card className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 border-indigo-200/50 dark:border-indigo-800/50">
+                        <CardContent className="p-6 md:p-8">
+                            <div className="flex items-start gap-3 mb-4">
+                                <div className="h-10 w-10 rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                                    <Award className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-foreground mb-1">How Rankings Are Calculated</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Our fair ranking system rewards both performance and experience
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Formula Explanation */}
+                                <div className="space-y-3">
+                                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-4 border border-indigo-200/50 dark:border-indigo-800/30">
+                                        <h4 className="text-sm font-semibold text-foreground mb-2">📊 Weighted Score Formula</h4>
+                                        <code className="text-xs bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded text-indigo-700 dark:text-indigo-300 block mb-2">
+                                            Score = Avg Score × (1 + log₁₀(interviews) / 10)
+                                        </code>
+                                        <p className="text-xs text-muted-foreground">
+                                            Your average interview score is multiplied by an experience bonus based on the number of interviews you've completed.
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-4 border border-indigo-200/50 dark:border-indigo-800/30">
+                                        <h4 className="text-sm font-semibold text-foreground mb-2">🎯 Why This System?</h4>
+                                        <ul className="text-xs text-muted-foreground space-y-1">
+                                            <li>• <strong>Performance First:</strong> Your actual scores matter most</li>
+                                            <li>• <strong>Experience Bonus:</strong> More interviews = more reliable ranking</li>
+                                            <li>• <strong>Fair to All:</strong> New users aren't artificially boosted</li>
+                                            <li>• <strong>Anti-Gaming:</strong> Diminishing returns prevent spam</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* Examples */}
+                                <div className="space-y-3">
+                                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-4 border border-indigo-200/50 dark:border-indigo-800/30">
+                                        <h4 className="text-sm font-semibold text-foreground mb-3">💡 Example Calculations</h4>
+                                        <div className="space-y-2 text-xs">
+                                            <div className="flex justify-between items-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded">
+                                                <span className="text-muted-foreground">1 interview @ 70%</span>
+                                                <span className="font-bold text-foreground">70.0</span>
+                                            </div>
+                                            <div className="flex justify-between items-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded">
+                                                <span className="text-muted-foreground">5 interviews @ 70%</span>
+                                                <span className="font-bold text-foreground">74.9</span>
+                                            </div>
+                                            <div className="flex justify-between items-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded">
+                                                <span className="text-muted-foreground">10 interviews @ 70%</span>
+                                                <span className="font-bold text-foreground">77.0</span>
+                                            </div>
+                                            <div className="flex justify-between items-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded">
+                                                <span className="text-muted-foreground">21 interviews @ 70%</span>
+                                                <span className="font-bold text-foreground">79.1</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-4 border border-green-200/50 dark:border-green-800/30">
+                                        <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">✨ Pro Tip</h4>
+                                        <p className="text-xs text-green-600 dark:text-green-300">
+                                            Focus on improving your average score! A 90% average with 5 interviews (96.3) beats a 70% average with 50 interviews (81.9).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Share Modal */}
