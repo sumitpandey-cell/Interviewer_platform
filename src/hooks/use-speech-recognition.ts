@@ -20,11 +20,11 @@ declare global {
     }
 }
 
-export function useSpeechRecognition(language?: LanguageOption) {
+export function useSpeechRecognition(language?: LanguageOption, onTranscript?: (text: string) => void) {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const recognitionRef = useRef<SpeechRecognition | null>(null);
-    
+
     // Use provided language or get from preferences
     const selectedLanguage = language || getPreferredLanguage();
 
@@ -38,7 +38,7 @@ export function useSpeechRecognition(language?: LanguageOption) {
                 // For technical interviews, force English to prevent script mixing issues
                 // Use English for technical content regardless of user's default language preference
                 recognitionRef.current.lang = 'en-US'; // Always use English for technical interviews
-                
+
                 console.log(`🌐 Speech recognition configured for technical interview in English (en-US) to prevent transcription mixing`);
 
                 recognitionRef.current.onresult = (event: any) => {
@@ -49,6 +49,9 @@ export function useSpeechRecognition(language?: LanguageOption) {
                             // NOTE: We're now handling transcription via Gemini Live API's inputTranscription
                             // So we don't need to dispatch events from here anymore
                             console.log(`Speech recognition final result (English forced for technical interview):`, event.results[i][0].transcript);
+                            if (onTranscript) {
+                                onTranscript(event.results[i][0].transcript);
+                            }
                         }
                     }
                 };

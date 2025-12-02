@@ -17,7 +17,7 @@ export class AudioRecorder extends EventTarget {
             this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
             this.source = this.audioContext.createMediaStreamSource(this.stream);
             // ScriptProcessorNode is deprecated. AudioWorkletNode should be used for new development.
-            this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+            this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
 
             this.processor.onaudioprocess = (e) => {
                 const inputData = e.inputBuffer.getChannelData(0);
