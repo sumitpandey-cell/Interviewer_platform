@@ -275,7 +275,10 @@ export default function InterviewReport() {
     }
 
     // Check if interview is in progress (not completed or no score)
-    const isInProgress = session.status !== 'completed' || session.score === null;
+    // Also check Zustand store for instant feedback to handle the case where
+    // the background save hasn't completed yet but we have feedback in memory
+    const hasInstantFeedback = instantFeedback && instantFeedback.skills && instantFeedback.skills.length > 0;
+    const isInProgress = (session.status !== 'completed' || session.score === null) && !hasInstantFeedback;
 
     // If interview is in progress, show continue interview UI
     if (isInProgress) {
@@ -373,6 +376,102 @@ export default function InterviewReport() {
                         </CardContent>
                     </Card>
                 </div>
+            </DashboardLayout>
+        );
+    }
+
+    // Check if feedback is being generated (session is completed but no feedback yet)
+    const isFeedbackGenerating = session.status === 'completed' &&
+        !session.feedback &&
+        (!instantFeedback || !instantFeedback.skills || instantFeedback.skills.length === 0);
+
+    // Beautiful loading state for feedback generation
+    if (isFeedbackGenerating) {
+        return (
+            <DashboardLayout>
+                <div className="min-h-[80vh] flex items-center justify-center p-4">
+                    <Card className="max-w-2xl w-full border-none shadow-2xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
+                        <CardContent className="p-8 md:p-12">
+                            <div className="flex flex-col items-center text-center space-y-8">
+                                {/* Animated AI Brain Icon */}
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+                                    <div className="relative bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-full p-8 animate-bounce">
+                                        <Bot className="h-16 w-16 text-white" />
+                                    </div>
+                                </div>
+
+                                {/* Title */}
+                                <div className="space-y-3">
+                                    <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                        Analyzing Your Interview
+                                    </h2>
+                                    <p className="text-slate-600 dark:text-slate-400 text-lg">
+                                        Our AI is carefully reviewing your responses...
+                                    </p>
+                                </div>
+
+                                {/* Animated Progress Bar */}
+                                <div className="w-full space-y-3">
+                                    <div className="relative h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 animate-[shimmer_2s_ease-in-out_infinite]"
+                                            style={{
+                                                backgroundSize: '200% 100%',
+                                                animation: 'shimmer 2s ease-in-out infinite'
+                                            }}>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        This usually takes 10-30 seconds
+                                    </p>
+                                </div>
+
+                                {/* Processing Steps */}
+                                <div className="w-full space-y-4 pt-4">
+                                    <div className="flex items-center gap-3 text-left">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                                            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <span className="text-slate-700 dark:text-slate-300">Transcribing conversation</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-left">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
+                                            <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></div>
+                                        </div>
+                                        <span className="text-slate-700 dark:text-slate-300">Evaluating technical skills</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-left opacity-50">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
+                                            <div className="w-2 h-2 rounded-full bg-slate-500"></div>
+                                        </div>
+                                        <span className="text-slate-700 dark:text-slate-300">Generating insights</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-left opacity-50">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
+                                            <div className="w-2 h-2 rounded-full bg-slate-500"></div>
+                                        </div>
+                                        <span className="text-slate-700 dark:text-slate-300">Preparing your report</span>
+                                    </div>
+                                </div>
+
+                                {/* Encouraging Message */}
+                                <div className="pt-6 px-6 py-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <p className="text-blue-700 dark:text-blue-300 text-sm">
+                                        💡 <strong>Tip:</strong> Your detailed feedback report will include personalized recommendations for improvement!
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Add shimmer animation */}
+                <style>{`
+                    @keyframes shimmer {
+                        0% { background-position: -200% 0; }
+                        100% { background-position: 200% 0; }
+                    }
+                `}</style>
             </DashboardLayout>
         );
     }

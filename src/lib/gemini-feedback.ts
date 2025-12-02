@@ -163,7 +163,9 @@ export { analyzeInterviewLength, INTERVIEW_THRESHOLDS };
 export async function generateFeedback(
     transcript: Message[],
     position: string,
-    interviewType: string
+    interviewType: string,
+    skills?: string[],
+    difficulty?: string
 ): Promise<FeedbackData> {
     console.log("Analyzing interview transcript:", transcript.length, "messages");
 
@@ -196,8 +198,23 @@ export async function generateFeedback(
     // Adjust prompt based on interview length
     const lengthSpecificInstructions = getLengthBasedInstructions(lengthAnalysis.category);
 
+    // Build context about expected skills and difficulty
+    const skillsContext = skills && skills.length > 0
+        ? `\n\nEXPECTED SKILLS TO ASSESS:\nThis interview was designed to evaluate the following skills: ${skills.join(', ')}.\nFocus your assessment on these specific areas when evaluating the candidate's performance.`
+        : '';
+
+    const difficultyContext = difficulty
+        ? `\n\nINTERVIEW DIFFICULTY LEVEL: ${difficulty}\n${difficulty === 'Beginner'
+            ? 'This is a beginner-level interview. Adjust expectations accordingly - focus on fundamental understanding rather than advanced expertise.'
+            : difficulty === 'Intermediate'
+                ? 'This is an intermediate-level interview. Expect solid foundational knowledge and some practical experience.'
+                : 'This is an advanced-level interview. Expect deep technical knowledge, complex problem-solving, and extensive experience.'
+        }`
+        : '';
+
     const prompt = `
     You are an expert technical interviewer and career coach. Analyze the following interview transcript for a ${position} position (${interviewType} interview).
+${skillsContext}${difficultyContext}
 
 TRANSCRIPT:
 ${transcriptText}
@@ -207,6 +224,7 @@ INTERVIEW METRICS:
 * Total exchanges: ${lengthAnalysis.totalTurns}
 * Category: ${lengthAnalysis.category.toUpperCase()}
 * Total words: ${lengthAnalysis.totalWordCount}
+${lengthSpecificInstructions}
 
 CRITICAL: Be EXTREMELY STRICT in scoring. Do not give ANY generous scores without clear evidence.
 

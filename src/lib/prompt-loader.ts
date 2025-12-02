@@ -8,6 +8,8 @@ interface PromptVariables {
     companyName?: string;
     timeLeftMinutes?: number;
     questions?: CompanyQuestion[];
+    skills?: string[];
+    difficulty?: string;
 }
 
 /**
@@ -47,6 +49,17 @@ export function loadGeneralInterviewPrompt(variables: PromptVariables): string {
     prompt = prompt.replace(/\{\{INTERVIEW_TYPE\}\}/g, variables.interviewType);
     prompt = prompt.replace(/\{\{POSITION\}\}/g, variables.position);
     prompt = prompt.replace(/\{\{TIME_CONSTRAINT\}\}/g, generateTimeConstraint(variables.timeLeftMinutes));
+
+    // Add skills and difficulty information if available
+    if (variables.skills && variables.skills.length > 0) {
+        const skillsText = `\n\nFocus on assessing the following skills: ${variables.skills.join(', ')}.`;
+        prompt += skillsText;
+    }
+
+    if (variables.difficulty) {
+        const difficultyText = `\nThe difficulty level for this interview is: ${variables.difficulty}. Adjust your questions accordingly.`;
+        prompt += difficultyText;
+    }
 
     return prompt.trim();
 }

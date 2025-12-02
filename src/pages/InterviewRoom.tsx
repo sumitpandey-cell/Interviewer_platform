@@ -55,6 +55,8 @@ Conduct a professional interview in ${selectedLanguage.name}. Focus on technical
 
     const { interview_type, position } = session;
     const companyName = (session as any).config?.companyInterviewConfig?.companyName;
+    const skills = (session as any).config?.skills;
+    const difficulty = (session as any).config?.difficulty;
 
     // Use the new prompt loader system with language context
     const basePrompt = loadSystemPrompt({
@@ -62,19 +64,32 @@ Conduct a professional interview in ${selectedLanguage.name}. Focus on technical
         position: position,
         companyName: companyName,
         timeLeftMinutes: timeLeftMinutes,
-        questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined
+        questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined,
+        skills: skills,
+        difficulty: difficulty
     });
 
     // Add language-specific instructions
     const languageInstructions = selectedLanguage.code !== 'en'
         ? `\n\nIMPORTANT LANGUAGE INSTRUCTIONS:
-- The candidate will be speaking in ${selectedLanguage.name} (${selectedLanguage.speechCode})
-- You should respond primarily in English, but acknowledge and understand their ${selectedLanguage.name} responses
-- Be patient with potential language barriers and ask for clarification if needed
-- Focus on the technical content rather than language perfection
-- If the candidate seems more comfortable in ${selectedLanguage.name}, you may incorporate some key phrases in ${selectedLanguage.name} to make them feel at ease`
+- The candidate has selected ${selectedLanguage.name} (${selectedLanguage.speechCode}) as their preferred language
+- HOWEVER, they may speak in a mix of English and ${selectedLanguage.name} (code-switching is common in technical interviews)
+- You should be flexible and understand BOTH English and ${selectedLanguage.name}
+- When the candidate speaks English, respond in English
+- When the candidate speaks ${selectedLanguage.name}, you may respond in English but acknowledge their language choice
+- Be patient with language mixing and focus on the technical content
+- CRITICAL: Always transcribe technical terms in English script (e.g., "React", "API", "database") even if spoken with an accent
+
+TRANSCRIPTION RULES:
+1. If candidate speaks English words → transcribe in English script
+2. If candidate speaks ${selectedLanguage.name} words → transcribe in ${selectedLanguage.name} script
+3. If candidate mixes both languages → transcribe each part in its correct script
+4. Technical terms MUST always be in English script regardless of pronunciation
+5. Example: If candidate says "मैं React में काम करता हूं" → transcribe exactly as "मैं React में काम करता हूं" (NOT "मैं रिएक्ट में काम करता हूं")
+
+Your interview questions can be in English - the candidate will understand both languages.`
         : '';
-`CRITICAL TRANSCRIPTION REQUIREMENTS FOR TECHNICAL INTERVIEWS:
+    `CRITICAL TRANSCRIPTION REQUIREMENTS FOR TECHNICAL INTERVIEWS:
 
 **LANGUAGE DETECTION AND TRANSCRIPTION RULES:**
 generate transcript of candidate's speech with these rules:
@@ -82,9 +97,13 @@ generate transcript of candidate's speech with these rules:
 - If the candidate speaks English or uses technical terms, always transcribe those parts in English script, regardless of their accent.
 - Do not transcribe any language in some other language's script. like माय नेम इज सुमित पांडे एंड आई एम फ्रॉम दिल्ली। transcribing English words in Hindi script or vice versa is not allowed.`
 
-    const fullPrompt = `You are an intelligent AI assistant.
+    const fullPrompt = `You are an intelligent AI assistant conducting a professional technical interview.
 
-For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").
+CRITICAL TRANSCRIPTION REQUIREMENTS:
+- Always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation")
+- Detect the language spoken by the candidate accurately
+- Do NOT transcribe one language using another language's script
+- Maintain proper script for each language (English in Latin, Hindi in Devanagari, etc.)
 
 ${basePrompt}${languageInstructions}`;
 
@@ -112,12 +131,12 @@ export default function InterviewRoom() {
     const selectedLanguage = getLanguageByCode(langCode);
     console.log(`🌐 Interview starting with language: ${selectedLanguage.name} (${selectedLanguage.speechCode})`);
 
-    const { fetchSessionDetail, completeInterviewSession } = useOptimizedQueries();
+    const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats } = useOptimizedQueries();
 
     // Sanitize API Key
     const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
     const { connect, disconnect, startRecording, stopRecording, pauseRecording, resumeRecording, sendTextMessage, suspendAudioOutput, resumeAudioOutput, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
-    const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion } = useInterviewStore();
+    const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion, clearFeedback } = useInterviewStore();
     const { startListening, stopListening, hasSupport, selectedLanguage: speechLanguage } = useSpeechRecognition(selectedLanguage);
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -173,6 +192,9 @@ export default function InterviewRoom() {
 
             if (shouldCountDown && !isInterviewPaused) {
                 setTimeLeft((prev) => {
+                    if (prev === 120) { // 2 minutes left
+                        toast.warning("2 minutes remaining in your interview!");
+                    }
                     if (prev <= 1) {
                         clearInterval(timer);
                         toast.info("Interview time has ended");
@@ -497,32 +519,45 @@ export default function InterviewRoom() {
                     companyQuestions.length > 0 ? companyQuestions : undefined
                 );
 
-                await connect({
-                    model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: {
-                                    voiceName: "Kore"
-                                }
-                            },
-                        }
-                    },
-                    systemInstruction: {
-                        parts: [{ text: systemInstruction }]
-                    },
-                    // Enable input and output audio transcription with language configuration
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {},
-                    onTranscriptFragment: handleTranscriptFragment
-                });
-                startTimeRef.current = Date.now();
-                console.log('Connection established successfully');
-            } catch (error) {
-                console.error("Failed to connect to Gemini Live API:", error);
-                toast.error("Failed to connect to AI interviewer. Please check your API key and try again.");
-                hasConnectedRef.current = false; // Reset on error to allow retry
+                try {
+                    await connect({
+                        model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: {
+                                        voiceName: "Kore"
+                                    },
+                                },
+                            }
+                        },
+                        systemInstruction: {
+                            parts: [{ text: systemInstruction }]
+                        },
+                        // Enable input and output audio transcription with language configuration
+                        inputAudioTranscription: {
+                        } ,
+                        outputAudioTranscription: {},
+                        onTranscriptFragment: handleTranscriptFragment
+                    });
+                    startTimeRef.current = Date.now();
+                    console.log('✅ Connection established successfully');
+                    console.log('🎤 Recording status:', isRecording);
+                    console.log('🔗 Connected status:', connected);
+                } catch (error) {
+                    console.error("❌ Failed to connect to Gemini Live API:");
+                    console.error("Error details:", error);
+                    console.error("Error type:", typeof error);
+                    console.error("Error message:", error instanceof Error ? error.message : String(error));
+                    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+
+                    toast.error("Failed to connect to AI interviewer. Please check your API key and try again.");
+                    hasConnectedRef.current = false; // Reset on error to allow retry
+                }
+            } catch (outerError) {
+                console.error("❌ Error in connection initialization:", outerError);
+                hasConnectedRef.current = false;
             }
         };
 
@@ -552,6 +587,13 @@ export default function InterviewRoom() {
         if (isEnding) return;
         setIsEnding(true);
         console.log('Ending call...');
+
+        // Capture all necessary data BEFORE navigation
+        const capturedMessages = [...messages];
+        const capturedSessionId = sessionId;
+        const capturedSession = session;
+        const capturedElapsedTime = elapsedTime;
+
         try {
             // Stop recording and disconnect
             if (isRecording) {
@@ -561,11 +603,11 @@ export default function InterviewRoom() {
             stopListening();
 
             // Calculate actual duration
-            const durationMinutes = Math.floor(elapsedTime / 60);
+            const durationMinutes = Math.floor(capturedElapsedTime / 60);
 
-            // Complete the session
-            if (sessionId) {
-                await completeInterviewSession(sessionId, {
+            // Complete the session with basic info
+            if (capturedSessionId) {
+                await completeInterviewSession(capturedSessionId, {
                     status: 'completed',
                     duration_minutes: durationMinutes,
                 });
@@ -574,106 +616,164 @@ export default function InterviewRoom() {
             // Record usage
             await recordUsage(durationMinutes);
 
+            // IMPORTANT: Clear previous feedback from Zustand to show loading state
+            clearFeedback();
 
+            // Store transcript in Zustand immediately
+            setTranscript(capturedMessages);
 
-            console.log('🔍 Generating feedback with messages:', messages.length, 'messages');
-            console.log('First 3 messages:', messages.slice(0, 3));
+            // Navigate to DASHBOARD instead of report page
+            navigate('/dashboard');
 
-            let feedback;
-            let feedbackWithTs;
-
-            try {
-                feedback = await generateFeedback(
-                    messages,
-                    session.position,
-                    session.interview_type
-                );
-                console.log('✅ Feedback generated successfully:', feedback);
-
-                // Attach generated timestamp to feedback for merging/ordering
-                feedbackWithTs = { ...feedback, generatedAt: new Date().toISOString() };
-
-                // Store feedback in Zustand for instant UI display
-                setFeedback(feedbackWithTs as any);
-            } catch (feedbackError) {
-                console.error('❌ Error generating feedback:', feedbackError);
-                // Create fallback feedback
-                feedbackWithTs = {
-                    executiveSummary: "Feedback generation encountered an error.",
-                    strengths: ["Unable to analyze"],
-                    improvements: ["Unable to analyze"],
-                    skills: [
-                        { name: "Technical Knowledge", score: 0, feedback: "Analysis failed" },
-                        { name: "Communication", score: 0, feedback: "Analysis failed" },
-                        { name: "Problem Solving", score: 0, feedback: "Analysis failed" },
-                        { name: "Cultural Fit", score: 0, feedback: "Analysis failed" }
-                    ],
-                    actionPlan: ["Please review transcript manually"],
-                    generatedAt: new Date().toISOString()
-                };
-                setFeedback(feedbackWithTs as any);
-            }
-
-            // Calculate average score
-            const averageScore = Math.round((feedbackWithTs.skills || []).reduce((acc: number, s: any) => acc + (s.score || 0), 0) / ((feedbackWithTs.skills || []).length || 1));
-
-            // Save to database
-            setSaving(true);
-            setSaveError(null);
-
-            const doSaveWithRetry = async (attempt = 1) => {
-                try {
-                    console.log(`Saving interview (attempt ${attempt})`);
-                    console.log(`Interview Data:
-                    - Duration: ${durationMinutes} minutes
-                    - Score: ${averageScore}
-                    - Messages: ${messages.length}
-                    - Transcript Messages:`);
-
-                    messages.forEach((msg, idx) => {
-                        console.log(`  [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 40)}...`);
-                    });
-
-                    // Prepare session update
-                    const sessionUpdate: any = {
-                        duration_minutes: durationMinutes,
-                        score: averageScore,
-                        transcript: messages,
-                        feedback: feedbackWithTs,
-                        status: 'completed'
-                    };
-
-                    await completeInterviewSession(sessionId!, sessionUpdate);
-
-                    setSaving(false);
-                    setSaveError(null);
-                    console.log('✅ Interview saved successfully');
-                } catch (err: any) {
-                    console.error(`❌ Save attempt ${attempt} failed:`, err?.message || err);
-                    if (attempt < 3) {
-                        // exponential backoff
-                        const backoff = 1000 * Math.pow(2, attempt - 1);
-                        setTimeout(() => doSaveWithRetry(attempt + 1), backoff);
-                    } else {
-                        setSaving(false);
-                        setSaveError(err?.message || 'Failed to save interview');
-                        console.error('Failed to save interview after multiple attempts');
-                    }
-                }
-            };
-
-            doSaveWithRetry();
-
-            toast.success("Interview ended. Generating your report...");
-
-            // Navigate to dashboard with progress indicator
-            navigate('/dashboard', {
-                state: {
-                    showReportProgress: true,
-                    sessionId: sessionId,
-                    message: "Your interview report is being generated. This may take a few moments..."
-                }
+            // Show persistent toast with loader for feedback generation
+            const feedbackToastId = toast.loading("🤖 Generating your interview feedback...", {
+                duration: Infinity, // Keep it until we dismiss it
             });
+
+            // ========================================
+            // BACKGROUND PROCESSING STARTS HERE
+            // ========================================
+
+            console.log('🔍 [Background] Generating feedback...');
+
+            // Generate feedback in background
+            (async () => {
+                let feedbackWithTs;
+
+                try {
+                    // Extract skills and difficulty from session config
+                    const sessionSkills = (capturedSession as any).config?.skills;
+                    const sessionDifficulty = (capturedSession as any).config?.difficulty;
+
+                    // Generate feedback with template context
+                    const feedback = await generateFeedback(
+                        capturedMessages,
+                        capturedSession.position,
+                        capturedSession.interview_type,
+                        sessionSkills,
+                        sessionDifficulty
+                    );
+                    console.log('✅ [Background] Feedback generated successfully');
+
+                    feedbackWithTs = { ...feedback, generatedAt: new Date().toISOString() };
+
+                    // Store in Zustand - this will update the UI immediately
+                    setFeedback(feedbackWithTs as any);
+
+                    // Dismiss the loading toast and show success with action button
+                    toast.dismiss(feedbackToastId);
+                    toast.success("✨ Interview report generated successfully!", {
+                        duration: 15000,
+                        description: "Your detailed feedback is ready to view.",
+                        action: {
+                            label: "View Report",
+                            onClick: () => {
+                                navigate(`/interview/${capturedSessionId}/report`);
+                            }
+                        }
+                    });
+                } catch (feedbackError) {
+                    console.error('❌ [Background] Error generating feedback:', feedbackError);
+
+                    // Fallback feedback
+                    feedbackWithTs = {
+                        executiveSummary: "Feedback generation encountered an error.",
+                        strengths: ["Unable to analyze"],
+                        improvements: ["Unable to analyze"],
+                        skills: [
+                            { name: "Technical Knowledge", score: 0, feedback: "Analysis failed" },
+                            { name: "Communication", score: 0, feedback: "Analysis failed" },
+                            { name: "Problem Solving", score: 0, feedback: "Analysis failed" },
+                            { name: "Cultural Fit", score: 0, feedback: "Analysis failed" }
+                        ],
+                        actionPlan: ["Please review transcript manually"],
+                        generatedAt: new Date().toISOString()
+                    };
+                    setFeedback(feedbackWithTs as any);
+
+                    // Dismiss loading toast and show error
+                    toast.dismiss(feedbackToastId);
+                    toast.error("❌ Failed to generate report", {
+                        duration: 4000,
+                        description: "Please try viewing the report manually from the Reports section."
+                    });
+                }
+
+                // Calculate average score
+                const averageScore = Math.round(
+                    (feedbackWithTs.skills || []).reduce((acc: number, s: any) => acc + (s.score || 0), 0) /
+                    ((feedbackWithTs.skills || []).length || 1)
+                );
+
+                // Save to database in parallel
+                setSaving(true);
+
+                const doSaveWithRetry = async (attempt = 1) => {
+                    try {
+                        const sessionUpdate: any = {
+                            duration_minutes: durationMinutes,
+                            score: averageScore,
+                            transcript: capturedMessages,
+                            feedback: feedbackWithTs,
+                            status: 'completed'
+                        };
+
+                        await completeInterviewSession(capturedSessionId!, sessionUpdate);
+
+                        setSaving(false);
+                        setSaveError(null);
+                        console.log('✅ [Background] Saved to database');
+
+                        // Show save success toast (subtle, since we already showed feedback success)
+                        toast.success("💾 Report saved to database", {
+                            duration: 2000,
+                        });
+
+                        // Trigger refetch of sessions and stats to update Dashboard/Reports
+                        // The cache was already invalidated by completeInterviewSession
+                        // Now we force a refetch to update the UI
+                        console.log('🔄 Triggering data refetch to update components...');
+
+                        // Use a small delay to ensure DB has fully committed
+                        setTimeout(async () => {
+                            try {
+                                // This will fetch fresh data since cache was invalidated
+                                await Promise.all([
+                                    fetchSessions(true),  // Force refresh
+                                    fetchStats(true)       // Force refresh
+                                ]);
+                                console.log('✅ Components refreshed with new data');
+                            } catch (refetchError) {
+                                console.error('Error refetching data:', refetchError);
+                            }
+                        }, 300);
+
+                    } catch (err: any) {
+                        console.error(`❌ [Background] Save attempt ${attempt} failed:`, err?.message || err);
+
+                        if (attempt < 3) {
+                            const backoff = 1000 * Math.pow(2, attempt - 1);
+                            setTimeout(() => doSaveWithRetry(attempt + 1), backoff);
+                        } else {
+                            setSaving(false);
+                            setSaveError(err?.message || 'Failed to save interview');
+
+                            toast.error("Failed to save to database", {
+                                duration: 3000,
+                            });
+                        }
+                    }
+                };
+
+                await doSaveWithRetry();
+            })().catch(err => {
+                console.error('❌ [Background] Unhandled error:', err);
+                toast.dismiss(feedbackToastId);
+                toast.error("An unexpected error occurred", {
+                    duration: 3000,
+                });
+            });
+
         } catch (error) {
             console.error("Error ending call:", error);
             toast.error("Failed to end interview properly");

@@ -254,6 +254,10 @@ export default function Templates() {
       const session = await createInterviewSession({
         position: template.title,
         interview_type: template.interviewType,
+        config: {
+          skills: template.skills,
+          difficulty: template.difficulty,
+        }
       });
 
       if (!session) {
@@ -298,7 +302,6 @@ export default function Templates() {
       const session = await createInterviewSession({
         position: role,
         interview_type: "Technical",
-        duration_minutes: 30,
         config: {
           companyInterviewConfig: {
             companyTemplateId: company.id,
@@ -466,8 +469,7 @@ export default function Templates() {
                     </div>
 
                     {/* Duration and Button */}
-                    <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
-                      <span className="text-2xl font-bold text-gray-900 dark:text-foreground">30m</span>
+                    <div className="flex items-center justify-end gap-3 pt-2 mt-auto">
                       <Button
                         className="w-auto px-8 bg-black dark:bg-primary hover:bg-gray-900 dark:hover:bg-primary/90 text-white dark:text-primary-foreground rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
                         onClick={() => startInterviewWithTemplate(template)}
@@ -616,8 +618,8 @@ export default function Templates() {
                             <span>Real interview questions</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>30 minutes duration</span>
+                            <Code className="h-4 w-4" />
+                            <span>Real interview questions</span>
                           </div>
                         </div>
 

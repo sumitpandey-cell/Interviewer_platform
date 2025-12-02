@@ -9,11 +9,22 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { getPreferredLanguage, getLanguageInstructions, type LanguageOption } from "@/lib/language-config";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SessionConfig {
     skills?: string[];
     jobDescription?: string;
     duration?: number;
+    difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
 interface SessionData {
@@ -37,7 +48,8 @@ export default function InterviewSetup() {
     const [cameraError, setCameraError] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(getPreferredLanguage());
-    const { allowed, loading: subscriptionLoading } = useSubscription();
+    const [showTimeWarning, setShowTimeWarning] = useState(false);
+    const { allowed, remaining_minutes, loading: subscriptionLoading } = useSubscription();
 
     useEffect(() => {
         if (sessionId) {
@@ -126,6 +138,20 @@ export default function InterviewSetup() {
             return;
         }
 
+        if (remaining_minutes <= 0 && !subscriptionLoading) {
+            toast.error("You have no remaining interview time.");
+            return;
+        }
+
+        if (remaining_minutes < 5 && !showTimeWarning && !subscriptionLoading) {
+            setShowTimeWarning(true);
+            return;
+        }
+
+        proceedToStart();
+    };
+
+    const proceedToStart = () => {
         if (!isMicOn) {
             toast.error("Please turn on your microphone to continue");
             return;
@@ -255,10 +281,27 @@ export default function InterviewSetup() {
                                         <span className="text-muted-foreground">Position</span>
                                         <span className="font-medium text-foreground">{session.position}</span>
                                     </div>
-                                    {session.duration_minutes && (
+                                    {session.config?.difficulty && (
                                         <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
-                                            <span className="text-muted-foreground">Duration</span>
-                                            <span className="font-medium text-foreground">{session.duration_minutes} min</span>
+                                            <span className="text-muted-foreground">Difficulty</span>
+                                            <span className={`px-2 py-1 rounded-md text-xs font-semibold ${session.config.difficulty === 'Beginner' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                                                session.config.difficulty === 'Intermediate' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' :
+                                                    'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                }`}>
+                                                {session.config.difficulty}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {session.config?.skills && session.config.skills.length > 0 && (
+                                        <div className="p-2 rounded-md bg-muted/50">
+                                            <span className="text-muted-foreground text-xs block mb-2">Skills to be assessed</span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {session.config.skills.map((skill, idx) => (
+                                                    <span key={idx} className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -343,6 +386,22 @@ export default function InterviewSetup() {
                 </div>
 
             </main>
+
+            <AlertDialog open={showTimeWarning} onOpenChange={setShowTimeWarning}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Low Time Warning</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have only {remaining_minutes} minutes remaining in your subscription.
+                            The interview will automatically end when your time runs out.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={proceedToStart}>Continue Anyway</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
