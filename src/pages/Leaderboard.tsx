@@ -41,6 +41,7 @@ interface LeaderboardUser {
     interviewCount: number;
     averageScore: number;
     bayesianScore: number;
+    gender?: string;
 }
 
 const Leaderboard = () => {
@@ -114,18 +115,21 @@ const Leaderboard = () => {
                     // Get current user's OAuth picture if they're in the leaderboard
                     const { data: { user: currentUser } } = await supabase.auth.getUser();
                     const currentUserOAuthPicture = currentUser?.user_metadata?.picture || currentUser?.user_metadata?.avatar_url;
+                    const currentUserGender = currentUser?.user_metadata?.gender;
 
                     // Merge profile data
                     const finalLeaderboard = sortedUsers.map((user) => {
                         const profile = profiles?.find((p) => p.id === user.userId);
                         // Use OAuth picture only for current user (we can't access other users' auth metadata from client)
                         const oauthPicture = user.userId === currentUser?.id ? currentUserOAuthPicture : null;
+                        const gender = user.userId === currentUser?.id ? currentUserGender : undefined;
 
                         return {
                             ...user,
                             fullName: profile?.full_name || "Anonymous",
                             avatarUrl: profile?.avatar_url,
                             oauthPicture: oauthPicture,
+                            gender: gender,
                         };
                     });
 
@@ -506,7 +510,8 @@ const Leaderboard = () => {
                                             user.avatarUrl,
                                             user.userId || user.fullName || 'user',
                                             'avataaars',
-                                            user.oauthPicture
+                                            user.oauthPicture,
+                                            user.gender
                                         )}
                                         className="object-cover"
                                     />
@@ -692,7 +697,8 @@ const Leaderboard = () => {
                                                                         leaderboardUser.avatarUrl,
                                                                         leaderboardUser.userId || leaderboardUser.fullName || 'user',
                                                                         'avataaars',
-                                                                        leaderboardUser.oauthPicture
+                                                                        leaderboardUser.oauthPicture,
+                                                                        leaderboardUser.gender
                                                                     )} />
                                                                     <AvatarFallback>{getInitials(leaderboardUser.fullName)}</AvatarFallback>
                                                                 </Avatar>

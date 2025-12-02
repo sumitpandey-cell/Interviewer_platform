@@ -274,7 +274,9 @@ export default function Reports() {
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
-                      'avataaars'
+                      'avataaars',
+                      null,
+                      user?.user_metadata?.gender
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>

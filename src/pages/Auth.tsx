@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Brain, Mail, Lock, User, Eye, EyeOff, CheckCircle2, Sparkles, Upload } from "lucide-react";
+import { Brain, Mail, Lock, User, Eye, EyeOff, CheckCircle2, Sparkles, Upload, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
@@ -14,11 +14,13 @@ import { Progress } from "@/components/ui/progress";
 import imageCompression from 'browser-image-compression';
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email address").max(255),
   password: z.string().min(6, "Password must be at least 6 characters").max(72),
+  gender: z.string().optional(),
 });
 
 const signInSchema = z.object({
@@ -44,6 +46,7 @@ export default function Auth() {
       fullName: "",
       email: "",
       password: "",
+      gender: "",
     },
   });
 
@@ -114,7 +117,7 @@ export default function Auth() {
 
   const handleSignUp = async (values: SignUpForm) => {
     try {
-      await signUp(values.email, values.password, values.fullName);
+      await signUp(values.email, values.password, values.fullName, values.gender);
 
       // Note: We can't immediately upload the avatar here because the user might not be logged in yet
       // (depending on email verification settings). 
@@ -305,6 +308,31 @@ export default function Auth() {
                           />
                         </div>
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={signUpForm.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <div className="relative">
+                            <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                            <SelectTrigger className="pl-10 h-11">
+                              <SelectValue placeholder="Select your gender" />
+                            </SelectTrigger>
+                          </div>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

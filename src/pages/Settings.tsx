@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { User, Bell, Shield, Trash2, Save, Upload, CreditCard, Lock } from "lucide-react";
+import { User, Bell, Shield, Trash2, Save, Upload, CreditCard, Lock, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
 import { getAvatarUrl, getInitials } from "@/lib/avatar-utils";
@@ -28,9 +29,10 @@ export default function Settings() {
 
     // Profile settings
     const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
+    const [gender, setGender] = useState(user?.user_metadata?.gender || "");
     const [email] = useState(user?.email || "");
     const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || user?.user_metadata?.picture);
-    
+
     // Language settings
     const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(getPreferredLanguage());
 
@@ -105,7 +107,10 @@ export default function Settings() {
         try {
             setLoading(true);
             const { error } = await supabase.auth.updateUser({
-                data: { full_name: fullName }
+                data: {
+                    full_name: fullName,
+                    gender: gender
+                }
             });
 
             if (error) throw error;
@@ -243,7 +248,7 @@ export default function Settings() {
                                         <div className="relative group">
                                             <Label htmlFor="avatar-upload" className="cursor-pointer block relative">
                                                 <Avatar className="h-24 w-24 border-4 border-background shadow-xl group-hover:opacity-90 transition-all">
-                                                    <AvatarImage src={getAvatarUrl(avatarUrl, user?.id || 'user')} />
+                                                    <AvatarImage src={getAvatarUrl(avatarUrl, user?.id || 'user', 'avataaars', null, gender)} />
                                                     <AvatarFallback className="text-3xl bg-primary/10 text-primary">
                                                         {getInitials(fullName) || "U"}
                                                     </AvatarFallback>
@@ -281,6 +286,19 @@ export default function Settings() {
                                             />
                                         </div>
                                         <div className="space-y-2">
+                                            <Label htmlFor="gender">Gender</Label>
+                                            <Select value={gender} onValueChange={setGender}>
+                                                <SelectTrigger className="max-w-md">
+                                                    <SelectValue placeholder="Select your gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="male">Male</SelectItem>
+                                                    <SelectItem value="female">Female</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
                                             <Label htmlFor="email">Email Address</Label>
                                             <Input
                                                 id="email"
@@ -289,9 +307,9 @@ export default function Settings() {
                                                 className="max-w-md bg-muted"
                                             />
                                         </div>
-                                        
+
                                         <Separator />
-                                        
+
                                         {/* Language Preferences */}
                                         <div className="space-y-4">
                                             <div>
@@ -313,7 +331,7 @@ export default function Settings() {
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="pt-2">
                                             <Button onClick={handleUpdateProfile} disabled={loading}>
                                                 {loading ? "Saving..." : "Save Changes"}
