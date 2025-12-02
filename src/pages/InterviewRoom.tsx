@@ -142,7 +142,19 @@ export default function InterviewRoom() {
     const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
     const { connect, disconnect, startRecording, stopRecording, pauseRecording, resumeRecording, sendTextMessage, suspendAudioOutput, resumeAudioOutput, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
     const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion, clearFeedback } = useInterviewStore();
-    const { startListening, stopListening, hasSupport, selectedLanguage: speechLanguage } = useSpeechRecognition(selectedLanguage);
+    // Track if browser speech recognition is working
+    const browserSpeechWorkingRef = useRef(false);
+    const lastBrowserTranscriptTimeRef = useRef(0);
+
+    const { startListening, stopListening, hasSupport, selectedLanguage: speechLanguage } = useSpeechRecognition(selectedLanguage, (text) => {
+        // Mark that browser speech is working
+        browserSpeechWorkingRef.current = true;
+        lastBrowserTranscriptTimeRef.current = Date.now();
+
+        if (handleTranscriptFragmentRef.current) {
+            handleTranscriptFragmentRef.current('user', text);
+        }
+    });
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [messages, setMessages] = useState<Message[]>([]);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -308,6 +320,17 @@ export default function InterviewRoom() {
             if (!cleanedText.trim()) {
                 console.log(`Skipping empty text from ${sender} after filtering`);
                 return;
+            }
+
+            // If this is a user transcript from Gemini, check if browser speech is working
+            // If browser speech has been working recently (within last 5 seconds), ignore Gemini's user transcript
+            if (sender === 'user') {
+                const timeSinceLastBrowserTranscript = Date.now() - lastBrowserTranscriptTimeRef.current;
+                if (browserSpeechWorkingRef.current && timeSinceLastBrowserTranscript < 5000) {
+                    console.log('🔇 Ignoring Gemini user transcript because browser speech recognition is working');
+                    return;
+                }
+                console.log('✅ Using Gemini user transcript (browser speech not working or inactive)');
             }
 
 
@@ -557,10 +580,10 @@ export default function InterviewRoom() {
                         realtimeInputConfig: {
                             automaticActivityDetection: {
                                 prefixPaddingMs: 300,      // Capture speech onset
-                                silenceDurationMs: 500     // Reduced to 500ms for minimum delay
+                                silenceDurationMs: 200     // Reduced to 500ms for minimum delay
                             }
                         },
-                        // Enable input and output audio transcription with language configuration
+                        // Enable input transcription with forced English to prevent Hindi script transliteration
                         inputAudioTranscription: {
                         },
                         outputAudioTranscription: {},
