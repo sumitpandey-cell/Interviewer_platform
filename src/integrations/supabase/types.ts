@@ -124,6 +124,8 @@ export type Database = {
           status: string
           user_id: string
           config: Json | null
+          feedback: Json | null
+          transcript: Json | null
         }
         Insert: {
           completed_at?: string | null
@@ -136,6 +138,8 @@ export type Database = {
           status?: string
           user_id: string
           config?: Json | null
+          feedback?: Json | null
+          transcript?: Json | null
         }
         Update: {
           completed_at?: string | null
@@ -148,6 +152,8 @@ export type Database = {
           status?: string
           user_id?: string
           config?: Json | null
+          feedback?: Json | null
+          transcript?: Json | null
         }
         Relationships: []
       }

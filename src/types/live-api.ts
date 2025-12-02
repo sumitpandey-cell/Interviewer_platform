@@ -16,6 +16,13 @@ export type LiveConfig = {
     }[];
   };
   tools?: Array<{ googleSearch: {} } | { codeExecution: {} }>;
+  // Configure Voice Activity Detection for background noise reduction
+  realtimeInputConfig?: {
+    automaticActivityDetection?: {
+      prefixPaddingMs?: number;
+      silenceDurationMs?: number;
+    };
+  };
   // Add transcription support with explicit language configuration
   inputAudioTranscription?: {
     language?: string;

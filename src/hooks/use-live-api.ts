@@ -111,7 +111,7 @@ export function useLiveAPI(apiKey: string) {
             if ('serverContent' in data) {
                 const { modelTurn, inputTranscription, outputTranscription, turnComplete, interrupted } = data.serverContent;
                 if (interrupted) {
-                    console.log('🛑 Conversation interrupted');
+                    console.warn('🛑 Conversation interrupted - possible background noise or premature turn completion');
                 }
 
                 // Handle AI text responses - use callback for direct processing

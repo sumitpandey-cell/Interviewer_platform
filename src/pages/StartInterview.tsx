@@ -41,7 +41,6 @@ const formSchema = z.object({
     role: z.string().optional(),
     experienceLevel: z.string().optional(),
     skills: z.string().optional(),
-    duration: z.string().min(1, "Duration is required"),
     jobDescription: z.any().optional(),
 });
 
@@ -72,7 +71,6 @@ export default function StartInterview() {
             role: "",
             experienceLevel: "",
             skills: "",
-            duration: "",
         },
     });
 
@@ -112,7 +110,6 @@ export default function StartInterview() {
             const config: any = {
                 skills: skillsList,
                 jobDescription: values.jobDescription || null,
-                duration: parseInt(values.duration)
             };
 
             // Add company-specific config if company interview
@@ -130,7 +127,7 @@ export default function StartInterview() {
                 user_id: user.id,
                 interview_type: values.interviewType,
                 position: values.position,
-                duration_minutes: parseInt(values.duration),
+                duration_minutes: 0, // Will be set to actual duration when interview completes
                 status: "pending",
                 config: config
             }).select();
@@ -413,25 +410,6 @@ export default function StartInterview() {
                                         </div>
                                     )}
                                 </div>
-
-                                <FormField
-                                    control={form.control}
-                                    name="duration"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">
-                                                <div className="p-1.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                                    <Clock className="h-4 w-4" />
-                                                </div>
-                                                Interview Duration (max 15 minutes) <span className="text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input type="number" max={15} placeholder="Enter duration (in minutes)" className="bg-background/50 border-input h-12 text-base" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
 
                                 <div className="space-y-4">
                                     <FormLabel className="text-foreground font-semibold flex items-center gap-2 text-base">

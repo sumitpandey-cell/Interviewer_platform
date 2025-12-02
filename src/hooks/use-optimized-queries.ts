@@ -4,6 +4,7 @@ import { useCacheStore } from '@/stores/use-cache-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { CompanyTemplate } from '@/types/company-types';
+import { PerformanceHistory, PerformanceMetrics } from '@/types/performance-types';
 
 // Add profile caching to the cache store interface
 interface ProfileCache {
@@ -93,7 +94,8 @@ export function useOptimizedQueries() {
       const averageScore = completedSessions.length > 0
         ? Math.round(completedSessions.reduce((acc, s) => acc + (s.score || 0), 0) / completedSessions.length)
         : 0;
-      const timePracticed = sessionsData.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
+      // Only count duration from completed interviews to avoid inflating practice time
+      const timePracticed = completedSessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
       const rank = totalInterviews > 0 ? Math.max(100 - totalInterviews * 5, 1) : 0;
 
       const calculatedStats = {
@@ -247,7 +249,7 @@ export function useOptimizedQueries() {
           user_id: user.id,
           position: sessionData.position,
           interview_type: sessionData.interview_type,
-          duration_minutes: sessionData.duration_minutes || 30, // Default to 30 minutes
+          duration_minutes: sessionData.duration_minutes || 0, // Default to 0 for in-progress
           status: 'in_progress',
           config: sessionData.config || {},
           created_at: new Date().toISOString()
@@ -383,6 +385,149 @@ export function useOptimizedQueries() {
     }
   }, [onInterviewUpdated, user?.id]);
 
+  // Fetch recent performance metrics from last 3 interviews
+  const fetchRecentPerformanceMetrics = useCallback(async (): Promise<PerformanceHistory> => {
+    if (!user?.id) {
+      return {
+        recentInterviews: [],
+        averageScores: {
+          technicalKnowledge: 0,
+          communication: 0,
+          problemSolving: 0,
+          adaptability: 0,
+          overall: 0,
+        },
+        trend: 'insufficient_data',
+      };
+    }
+
+    try {
+      console.log('🔍 Fetching recent performance metrics for user:', user.id);
+
+      // Fetch last 3 completed interviews with feedback
+      const { data, error } = await supabase
+        .from('interview_sessions')
+        .select('id, position, interview_type, completed_at, score, feedback')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .not('feedback', 'is', null)
+        .not('score', 'is', null)
+        .order('completed_at', { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error('Error fetching performance metrics:', error);
+        return {
+          recentInterviews: [],
+          averageScores: {
+            technicalKnowledge: 0,
+            communication: 0,
+            problemSolving: 0,
+            adaptability: 0,
+            overall: 0,
+          },
+          trend: 'insufficient_data',
+        };
+      }
+
+      if (!data || data.length === 0) {
+        console.log('📊 No previous interview data found');
+        return {
+          recentInterviews: [],
+          averageScores: {
+            technicalKnowledge: 0,
+            communication: 0,
+            problemSolving: 0,
+            adaptability: 0,
+            overall: 0,
+          },
+          trend: 'insufficient_data',
+        };
+      }
+
+      console.log(`📊 Found ${data.length} previous interviews with feedback`);
+
+      // Extract performance metrics from each session
+      const recentInterviews: PerformanceMetrics[] = data.map((session) => {
+        const feedback = session.feedback as any;
+        const skills = feedback?.skills || [];
+
+        return {
+          sessionId: session.id,
+          position: session.position,
+          interviewType: session.interview_type,
+          completedAt: session.completed_at || '',
+          skills: skills.map((skill: any) => ({
+            name: skill.name,
+            score: skill.score || 0,
+            feedback: skill.feedback || '',
+          })),
+          overallScore: session.score || 0,
+        };
+      });
+
+      // Calculate average scores across all interviews
+      const totalInterviews = recentInterviews.length;
+      let techSum = 0, commSum = 0, probSum = 0, adaptSum = 0, overallSum = 0;
+
+      recentInterviews.forEach((interview) => {
+        interview.skills.forEach((skill) => {
+          const skillName = skill.name.toLowerCase();
+          if (skillName.includes('technical')) techSum += skill.score;
+          else if (skillName.includes('communication')) commSum += skill.score;
+          else if (skillName.includes('problem')) probSum += skill.score;
+          else if (skillName.includes('adaptability')) adaptSum += skill.score;
+        });
+        overallSum += interview.overallScore;
+      });
+
+      const averageScores = {
+        technicalKnowledge: Math.round(techSum / totalInterviews),
+        communication: Math.round(commSum / totalInterviews),
+        problemSolving: Math.round(probSum / totalInterviews),
+        adaptability: Math.round(adaptSum / totalInterviews),
+        overall: Math.round(overallSum / totalInterviews),
+      };
+
+      // Determine trend (comparing most recent to oldest in the set)
+      let trend: PerformanceHistory['trend'] = 'insufficient_data';
+      if (totalInterviews >= 2) {
+        const recentScore = recentInterviews[0].overallScore;
+        const oldestScore = recentInterviews[totalInterviews - 1].overallScore;
+        const difference = recentScore - oldestScore;
+
+        if (difference > 5) trend = 'improving';
+        else if (difference < -5) trend = 'declining';
+        else trend = 'consistent';
+      }
+
+      console.log('📈 Performance metrics calculated:', {
+        totalInterviews,
+        averageScores,
+        trend,
+      });
+
+      return {
+        recentInterviews,
+        averageScores,
+        trend,
+      };
+    } catch (error) {
+      console.error('Error in fetchRecentPerformanceMetrics:', error);
+      return {
+        recentInterviews: [],
+        averageScores: {
+          technicalKnowledge: 0,
+          communication: 0,
+          problemSolving: 0,
+          adaptability: 0,
+          overall: 0,
+        },
+        trend: 'insufficient_data',
+      };
+    }
+  }, [user?.id]);
+
   return {
     // Data
     sessions,
@@ -397,6 +542,7 @@ export function useOptimizedQueries() {
     fetchSessionDetail,
     fetchCompanyTemplates,
     fetchCompanyTemplateBySlug,
+    fetchRecentPerformanceMetrics,
 
     // CRUD operations with cache invalidation
     createInterviewSession,

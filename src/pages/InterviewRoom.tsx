@@ -38,12 +38,14 @@ interface SessionData {
 }
 
 import { loadSystemPrompt, containsCodingKeywords } from "@/lib/prompt-loader";
+import { PerformanceHistory } from "@/types/performance-types";
 
 const generateSystemInstruction = (
     session: SessionData | null,
     selectedLanguage: LanguageOption,
     timeLeftMinutes?: number,
-    companyQuestions?: CompanyQuestion[]
+    companyQuestions?: CompanyQuestion[],
+    performanceHistory?: PerformanceHistory
 ) => {
     if (!session) {
         return `You are a Senior Technical Interviewer. You are an intelligent AI assistant.
@@ -57,8 +59,9 @@ Conduct a professional interview in ${selectedLanguage.name}. Focus on technical
     const companyName = (session as any).config?.companyInterviewConfig?.companyName;
     const skills = (session as any).config?.skills;
     const difficulty = (session as any).config?.difficulty;
+    const jobDescription = (session as any).config?.jobDescription;
 
-    // Use the new prompt loader system with language context
+    // Use the new prompt loader system with language context and performance history
     const basePrompt = loadSystemPrompt({
         interviewType: interview_type,
         position: position,
@@ -66,7 +69,9 @@ Conduct a professional interview in ${selectedLanguage.name}. Focus on technical
         timeLeftMinutes: timeLeftMinutes,
         questions: companyQuestions && companyQuestions.length > 0 ? companyQuestions : undefined,
         skills: skills,
-        difficulty: difficulty
+        difficulty: difficulty,
+        performanceHistory: performanceHistory,
+        jobDescription: jobDescription
     });
 
     // Add language-specific instructions
@@ -131,7 +136,7 @@ export default function InterviewRoom() {
     const selectedLanguage = getLanguageByCode(langCode);
     console.log(`🌐 Interview starting with language: ${selectedLanguage.name} (${selectedLanguage.speechCode})`);
 
-    const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats } = useOptimizedQueries();
+    const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats, fetchRecentPerformanceMetrics } = useOptimizedQueries();
 
     // Sanitize API Key
     const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
@@ -512,11 +517,24 @@ export default function InterviewRoom() {
             hasConnectedRef.current = true;
 
             try {
+                // Fetch performance history before generating system instruction
+                console.log('📊 Fetching candidate performance history...');
+                const performanceHistory = await fetchRecentPerformanceMetrics();
+
+                if (performanceHistory.recentInterviews.length > 0) {
+                    console.log(`✅ Found ${performanceHistory.recentInterviews.length} previous interviews`);
+                    console.log('📈 Average scores:', performanceHistory.averageScores);
+                    console.log('📊 Trend:', performanceHistory.trend);
+                } else {
+                    console.log('📊 No previous interview history found - this is the candidate\'s first interview');
+                }
+
                 const systemInstruction = generateSystemInstruction(
                     session,
                     selectedLanguage,
                     Math.floor(timeLeft / 60),
-                    companyQuestions.length > 0 ? companyQuestions : undefined
+                    companyQuestions.length > 0 ? companyQuestions : undefined,
+                    performanceHistory
                 );
 
                 try {
@@ -535,9 +553,16 @@ export default function InterviewRoom() {
                         systemInstruction: {
                             parts: [{ text: systemInstruction }]
                         },
+                        // Configure Voice Activity Detection to reduce background noise sensitivity
+                        realtimeInputConfig: {
+                            automaticActivityDetection: {
+                                prefixPaddingMs: 300,      // Capture speech onset
+                                silenceDurationMs: 2000     // Require 2 seconds of silence before considering speech complete
+                            }
+                        },
                         // Enable input and output audio transcription with language configuration
                         inputAudioTranscription: {
-                        } ,
+                        },
                         outputAudioTranscription: {},
                         onTranscriptFragment: handleTranscriptFragment
                     });
@@ -723,11 +748,6 @@ export default function InterviewRoom() {
                         setSaving(false);
                         setSaveError(null);
                         console.log('✅ [Background] Saved to database');
-
-                        // Show save success toast (subtle, since we already showed feedback success)
-                        toast.success("💾 Report saved to database", {
-                            duration: 2000,
-                        });
 
                         // Trigger refetch of sessions and stats to update Dashboard/Reports
                         // The cache was already invalidated by completeInterviewSession

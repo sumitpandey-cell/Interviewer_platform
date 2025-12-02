@@ -25,6 +25,12 @@ interface SessionConfig {
     jobDescription?: string;
     duration?: number;
     difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+    companyInterviewConfig?: {
+        companyTemplateId: string;
+        companyName: string;
+        role: string;
+        experienceLevel: string;
+    };
 }
 
 interface SessionData {
@@ -281,6 +287,22 @@ export default function InterviewSetup() {
                                         <span className="text-muted-foreground">Position</span>
                                         <span className="font-medium text-foreground">{session.position}</span>
                                     </div>
+                                    {session.config?.companyInterviewConfig && (
+                                        <>
+                                            <div className="flex justify-between items-center p-2 rounded-md bg-primary/10 border border-primary/20">
+                                                <span className="text-muted-foreground">Company</span>
+                                                <span className="font-semibold text-primary">{session.config.companyInterviewConfig.companyName}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
+                                                <span className="text-muted-foreground">Role</span>
+                                                <span className="font-medium text-foreground">{session.config.companyInterviewConfig.role}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
+                                                <span className="text-muted-foreground">Experience Level</span>
+                                                <span className="font-medium text-foreground">{session.config.companyInterviewConfig.experienceLevel}</span>
+                                            </div>
+                                        </>
+                                    )}
                                     {session.config?.difficulty && (
                                         <div className="flex justify-between items-center p-2 rounded-md bg-muted/50">
                                             <span className="text-muted-foreground">Difficulty</span>
@@ -302,6 +324,14 @@ export default function InterviewSetup() {
                                                     </span>
                                                 ))}
                                             </div>
+                                        </div>
+                                    )}
+                                    {session.config?.jobDescription && (
+                                        <div className="p-2 rounded-md bg-muted/50">
+                                            <span className="text-muted-foreground text-xs block mb-2">Job Description</span>
+                                            <p className="text-xs text-foreground line-clamp-3 hover:line-clamp-none transition-all cursor-pointer" title={session.config.jobDescription}>
+                                                {session.config.jobDescription}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
