@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Trophy, Medal, Loader2, Search, TrendingUp, Users, Award, Settings as SettingsIcon, LogOut, Share2, Download, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface LeaderboardUser {
     userId: string;
@@ -39,6 +47,10 @@ const Leaderboard = () => {
     const [users, setUsers] = useState<LeaderboardUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<LeaderboardUser | null>(null);
+    const [selectedRank, setSelectedRank] = useState<number>(0);
+    const [copied, setCopied] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
@@ -140,142 +152,385 @@ const Leaderboard = () => {
         user.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const YourProgressCard = () => (
-        <Card className="bg-[#1A1F2C] text-white border-none overflow-hidden relative h-full min-h-[320px] flex flex-col items-center justify-center p-6 shadow-xl">
-            {/* Background effects */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10" />
+    const handleShare = (user: LeaderboardUser, rank: number) => {
+        setSelectedUser(user);
+        setSelectedRank(rank);
+        setShareModalOpen(true);
+    };
 
-            <div className="relative z-10 flex flex-col items-center text-center space-y-6">
-                <div className="space-y-2">
-                    <h3 className="font-semibold text-lg">Your Progress</h3>
-                    <Badge className="bg-white/10 text-white hover:bg-white/20 border-none px-3 py-1">
-                        7 Day Streak
-                    </Badge>
-                </div>
+    const handleDownloadCard = async () => {
+        const cardElement = document.getElementById('share-card');
+        if (!cardElement) return;
 
-                {/* Circular Progress */}
-                {/* Circular Progress */}
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
-                        <circle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke="currentColor"
-                            strokeWidth="12"
-                            fill="transparent"
-                            className="text-white/10"
-                        />
-                        <circle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke="currentColor"
-                            strokeWidth="12"
-                            fill="transparent"
-                            strokeDasharray={439.82}
-                            strokeDashoffset={439.82 * 0.25} // 75% progress
-                            className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl sm:text-4xl font-bold">300</span>
-                    </div>
-                </div>
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
 
-                <div className="text-sm text-gray-300">
-                    Next Badge: <span className="text-white font-medium">Mentor</span>
-                </div>
-            </div>
-        </Card>
-    );
+            const scale = 2;
+            const width = 700;
+            const height = 700; // Reduced from 900
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+            ctx.scale(scale, scale);
+
+            // Background
+            ctx.fillStyle = '#f9fafb';
+            ctx.fillRect(0, 0, width, height);
+
+            // Header - Aura Logo and Branding
+            ctx.fillStyle = '#6366f1';
+            ctx.font = 'bold 24px Inter, system-ui, sans-serif';
+            ctx.fillText('Aura', 50, 40);
+
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '12px Inter, system-ui, sans-serif';
+            ctx.fillText('Elevate Your Hiring', 50, 60);
+
+            // Verified Badge
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('✓ Aura Verified', width - 50, 50);
+
+            // White Card Background
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 4;
+            ctx.roundRect(30, 90, width - 60, height - 160, 16);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+
+            // User Name
+            ctx.fillStyle = '#111827';
+            ctx.font = 'bold 28px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(selectedUser?.fullName || 'Anonymous', 180, 160);
+
+            // Subtitle
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '14px Inter, system-ui, sans-serif';
+            ctx.fillText('Interview Candidate', 180, 185);
+
+            // Rank Badge
+            const rankText = `🏆 Global Rank #${selectedRank}`;
+            const rankBgColor = selectedRank === 1 ? '#fbbf24' :
+                selectedRank === 2 ? '#d1d5db' :
+                    selectedRank === 3 ? '#f59e0b' : '#6366f1';
+
+            ctx.fillStyle = rankBgColor;
+            ctx.roundRect(180, 200, 200, 32, 16);
+            ctx.fill();
+
+            ctx.fillStyle = selectedRank <= 3 ? '#1f2937' : '#ffffff';
+            ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(rankText, 280, 222);
+
+            // Stats Grid - Interview Score
+            ctx.fillStyle = '#eef2ff';
+            ctx.roundRect(50, 260, 180, 100, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#6366f1';
+            ctx.beginPath();
+            ctx.arc(75, 285, 14, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('✓', 75, 290);
+
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Interview Score:', 98, 290);
+
+            ctx.fillStyle = '#6366f1';
+            ctx.font = 'bold 32px Inter, system-ui, sans-serif';
+            ctx.fillText(`${selectedUser?.bayesianScore.toFixed(0)}%`, 60, 330);
+
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '10px Inter, system-ui, sans-serif';
+            ctx.fillText('(Aura Verified)', 60, 350);
+
+            // Stats Grid - Top Skills
+            ctx.fillStyle = '#f3e8ff';
+            ctx.roundRect(250, 260, 180, 100, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#9333ea';
+            ctx.beginPath();
+            ctx.arc(275, 285, 14, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('★', 275, 290);
+
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Top Skills:', 298, 290);
+
+            ctx.fillStyle = '#581c87';
+            ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+            ctx.fillText('Problem Solving,', 260, 315);
+            ctx.fillText('Communication,', 260, 335);
+            ctx.fillText('Technical', 260, 355);
+
+            // Stats Grid - Experience
+            ctx.fillStyle = '#fce7f3';
+            ctx.roundRect(450, 260, 180, 100, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#db2777';
+            ctx.beginPath();
+            ctx.arc(475, 285, 14, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('↗', 475, 290);
+
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Experience:', 498, 290);
+
+            ctx.fillStyle = '#db2777';
+            ctx.font = 'bold 32px Inter, system-ui, sans-serif';
+            ctx.fillText(`${selectedUser?.interviewCount}+`, 460, 330);
+
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '10px Inter, system-ui, sans-serif';
+            ctx.fillText('Interviews', 460, 350);
+
+            // Hire Recommendation
+            ctx.fillStyle = '#d1fae5';
+            ctx.roundRect(50, 380, 580, 65, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#059669';
+            ctx.beginPath();
+            ctx.arc(75, 412, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆', 75, 418);
+
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '12px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Hire Recommendation:', 105, 405);
+
+            const recommendation = selectedUser?.bayesianScore && selectedUser.bayesianScore >= 80
+                ? "Highly Recommended"
+                : selectedUser?.bayesianScore && selectedUser.bayesianScore >= 60
+                    ? "Recommended"
+                    : "Under Review";
+
+            ctx.fillStyle = '#047857';
+            ctx.font = 'bold 18px Inter, system-ui, sans-serif';
+            ctx.fillText(recommendation, 105, 425);
+
+            // CTA Button
+            const gradient = ctx.createLinearGradient(50, 465, 650, 465);
+            gradient.addColorStop(0, '#6366f1');
+            gradient.addColorStop(1, '#9333ea');
+            ctx.fillStyle = gradient;
+            ctx.roundRect(50, 465, 580, 45, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('View Full Profile on Aura', width / 2, 492);
+
+            // Footer
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '13px Inter, system-ui, sans-serif';
+            ctx.fillText('AuraPlatform.com', width / 2, height - 40);
+
+            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('Intelligent Interview Solutions', width / 2, height - 20);
+
+            // Convert to blob and download
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `aura-interview-${selectedUser?.fullName?.replace(/\s+/g, '-').toLowerCase()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                toast({
+                    title: "Success",
+                    description: "Card downloaded successfully!",
+                });
+            });
+        } catch (error) {
+            console.error('Error downloading card:', error);
+            toast({
+                title: "Error",
+                description: "Failed to download card.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleNativeShare = async () => {
+        try {
+            const shareData = {
+                title: `${selectedUser?.fullName || 'Candidate'} - Aura Interview Profile`,
+                text: `Check out this interview profile on Aura! Global Rank #${selectedRank} with a score of ${selectedUser?.bayesianScore.toFixed(0)}%`,
+                url: `${window.location.origin}/leaderboard?user=${selectedUser?.userId}`,
+            };
+
+            if (navigator.share && navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+                toast({
+                    title: "Success",
+                    description: "Shared successfully!",
+                });
+            } else {
+                // Fallback to copy link
+                await navigator.clipboard.writeText(shareData.url);
+                toast({
+                    title: "Link Copied",
+                    description: "Share link copied to clipboard!",
+                });
+            }
+        } catch (error) {
+            if ((error as Error).name !== 'AbortError') {
+                console.error('Error sharing:', error);
+                toast({
+                    title: "Error",
+                    description: "Failed to share.",
+                    variant: "destructive",
+                });
+            }
+        }
+    };
+
+    const handleCopyLink = () => {
+        const shareUrl = `${window.location.origin}/leaderboard?user=${selectedUser?.userId}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            setCopied(true);
+            toast({
+                title: "Success",
+                description: "Link copied to clipboard!",
+            });
+            setTimeout(() => setCopied(false), 2000);
+        }).catch(() => {
+            toast({
+                title: "Error",
+                description: "Failed to copy link.",
+                variant: "destructive",
+            });
+        });
+    };
+
+
 
     const TopPlayerCard = ({ user, rank }: { user: LeaderboardUser; rank: number }) => {
-        const isFirst = rank === 1;
+        // Define gradient colors for each rank
+        const gradientColors = {
+            1: "from-emerald-400 via-cyan-400 to-blue-400",
+            2: "from-rose-400 via-orange-400 to-yellow-400",
+            3: "from-purple-500 via-indigo-500 to-blue-600"
+        };
+
+        const rankSuffix = {
+            1: "st",
+            2: "nd",
+            3: "rd"
+        };
 
         return (
-            <div className={cn(
-                "relative flex flex-col items-center transition-all duration-300",
-                isFirst ? "-mt-8 sm:-mt-12 z-10" : "mt-0"
-            )}>
-                {isFirst && (
-                    <div className="absolute -top-8 sm:-top-12 left-1/2 -translate-x-1/2 z-20">
-                        <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-yellow-500 fill-yellow-500 animate-bounce drop-shadow-lg" />
-                    </div>
-                )}
-
-                <Card className={cn(
-                    "relative overflow-visible border-none shadow-xl transition-all flex flex-col items-center",
-                    // Responsive width and height
-                    isFirst
-                        ? "w-[140px] h-[240px] sm:w-[260px] sm:h-[340px] ring-2 sm:ring-4 ring-yellow-100 dark:ring-yellow-900/30"
-                        : "w-[110px] h-[200px] sm:w-[220px] sm:h-[280px]",
-                    "bg-card rounded-2xl sm:rounded-[2rem]"
-                )}>
+            <div className="relative flex flex-col items-center w-full max-w-[280px]">
+                <Card className="w-full bg-[#1a1a1a] border-none shadow-2xl rounded-2xl overflow-hidden">
+                    {/* Gradient Header with Rank Badge */}
                     <div className={cn(
-                        "absolute top-2 right-2 sm:top-2 sm:right-4 font-black select-none opacity-20",
-                        // Responsive font size for rank number
-                        "text-3xl sm:text-5xl",
-                        rank === 1 ? "text-yellow-500" :
-                            rank === 2 ? "text-slate-400" :
-                                "text-amber-700"
+                        "relative h-20 bg-gradient-to-r",
+                        gradientColors[rank as keyof typeof gradientColors]
                     )}>
-                        #{rank}
+                        <div className="absolute top-4 right-4 flex items-baseline gap-1">
+                            <span className="text-5xl font-black text-white/90 leading-none">
+                                {rank}
+                            </span>
+                            <span className="text-xl font-bold text-white/70 leading-none">
+                                {rankSuffix[rank as keyof typeof rankSuffix]}
+                            </span>
+                        </div>
                     </div>
 
-                    <CardContent className="flex flex-col items-center justify-center h-full p-3 sm:p-6 w-full z-10">
-                        <div className="relative mb-3 sm:mb-6">
-                            <div className={cn(
-                                "rounded-full p-1",
-                                isFirst ? "bg-gradient-to-b from-yellow-400 to-yellow-200" : "bg-muted"
-                            )}>
-                                <Avatar className={cn(
-                                    "border-2 sm:border-4 border-background",
-                                    // Responsive avatar size
-                                    isFirst ? "h-16 w-16 sm:h-28 sm:w-28" : "h-12 w-12 sm:h-20 sm:w-20"
-                                )}>
-                                    <AvatarImage src={getAvatarUrl(
-                                        user.avatarUrl,
-                                        user.userId || user.fullName || 'user',
-                                        'avataaars',
-                                        user.oauthPicture
-                                    )} />
-                                    <AvatarFallback className="text-sm sm:text-xl font-bold">
-                                        {user.fullName?.charAt(0) || "U"}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </div>
-                            {isFirst && (
-                                <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md whitespace-nowrap border-2 border-background">
-                                    Top 1
+                    <CardContent className="flex flex-col items-center pt-0 pb-6 px-6 -mt-10 relative z-10">
+                        {/* Hexagonal Avatar */}
+                        <div className="relative mb-4">
+                            <div className="w-20 h-20 bg-white rounded-lg rotate-45 overflow-hidden shadow-xl">
+                                <div className="-rotate-45 scale-[1.4] w-full h-full flex items-center justify-center">
+                                    <Avatar className="h-16 w-16">
+                                        <AvatarImage
+                                            src={getAvatarUrl(
+                                                user.avatarUrl,
+                                                user.userId || user.fullName || 'user',
+                                                'avataaars',
+                                                user.oauthPicture
+                                            )}
+                                            className="object-cover"
+                                        />
+                                        <AvatarFallback className="text-lg font-bold bg-gradient-to-br from-gray-200 to-gray-300">
+                                            {user.fullName?.charAt(0) || "U"}
+                                        </AvatarFallback>
+                                    </Avatar>
                                 </div>
-                            )}
+                            </div>
                         </div>
 
-                        <div className="text-center space-y-0.5 sm:space-y-1 mb-4 sm:mb-8 w-full">
-                            <h3 className={cn(
-                                "font-bold text-foreground truncate w-full px-1",
-                                // Responsive text size
-                                isFirst ? "text-sm sm:text-xl" : "text-xs sm:text-lg"
-                            )}>
-                                {user.fullName?.split(' ')[0]}
+                        {/* User Name with Fire Emoji */}
+                        <div className="flex items-center gap-2 mb-4">
+                            <h3 className="text-white font-semibold text-base truncate max-w-[180px]">
+                                {user.fullName || "Anonymous"}
                             </h3>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
-                                {user.interviewCount} Interviews
-                            </p>
+                            <span className="text-lg">🔥</span>
                         </div>
 
-                        <div className="mt-auto text-center">
-                            <p className={cn(
-                                "font-black text-foreground tracking-tight",
-                                // Responsive score size
-                                isFirst ? "text-2xl sm:text-4xl" : "text-xl sm:text-3xl"
-                            )}>
-                                {user.bayesianScore.toFixed(1)}
-                            </p>
-                            <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mt-1">Score</p>
+                        {/* Stats Grid - Using Original Data */}
+                        <div className="grid grid-cols-2 gap-4 w-full mb-5">
+                            <div className="text-center">
+                                <p className="text-white font-bold text-lg">
+                                    {user.interviewCount}
+                                </p>
+                                <p className="text-gray-400 text-[10px] font-medium">
+                                    Interviews
+                                </p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-white font-bold text-lg">
+                                    {user.bayesianScore.toFixed(1)}
+                                </p>
+                                <p className="text-gray-400 text-[10px] font-medium">
+                                    Score
+                                </p>
+                            </div>
                         </div>
+
+                        {/* Profile Button */}
+                        <button className="w-full bg-[#2a2a2a] hover:bg-[#333333] text-gray-300 font-medium py-2.5 rounded-lg transition-colors text-sm">
+                            Profile
+                        </button>
                     </CardContent>
                 </Card>
             </div>
@@ -286,13 +541,28 @@ const Leaderboard = () => {
         <DashboardLayout>
             <div className="space-y-8 pb-8">
                 {/* Header Section */}
-                <div className="flex flex-col items-start justify-start text-left space-y-2 mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-                        Global Standings
-                    </h1>
-                    <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl">
-                        Compete, grow, and see where you rank among the best.
-                    </p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                    <div className="flex flex-col items-start justify-start text-left space-y-2">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+                            Global Standings
+                        </h1>
+                        <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl">
+                            Compete, grow, and see where you rank among the best.
+                        </p>
+                    </div>
+                    {user && users.find(u => u.userId === user.id) && (
+                        <div className="hidden sm:flex items-center gap-3 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl px-6 py-4 shadow-lg">
+                            <div className="text-right">
+                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Your Score</p>
+                                <p className="text-3xl font-black text-foreground">
+                                    {users.find(u => u.userId === user.id)?.bayesianScore.toFixed(1)}
+                                </p>
+                            </div>
+                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                                <Trophy className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
@@ -310,20 +580,12 @@ const Leaderboard = () => {
                     </Card>
                 ) : (
                     <>
-                        {/* Top Section Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-end">
-                            {/* Your Progress Card */}
-                            <div className="col-span-1 h-full w-full">
-                                <YourProgressCard />
-                            </div>
-
-                            {/* Podium Section */}
-                            <div className="col-span-1 lg:col-span-3 w-full overflow-x-visible mt-16 lg:mt-0">
-                                <div className="flex flex-row items-end justify-center gap-2 sm:gap-8 h-full pb-4 px-2">
-                                    {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
-                                    <TopPlayerCard user={users[0]} rank={1} />
-                                    {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
-                                </div>
+                        {/* Podium Section */}
+                        <div className="w-full overflow-x-visible mt-8">
+                            <div className="flex flex-row items-end justify-center gap-2 sm:gap-8 h-full pb-4 px-2">
+                                {users[1] && <TopPlayerCard user={users[1]} rank={2} />}
+                                <TopPlayerCard user={users[0]} rank={1} />
+                                {users[2] && <TopPlayerCard user={users[2]} rank={3} />}
                             </div>
                         </div>
 
@@ -438,8 +700,12 @@ const Leaderboard = () => {
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right py-4 pr-6">
-                                                        <button className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-200">
-                                                            Challenge
+                                                        <button
+                                                            onClick={() => handleShare(leaderboardUser, actualRank)}
+                                                            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm shadow-indigo-200 flex items-center gap-2 ml-auto"
+                                                        >
+                                                            <Share2 className="h-4 w-4" />
+                                                            Share
                                                         </button>
                                                     </TableCell>
                                                 </TableRow>
@@ -458,6 +724,209 @@ const Leaderboard = () => {
                         </div>
                     </>
                 )}
+
+                {/* Share Modal */}
+                <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+                    <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden">
+                        <DialogHeader className="p-6 pb-4">
+                            <DialogTitle>Share Interview Profile</DialogTitle>
+                            <DialogDescription>
+                                Download or share this professional card showcasing interview achievements.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {/* Share Card Preview */}
+                        <div id="share-card" className="relative w-full bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-8">
+                            {/* Aura Logo Header */}
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src="/aura-icon.png"
+                                        alt="Aura"
+                                        className="h-12 w-12"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                    <div>
+                                        <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                            Aura
+                                        </h1>
+                                        <p className="text-xs text-muted-foreground">Elevate Your Hiring</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">Verified Profile</p>
+                                    <div className="flex items-center gap-1 text-green-600">
+                                        <Check className="h-4 w-4" />
+                                        <span className="text-sm font-semibold">Aura Verified</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Content Card */}
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+                                {/* Profile Section */}
+                                <div className="flex items-start gap-6 mb-8">
+                                    {/* Avatar with gradient border */}
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm"></div>
+                                        <div className="relative w-28 h-28 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden shadow-lg bg-white">
+                                            <Avatar className="h-full w-full">
+                                                <AvatarImage
+                                                    src={getAvatarUrl(
+                                                        selectedUser?.avatarUrl || null,
+                                                        selectedUser?.userId || selectedUser?.fullName || 'user',
+                                                        'avataaars',
+                                                        selectedUser?.oauthPicture
+                                                    )}
+                                                    className="object-cover"
+                                                />
+                                                <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700">
+                                                    {selectedUser?.fullName?.charAt(0) || "U"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                    </div>
+
+                                    {/* User Info */}
+                                    <div className="flex-1">
+                                        <h2 className="text-2xl font-bold text-foreground mb-1">
+                                            {selectedUser?.fullName || "Anonymous"}
+                                        </h2>
+                                        <p className="text-muted-foreground mb-4">
+                                            Interview Candidate
+                                        </p>
+
+                                        {/* Rank Badge */}
+                                        <div className="inline-flex items-center gap-2">
+                                            <div className={cn(
+                                                "px-4 py-1.5 rounded-full font-bold text-sm shadow-md",
+                                                selectedRank === 1 ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900" :
+                                                    selectedRank === 2 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800" :
+                                                        selectedRank === 3 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-amber-100" :
+                                                            "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                                            )}>
+                                                {selectedRank === 1 && "🏆 "}
+                                                {selectedRank === 2 && "🥈 "}
+                                                {selectedRank === 3 && "🥉 "}
+                                                Global Rank #{selectedRank}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Stats Grid */}
+                                <div className="grid grid-cols-3 gap-4 mb-8">
+                                    {/* Interview Score */}
+                                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 rounded-xl p-4 border border-indigo-200 dark:border-indigo-800">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+                                                <Check className="h-5 w-5 text-white" />
+                                            </div>
+                                            <p className="text-xs font-medium text-muted-foreground">Interview Score:</p>
+                                        </div>
+                                        <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                                            {selectedUser?.bayesianScore.toFixed(0)}%
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">(Aura Verified)</p>
+                                    </div>
+
+                                    {/* Top Skills */}
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                                                <Award className="h-5 w-5 text-white" />
+                                            </div>
+                                            <p className="text-xs font-medium text-muted-foreground">Top Skills:</p>
+                                        </div>
+                                        <p className="text-sm font-semibold text-purple-900 dark:text-purple-100 leading-tight">
+                                            Problem Solving, Communication, Technical
+                                        </p>
+                                    </div>
+
+                                    {/* Experience */}
+                                    <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 rounded-xl p-4 border border-pink-200 dark:border-pink-800">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 rounded-full bg-pink-600 flex items-center justify-center">
+                                                <TrendingUp className="h-5 w-5 text-white" />
+                                            </div>
+                                            <p className="text-xs font-medium text-muted-foreground">Experience:</p>
+                                        </div>
+                                        <p className="text-3xl font-black text-pink-600 dark:text-pink-400">
+                                            {selectedUser?.interviewCount}+
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">Interviews</p>
+                                    </div>
+                                </div>
+
+                                {/* Hire Recommendation */}
+                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-xl p-4 border-2 border-green-200 dark:border-green-800 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center">
+                                            <Trophy className="h-6 w-6 text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-muted-foreground">Hire Recommendation:</p>
+                                            <p className="text-lg font-bold text-green-700 dark:text-green-400">
+                                                {selectedUser?.bayesianScore && selectedUser.bayesianScore >= 80
+                                                    ? "Highly Recommended"
+                                                    : selectedUser?.bayesianScore && selectedUser.bayesianScore >= 60
+                                                        ? "Recommended"
+                                                        : "Under Review"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CTA Button */}
+                                <div className="text-center">
+                                    <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl">
+                                        View Full Profile on Aura
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="mt-6 text-center">
+                                <p className="text-sm text-muted-foreground mb-1">
+                                    AuraPlatform.com
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Intelligent Interview Solutions
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3 p-6 pt-0">
+                            <Button
+                                onClick={handleDownloadCard}
+                                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Card
+                            </Button>
+                            <Button
+                                onClick={handleCopyLink}
+                                variant="outline"
+                                className="flex-1 border-2"
+                            >
+                                {copied ? (
+                                    <>
+                                        <Check className="h-4 w-4 mr-2" />
+                                        Copied!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="h-4 w-4 mr-2" />
+                                        Copy Link
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </DashboardLayout>
     );
