@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useAuth } from "@/contexts/AuthContext";
@@ -255,16 +255,19 @@ export default function Reports() {
     <DashboardLayout>
       <div className="space-y-6 pb-8">
         {/* Header Section with Controls */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1">
-            <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
+            <h2 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+              Interview Reports
+              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+            </h2>
             <p className="text-muted-foreground text-sm">
               View insights and analysis from your completed interviews
             </p>
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <NotificationBell />
 
             <DropdownMenu>
@@ -310,9 +313,9 @@ export default function Reports() {
         {completedSessions.length > 0 && (
           <div className="bg-card rounded-2xl px-8 py-5 shadow-sm border border-border">
             <Tabs defaultValue="overall" className="w-full">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h3 className="text-lg font-bold text-foreground">Statistics</h3>
-                <TabsList className="grid w-[280px] grid-cols-2">
+                <TabsList className="grid w-full sm:w-[280px] grid-cols-2">
                   <TabsTrigger value="overall">Overall</TabsTrigger>
                   <TabsTrigger value="filtered">Filtered</TabsTrigger>
                 </TabsList>
@@ -498,22 +501,22 @@ export default function Reports() {
           <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             {/* Filters Section */}
             <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                <div className="flex items-center gap-2 mb-2 lg:mb-0">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">Filters:</span>
                 </div>
 
-                <div className="flex flex-wrap gap-3 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 flex-1 w-full">
                   <Input
                     placeholder="Search by position or type..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full sm:w-64 bg-background"
+                    className="w-full lg:w-64 bg-background"
                   />
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-background">
+                    <SelectTrigger className="w-full lg:w-40 bg-background">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -524,7 +527,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={positionFilter} onValueChange={setPositionFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-background">
+                    <SelectTrigger className="w-full lg:w-40 bg-background">
                       <SelectValue placeholder="Position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -536,7 +539,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-48 bg-background">
+                    <SelectTrigger className="w-full lg:w-48 bg-background">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -580,7 +583,8 @@ export default function Reports() {
             <div className="bg-card rounded-3xl p-6 shadow-sm">
               <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
 
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[1000px]">
                   <thead>
                     <tr className="text-left border-b border-border">
@@ -658,6 +662,99 @@ export default function Reports() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View - Creative & Professional Redesign */}
+              <div className="md:hidden space-y-5">
+                {filteredAndSortedSessions.map((session) => (
+                  <div key={session.id} className="relative overflow-hidden rounded-2xl bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all duration-300">
+                    {/* Decorative top gradient line */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${session.status === 'completed' ? 'from-green-400 via-emerald-500 to-teal-500' : 'from-amber-400 via-orange-500 to-red-500'}`} />
+
+                    <div className="p-5">
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-5">
+                        <div className="flex items-center gap-4">
+                          {/* Styled Icon Box */}
+                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-lg ${session.status === 'completed'
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
+                            : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/20'
+                            }`}>
+                            <span className="text-lg font-bold tracking-wider">{session.position.substring(0, 2).toUpperCase()}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-foreground text-lg leading-tight truncate pr-2">{session.position}</h4>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Status Badge */}
+                        <div className="shrink-0">
+                          {session.status === 'completed' && session.score !== null ? (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30">
+                              <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Done</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
+                              <Timer className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-2 mb-5 bg-muted/30 rounded-xl p-3 border border-border/50">
+                        <div className="flex flex-col items-center justify-center text-center p-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Type</span>
+                          <span className="text-xs font-bold text-foreground capitalize truncate w-full">{session.interview_type.replace('_', ' ')}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center p-1 border-x border-border/50">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Time</span>
+                          <span className="text-xs font-bold text-foreground">{session.duration_minutes || 0}m</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center p-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Score</span>
+                          {session.score !== null ? (
+                            <span className={`text-sm font-black ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
+                              session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                              }`}>
+                              {session.score}%
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-muted-foreground">-</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      {session.status === 'completed' && session.score !== null ? (
+                        <Button
+                          asChild
+                          className="w-full rounded-xl h-11 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 group"
+                        >
+                          <Link to={`/interview/${session.id}/report`} className="flex items-center justify-center gap-2">
+                            View Analysis
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button
+                          asChild
+                          className="w-full rounded-xl h-11 font-semibold bg-white dark:bg-slate-800 text-amber-600 border-2 border-amber-100 dark:border-amber-900/30 hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:border-amber-200 transition-all"
+                        >
+                          <Link to={`/interview/${session.id}/active`} className="flex items-center justify-center gap-2">
+                            <Play className="h-4 w-4 fill-current" />
+                            Continue Interview
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </Card>

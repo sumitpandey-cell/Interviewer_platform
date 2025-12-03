@@ -602,62 +602,99 @@ export default function Templates() {
               </>
             ) : (
               <>
-                {/* Step 2: Select Role for Selected Company */}
-                <div className="mb-6">
+                {/* Step 2: Select Role for Selected Company - Redesigned */}
+                <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <button
                     onClick={() => setSelectedCompany(null)}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+                    className="group flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <div className="h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                      <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </div>
                     Back to companies
                   </button>
-                  <div className="flex items-center gap-4 mb-2">
-                    {selectedCompany.logo_url && (
-                      <img
-                        src={selectedCompany.logo_url}
-                        alt={`${selectedCompany.name} logo`}
-                        className="w-16 h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-700 p-2"
-                      />
-                    )}
-                    <div>
-                      <h3 className="text-2xl font-bold text-foreground">{selectedCompany.name}</h3>
-                      <p className="text-muted-foreground">{selectedCompany.industry}</p>
+
+                  <div className="relative overflow-hidden rounded-3xl bg-slate-900 dark:bg-slate-950 text-white p-8 shadow-2xl">
+                    {/* Decorative background elements */}
+                    <div className="absolute top-0 right-0 -mt-20 -mr-20 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
+                    <div className="absolute bottom-0 left-0 -mb-20 -ml-20 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
+
+                    <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
+                      <div className="h-24 w-24 rounded-2xl bg-white p-4 shadow-lg flex items-center justify-center shrink-0">
+                        {selectedCompany.logo_url ? (
+                          <img
+                            src={selectedCompany.logo_url}
+                            alt={`${selectedCompany.name} logo`}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <Briefcase className="h-10 w-10 text-slate-900" />
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-white">{selectedCompany.name}</h3>
+                          <Badge className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
+                            {selectedCompany.industry}
+                          </Badge>
+                        </div>
+                        <p className="text-slate-300 text-lg max-w-2xl leading-relaxed">
+                          {selectedCompany.description || `Prepare for your interview at ${selectedCompany.name} with our curated role-specific templates.`}
+                        </p>
+                      </div>
+
+                      <div className="hidden md:block text-right bg-white/5 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                        <div className="text-3xl font-bold mb-1 text-white">{selectedCompany.common_roles.length}</div>
+                        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">Available Roles</div>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Select a role to start your interview</p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {selectedCompany.common_roles.map((role, index) => (
-                    <Card key={index} className="flex flex-col h-full hover:shadow-lg transition-all bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden cursor-pointer group">
-                      <CardContent className="p-6 flex flex-col h-full">
-                        <div className="flex items-start gap-3 mb-4">
-                          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900 dark:to-orange-800 flex items-center justify-center border border-orange-200 dark:border-orange-700">
-                            <Briefcase className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    <Card key={index} className="group relative overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-primary/50 dark:hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                            <Briefcase className="h-6 w-6" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                              {role}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              at {selectedCompany.name}
-                            </p>
-                          </div>
+                          <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            Mid-Senior
+                          </Badge>
                         </div>
 
-                        <div className="space-y-2 text-sm mb-4 flex-1">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Code className="h-4 w-4" />
-                            <span>Real interview questions</span>
+                        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-primary transition-colors">
+                          {role}
+                        </h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 line-clamp-2">
+                          Comprehensive interview assessment for {role} position at {selectedCompany.name}.
+                        </p>
+
+                        <div className="space-y-3 mb-8">
+                          <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                              <Code className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <span>Technical & Behavioral</span>
                           </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Code className="h-4 w-4" />
-                            <span>Real interview questions</span>
+                          <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                              <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <span>~45 Minutes Duration</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <span>AI Performance Analysis</span>
                           </div>
                         </div>
 
                         <Button
-                          className="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white rounded-xl py-3 font-medium transition-all group-hover:scale-[1.02]"
+                          className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={() => startCompanyRoleInterview(selectedCompany, role)}
                           disabled={loadingTemplate === `${selectedCompany.id}-${role}`}
                         >
@@ -669,7 +706,7 @@ export default function Templates() {
                           ) : (
                             <>
                               Start Interview
-                              <ChevronRight className="h-4 w-4 ml-2" />
+                              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </>
                           )}
                         </Button>

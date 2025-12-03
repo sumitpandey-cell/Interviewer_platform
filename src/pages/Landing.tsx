@@ -1323,7 +1323,7 @@ export default function Landing() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="h-16 px-10 text-lg border-white/10 text-white hover:bg-white/5 hover:border-indigo-500/50 hover:shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] rounded-full font-medium backdrop-blur-sm transition-all duration-300"
+                    className="h-16 px-10 text-lg border-white/10 text-white bg-transparent hover:bg-white/5 hover:text-white hover:border-indigo-500/50 hover:shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] rounded-full font-medium backdrop-blur-sm transition-all duration-300"
                   >
                     View Sample Report
                   </Button>
