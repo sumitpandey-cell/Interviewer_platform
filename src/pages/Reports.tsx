@@ -581,14 +581,14 @@ export default function Reports() {
               <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
 
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[1000px]">
                   <thead>
                     <tr className="text-left border-b border-border">
                       <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Position</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden sm:table-cell">Date</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Type</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden lg:table-cell">Duration</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Status</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                     </tr>
@@ -604,19 +604,19 @@ export default function Reports() {
                             <span className="font-medium text-foreground">{session.position}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden sm:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm capitalize hidden md:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm capitalize">
                           {session.interview_type.replace('_', ' ')}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden lg:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4 hidden md:table-cell">
+                        <td className="py-4">
                           {getStatusBadge(session.status, session.score)}
                         </td>
                         <td className="py-4">
