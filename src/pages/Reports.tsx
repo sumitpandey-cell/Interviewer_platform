@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles } from "lucide-react";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles, Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useAuth } from "@/contexts/AuthContext";
@@ -194,27 +194,43 @@ export default function Reports() {
     switch (status) {
       case 'completed':
         return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
             Completed
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
             In Progress
           </Badge>
         );
       case 'in_progress':
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
             In Progress
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             {status}
           </Badge>
         );
     }
+  };
+
+  // Helper to render stars based on score
+  const renderStars = (score: number | null) => {
+    if (score === null) return <span className="text-muted-foreground">-</span>;
+    const stars = Math.round(score / 20); // 0-5 stars
+    return (
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < stars ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+          />
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -267,46 +283,7 @@ export default function Reports() {
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <NotificationBell />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src={getAvatarUrl(
-                      profile?.avatar_url || user?.user_metadata?.avatar_url,
-                      user?.id || 'user',
-                      'avataaars',
-                      null,
-                      user?.user_metadata?.gender
-                    )} />
-                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-foreground hidden sm:block">
-                    {profile?.full_name?.split(' ')[0] || "User"}
-                  </span>
-                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <SettingsIcon className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <ThemeToggle />
-          </div>
         </div>
 
         {/* Statistics Section */}
@@ -580,20 +557,21 @@ export default function Reports() {
             <div className="border-t border-border" />
 
             {/* Reports List Section */}
-            <div className="bg-card rounded-3xl p-6 shadow-sm">
+            <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
               <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
 
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
+              {/* Table View */}
+              <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px]">
                   <thead>
                     <tr className="text-left border-b border-border">
-                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Position</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                     </tr>
                   </thead>
@@ -602,7 +580,7 @@ export default function Reports() {
                       <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
                         <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
-                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
+                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
                               {session.position.substring(0, 2).toUpperCase()}
                             </div>
                             <span className="font-medium text-foreground">{session.position}</span>
@@ -611,7 +589,7 @@ export default function Reports() {
                         <td className="py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm capitalize">
+                        <td className="py-4 text-foreground text-sm font-medium capitalize">
                           {session.interview_type.replace('_', ' ')}
                         </td>
                         <td className="py-4 text-muted-foreground text-sm">
@@ -624,37 +602,39 @@ export default function Reports() {
                           {getStatusBadge(session.status, session.score)}
                         </td>
                         <td className="py-4">
-                          {session.score !== null ? (
-                            <span className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
-                              session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                              {session.score}%
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
+                          <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+                            (session.score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                            }`}>
+                            {session.score !== null ? `${session.score}%` : '-'}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            {renderStars(session.score)}
+                            <div className="flex gap-1 ml-2 border-l pl-3 border-border">
+                              <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <ThumbsDown className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
                         </td>
                         <td className="py-4 text-right pr-4">
                           {session.status === 'completed' && session.score !== null ? (
                             <Button
-                              asChild
                               variant="outline"
                               size="sm"
                               className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                              onClick={() => navigate(`/interview/${session.id}/report`)}
                             >
-                              <Link to={`/interview/${session.id}/report`}>
-                                View Report
-                              </Link>
+                              Report
                             </Button>
                           ) : (
                             <Button
-                              asChild
+                              variant="outline"
                               size="sm"
                               className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                              onClick={() => navigate(`/interview/${session.id}/active`)}
                             >
-                              <Link to={`/interview/${session.id}/active`}>
-                                Continue
-                              </Link>
+                              Continue
                             </Button>
                           )}
                         </td>
@@ -662,99 +642,6 @@ export default function Reports() {
                     ))}
                   </tbody>
                 </table>
-              </div>
-
-              {/* Mobile Card View - Creative & Professional Redesign */}
-              <div className="md:hidden space-y-5">
-                {filteredAndSortedSessions.map((session) => (
-                  <div key={session.id} className="relative overflow-hidden rounded-2xl bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all duration-300">
-                    {/* Decorative top gradient line */}
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${session.status === 'completed' ? 'from-green-400 via-emerald-500 to-teal-500' : 'from-amber-400 via-orange-500 to-red-500'}`} />
-
-                    <div className="p-5">
-                      {/* Header */}
-                      <div className="flex justify-between items-start mb-5">
-                        <div className="flex items-center gap-4">
-                          {/* Styled Icon Box */}
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-lg ${session.status === 'completed'
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'
-                            : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-orange-500/20'
-                            }`}>
-                            <span className="text-lg font-bold tracking-wider">{session.position.substring(0, 2).toUpperCase()}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-foreground text-lg leading-tight truncate pr-2">{session.position}</h4>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </div>
-                          </div>
-                        </div>
-                        {/* Status Badge */}
-                        <div className="shrink-0">
-                          {session.status === 'completed' && session.score !== null ? (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30">
-                              <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Done</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
-                              <Timer className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-3 gap-2 mb-5 bg-muted/30 rounded-xl p-3 border border-border/50">
-                        <div className="flex flex-col items-center justify-center text-center p-1">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Type</span>
-                          <span className="text-xs font-bold text-foreground capitalize truncate w-full">{session.interview_type.replace('_', ' ')}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center text-center p-1 border-x border-border/50">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Time</span>
-                          <span className="text-xs font-bold text-foreground">{session.duration_minutes || 0}m</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center text-center p-1">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Score</span>
-                          {session.score !== null ? (
-                            <span className={`text-sm font-black ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
-                              session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                              {session.score}%
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-muted-foreground">-</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      {session.status === 'completed' && session.score !== null ? (
-                        <Button
-                          asChild
-                          className="w-full rounded-xl h-11 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 group"
-                        >
-                          <Link to={`/interview/${session.id}/report`} className="flex items-center justify-center gap-2">
-                            View Analysis
-                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button
-                          asChild
-                          className="w-full rounded-xl h-11 font-semibold bg-white dark:bg-slate-800 text-amber-600 border-2 border-amber-100 dark:border-amber-900/30 hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:border-amber-200 transition-all"
-                        >
-                          <Link to={`/interview/${session.id}/active`} className="flex items-center justify-center gap-2">
-                            <Play className="h-4 w-4 fill-current" />
-                            Continue Interview
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </Card>

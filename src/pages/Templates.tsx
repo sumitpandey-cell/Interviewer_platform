@@ -349,46 +349,7 @@ export default function Templates() {
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2">
-            <NotificationBell />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src={getAvatarUrl(
-                      profile?.avatar_url || user?.user_metadata?.avatar_url,
-                      user?.id || 'user',
-                      'avataaars',
-                      null,
-                      user?.user_metadata?.gender
-                    )} />
-                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-foreground hidden sm:block">
-                    {profile?.full_name?.split(' ')[0] || "User"}
-                  </span>
-                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <SettingsIcon className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <ThemeToggle />
-          </div>
         </div>
 
         <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">

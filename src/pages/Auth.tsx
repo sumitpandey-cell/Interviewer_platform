@@ -199,12 +199,16 @@ export default function Auth() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center gap-3">
         <div className="relative">
-          <Brain className="h-14 w-14 text-indigo-600" />
-          <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-2xl rounded-full"></div>
+          <img
+            src="/arjuna-logo.png"
+            alt="Arjuna AI"
+            className="relative h-16 w-16 object-contain drop-shadow-2xl"
+          />
         </div>
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Aura
+            Arjuna AI
           </h1>
           <p className="text-xs text-muted-foreground">AI Interview Practice</p>
         </div>

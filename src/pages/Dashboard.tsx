@@ -188,7 +188,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-foreground mb-1">
               Good morning, {profile?.full_name?.split(' ')[0] || "James"}!
             </h1>
-            <p className="text-muted-foreground text-sm">Aura: Your AI Voice Interviewer.</p>
+            <p className="text-muted-foreground text-sm">Arjuna AI: Your AI Voice Interviewer.</p>
           </div>
 
           {/* Header Controls */}

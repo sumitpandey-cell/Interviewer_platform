@@ -138,8 +138,8 @@ export default function InterviewRoom() {
 
     const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats, fetchRecentPerformanceMetrics } = useOptimizedQueries();
 
-    // Sanitize API Key
-    const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
+    // Sanitize API Key - check if it exists first
+    const cleanApiKey = API_KEY ? API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '') : '';
     const { connect, disconnect, startRecording, stopRecording, pauseRecording, resumeRecording, sendTextMessage, suspendAudioOutput, resumeAudioOutput, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
     const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion, clearFeedback } = useInterviewStore();
     const { startListening, stopListening, hasSupport, selectedLanguage: speechLanguage } = useSpeechRecognition(selectedLanguage);
@@ -936,7 +936,7 @@ export default function InterviewRoom() {
                         </div>
                         <div className="min-w-0 flex-1">
                             <h3 className="text-white text-xs sm:text-base font-bold truncate bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                                Aura
+                                Arjuna AI
                             </h3>
                             <p className="text-slate-400 text-[9px] sm:text-xs truncate">
                                 {connected ? "AI Interviewer • Connected" : "Connecting..."}

@@ -26,19 +26,15 @@ const scaleIn = {
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
 };
 
-// Section Wrapper for consistent scroll animations
+// Section Wrapper - Animations Disabled for Performance
 const SectionWrapper = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => {
   return (
-    <motion.section
+    <section
       id={id}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
-      variants={fadeInUp}
       className={className}
     >
       {children}
-    </motion.section>
+    </section>
   );
 };
 
@@ -186,37 +182,40 @@ export default function Landing() {
   });
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
-      {/* Scroll Progress Bar */}
-      <motion.div
+    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden max-w-[100vw]">
+      {/* Scroll Progress Bar - Disabled */}
+      {/* <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 origin-left z-[100]"
         style={{ scaleX }}
-      />
+      /> */}
       {/* Navbar */}
       {/* Navbar */}
       <header
         className={`fixed left-0 right-0 z-50 transition-all duration-500 ease-in-out ${hidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
           } ${scrolled
-            ? "top-4 flex justify-center px-4"
+            ? "top-4 flex justify-center px-3"
             : "top-0 py-6"
           }`}
       >
         <div
           className={`transition-all duration-500 ease-in-out flex items-center justify-between ${scrolled
-            ? "bg-[#0f1117]/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full px-6 py-3 w-full max-w-4xl ring-1 ring-white/5"
-            : "w-full container mx-auto px-6 bg-transparent border-transparent border ring-0"
+            ? "bg-[#0f1117]/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full px-4 py-3 w-full max-w-4xl ring-1 ring-white/5"
+            : "w-full container mx-auto px-4 sm:px-6 bg-transparent border-transparent border ring-0"
             }`}
         >
           <Link to="/" className="flex items-center gap-2 text-xl font-bold group">
             <div className="relative">
-              <Brain className={`h-8 w-8 transition-colors duration-300 ${scrolled ? "text-indigo-400" : "text-white"}`} />
-              <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+              <img
+                src="/arjuna-logo.png"
+                alt="Arjuna AI"
+                className="h-9 w-9 object-contain drop-shadow-lg"
+              />
             </div>
             <span className={`bg-clip-text text-transparent transition-all duration-300 ${scrolled
               ? "bg-gradient-to-r from-indigo-400 to-purple-400"
               : "bg-gradient-to-r from-white to-indigo-200"
               }`}>
-              Aura
+              Arjuna AI
             </span>
           </Link>
 
@@ -298,12 +297,12 @@ export default function Landing() {
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0A0A0B] pt-32 md:pt-40 pb-20">
         {/* Animated Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]" />
-          <div className="absolute top-[20%] left-[50%] transform -translate-x-1/2 w-[800px] h-[800px] bg-blue-900/10 rounded-full blur-[100px]"></div>
+          <div className="absolute top-[-10%] left-0 w-[min(500px,70vw)] h-[min(500px,70vw)] bg-indigo-600/20 rounded-full blur-[120px] -translate-x-1/4" />
+          <div className="absolute bottom-[-10%] right-0 w-[min(500px,70vw)] h-[min(500px,70vw)] bg-purple-600/20 rounded-full blur-[120px] translate-x-1/4" />
+          <div className="absolute top-[20%] left-[50%] transform -translate-x-1/2 w-[min(800px,90vw)] h-[min(800px,90vw)] bg-blue-900/10 rounded-full blur-[100px]"></div>
         </div>
 
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -448,7 +447,7 @@ export default function Landing() {
       {/* Features Section */}
       <SectionWrapper id="features" className="py-24 bg-slate-50 relative overflow-hidden">
 
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center mb-16">
             <motion.h2
               variants={fadeInUp}
@@ -856,7 +855,7 @@ export default function Landing() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]"></div>
         </div>
 
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-indigo-300 text-sm font-medium mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <Building2 className="h-4 w-4" />
@@ -1055,11 +1054,11 @@ export default function Landing() {
       <SectionWrapper id="testimonials" className="py-32 bg-[#0A0A0B] relative overflow-hidden">
         {/* Background Effect - Permanent */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse delay-700" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-900/5 rounded-full blur-[100px] animate-pulse delay-1000"></div>
+          <div className="absolute top-1/4 left-0 w-[min(600px,80vw)] h-[min(600px,80vw)] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse -translate-x-1/3" />
+          <div className="absolute bottom-1/4 right-0 w-[min(600px,80vw)] h-[min(600px,80vw)] bg-purple-600/10 rounded-full blur-[120px] animate-pulse delay-700 translate-x-1/3" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(800px,90vw)] h-[min(800px,90vw)] bg-blue-900/5 rounded-full blur-[100px] animate-pulse delay-1000"></div>
         </div>
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="grid lg:grid-cols-12 gap-12 items-center">
             {/* Left Content */}
             <div className="lg:col-span-5 space-y-8 text-center lg:text-left">
@@ -1282,11 +1281,11 @@ export default function Landing() {
         {/* Background Grid & Glow */}
         <div className="absolute inset-0 bg-[#0A0A0B]">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse"></div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[300px] rounded-full bg-purple-500/20 blur-[80px] animate-pulse delay-700"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[min(500px,70vw)] w-[min(500px,70vw)] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[min(300px,50vw)] w-[min(300px,50vw)] rounded-full bg-purple-500/20 blur-[80px] animate-pulse delay-700"></div>
         </div>
 
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-6xl mx-auto text-center relative">
             {/* Main Card */}
             <div className="relative p-8 md:p-16 group transition-all duration-500">
@@ -1371,17 +1370,20 @@ export default function Landing() {
 
       {/* Footer */}
       <SectionWrapper className="bg-[#0A0A0B] border-t border-white/10 pt-20 pb-10">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16">
             {/* Brand Column */}
             <div className="lg:col-span-2">
               <Link to="/" className="flex items-center gap-2 text-xl font-bold mb-6">
                 <div className="relative">
-                  <Brain className="h-8 w-8 text-indigo-500" />
-                  <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+                  <img
+                    src="/arjuna-logo.png"
+                    alt="Arjuna AI"
+                    className="h-9 w-9 object-contain drop-shadow-lg"
+                  />
                 </div>
                 <span className="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">
-                  Aura
+                  Arjuna AI
                 </span>
               </Link>
               <p className="text-slate-400 mb-6 leading-relaxed max-w-sm">
@@ -1452,7 +1454,7 @@ export default function Landing() {
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm">
-              © 2025 Aura AI. All rights reserved.
+              © 2025 Arjuna AI. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-slate-500">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
