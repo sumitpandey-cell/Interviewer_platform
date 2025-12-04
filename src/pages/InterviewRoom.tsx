@@ -533,7 +533,7 @@ export default function InterviewRoom() {
                             responseModalities: ["AUDIO"],
                             // Optimize for faster response generation
                             temperature: 0.9,              // Balanced creativity and speed
-                            maxOutputTokens: 128,          // Reduced to 256 for faster, more concise responses
+                            maxOutputTokens: 256,          // Reduced to 256 for faster, more concise responses
                             topP: 0.95,                    // Nucleus sampling for quality
                             topK: 40,                      // Reduce token consideration for speed
                             speechConfig: {
