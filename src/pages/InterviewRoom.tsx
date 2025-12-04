@@ -531,10 +531,15 @@ export default function InterviewRoom() {
                         model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
                         generationConfig: {
                             responseModalities: ["AUDIO"],
+                            // Optimize for faster response generation
+                            temperature: 0.9,              // Balanced creativity and speed
+                            maxOutputTokens: 128,          // Reduced to 256 for faster, more concise responses
+                            topP: 0.95,                    // Nucleus sampling for quality
+                            topK: 40,                      // Reduce token consideration for speed
                             speechConfig: {
                                 voiceConfig: {
                                     prebuiltVoiceConfig: {
-                                        voiceName: "Kore"
+                                        voiceName: "Fenrir"
                                     },
                                 },
                             }
@@ -542,14 +547,14 @@ export default function InterviewRoom() {
                         systemInstruction: {
                             parts: [{ text: systemInstruction }]
                         },
-                        // Configure Voice Activity Detection to reduce background noise sensitivity
+                        // Optimized VAD for faster response after long answers
                         realtimeInputConfig: {
                             automaticActivityDetection: {
-                                prefixPaddingMs: 300,      // Capture speech onset
-                                silenceDurationMs: 200     // Reduced to 500ms for minimum delay
+                                prefixPaddingMs: 100,      // Reduced for faster detection
+                                silenceDurationMs: 400     // Reduced from 800ms for faster response
                             }
                         },
-                        // Enable input transcription with forced English to prevent Hindi script transliteration
+                        // Enable input transcription
                         inputAudioTranscription: {
                         },
                         outputAudioTranscription: {},
@@ -965,7 +970,7 @@ export default function InterviewRoom() {
                 <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm shadow-lg">
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <span>You</span>
-                        
+
                     </div>
                 </div>
             </div>
