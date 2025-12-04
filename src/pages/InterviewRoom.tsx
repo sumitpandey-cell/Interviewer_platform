@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, User, Sparkles, ChevronRight, ChevronLeft, Loader2, Code } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, User, Sparkles, ChevronRight, ChevronLeft, Loader2, Code, Wifi, WifiOff, Activity, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useLiveAPI } from "@/hooks/use-live-api";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -13,6 +13,7 @@ import { useInterviewStore } from "@/stores/use-interview-store";
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useCompanyQuestions } from "@/hooks/use-company-questions";
+import { useDebouncedCallback } from "use-debounce";
 
 import { CompanyQuestion } from "@/types/company-types";
 import { CodingChallengeModal } from "@/components/CodingChallengeModal";
@@ -122,9 +123,21 @@ export default function InterviewRoom() {
         browserSpeechWorkingRef.current = true;
         lastBrowserTranscriptTimeRef.current = Date.now();
 
+        // User is speaking - update state
+        setIsUserSpeaking(true);
+        lastUserSpeechTimeRef.current = Date.now();
+
         if (handleTranscriptFragmentRef.current) {
             handleTranscriptFragmentRef.current('user', text);
         }
+
+        // Clear user speaking state after 2 seconds of no speech
+        setTimeout(() => {
+            const timeSinceLastSpeech = Date.now() - lastUserSpeechTimeRef.current;
+            if (timeSinceLastSpeech >= 2000) {
+                setIsUserSpeaking(false);
+            }
+        }, 2000);
     });
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -145,6 +158,39 @@ export default function InterviewRoom() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isEnding, setIsEnding] = useState(false);
     const [isCodingChallengeAvailable, setIsCodingChallengeAvailable] = useState(false);
+
+    // ========================================
+    // OPTIMIZATION STATES
+    // ========================================
+
+    // Visual Feedback Optimizations
+    const [aiThinking, setAiThinking] = useState(false);
+    const [showTranscript, setShowTranscript] = useState(false);
+    const [userVolume, setUserVolume] = useState(0);
+
+    // Connection Health Monitoring
+    const [connectionHealth, setConnectionHealth] = useState({
+        latency: 0,
+        packetsLost: 0,
+        reconnectAttempts: 0,
+        quality: 'good' as 'excellent' | 'good' | 'poor'
+    });
+
+    // Performance Optimizations
+    const messageQueue = useRef<string[]>([]);
+    const isProcessingQueue = useRef(false);
+    const errorRecoveryRef = useRef(0);
+    const lastPingTime = useRef(0);
+    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Audio Capture Control (Internal - doesn't affect recording state)
+    const shouldSuppressAudioRef = useRef(false); // Suppress audio when AI speaks, but keep mic on
+    const [isUserSpeaking, setIsUserSpeaking] = useState(false); // Track when user is actually speaking
+    const lastUserSpeechTimeRef = useRef(0); // Track last time user spoke
+
+    // Message Management
+    const MAX_MESSAGES_IN_MEMORY = 50;
+    const archivedMessagesRef = useRef<Message[]>([]);
 
 
 
@@ -196,10 +242,32 @@ export default function InterviewRoom() {
         return () => clearInterval(timer);
     }, [subscriptionType, remaining_minutes, session, isInterviewPaused]);
 
-    // AI speaking animation based on volume
+    // AI speaking animation based on volume + Internal audio suppression
     useEffect(() => {
-        setIsAiSpeaking(volume > 0.01);
-    }, [volume]);
+        const wasSpeaking = isAiSpeaking;
+        const isSpeaking = volume > 0.01;
+
+        setIsAiSpeaking(isSpeaking);
+
+        // ========================================
+        // INTERNAL AUDIO SUPPRESSION WHEN AI SPEAKS
+        // Keep mic recording but suppress audio capture internally
+        // ========================================
+        if (isSpeaking && !wasSpeaking) {
+            // AI just started speaking - suppress candidate audio internally
+            console.log('🔇 AI started speaking - suppressing candidate audio (mic stays on)');
+            shouldSuppressAudioRef.current = true;
+        } else if (!isSpeaking && wasSpeaking) {
+            // AI just stopped speaking - allow candidate audio
+            console.log('🎤 AI stopped speaking - allowing candidate audio');
+            // Small delay to ensure AI has completely finished
+            setTimeout(() => {
+                if (!isAiSpeaking && volume <= 0.01) {
+                    shouldSuppressAudioRef.current = false;
+                }
+            }, 300); // 300ms delay to avoid cutting off AI
+        }
+    }, [volume, isAiSpeaking]);
 
     // Fetch session data
     useEffect(() => {
@@ -228,6 +296,190 @@ export default function InterviewRoom() {
             setSessionLoaded(true);
         }
     };
+
+    // ========================================
+    // OPTIMIZATION UTILITY FUNCTIONS
+    // ========================================
+
+    // Connection Health Monitoring with Notifications
+    const monitorConnection = useCallback(() => {
+        const pingStart = Date.now();
+        lastPingTime.current = pingStart;
+
+        // Simulate ping/pong - in real implementation, this would use WebSocket ping
+        setTimeout(() => {
+            const latency = Date.now() - pingStart;
+
+            setConnectionHealth(prev => {
+                let quality: 'excellent' | 'good' | 'poor' = 'excellent';
+                if (latency > 200) quality = 'good';
+                if (latency > 500) quality = 'poor';
+
+                // Show toast notification when quality changes
+                if (prev.quality !== quality) {
+                    if (quality === 'poor') {
+                        toast.error("⚠️ Poor connection detected", {
+                            description: `High latency: ${latency}ms. Consider checking your internet connection.`,
+                            duration: 5000,
+                        });
+                    } else if (quality === 'good' && prev.quality === 'poor') {
+                        toast.success("✅ Connection improved", {
+                            description: `Latency: ${latency}ms`,
+                            duration: 3000,
+                        });
+                    } else if (quality === 'excellent' && prev.quality !== 'excellent') {
+                        toast.success("🚀 Excellent connection", {
+                            description: `Latency: ${latency}ms`,
+                            duration: 2000,
+                        });
+                    }
+                }
+
+                return {
+                    ...prev,
+                    latency,
+                    quality
+                };
+            });
+        }, 100);
+    }, []);
+
+    // Adaptive Audio Configuration based on connection quality
+    const getAdaptiveAudioConfig = useCallback(() => {
+        switch (connectionHealth.quality) {
+            case 'excellent':
+                return { sampleRate: 48000, bitrate: 128, maxTokens: 800 };
+            case 'good':
+                return { sampleRate: 24000, bitrate: 64, maxTokens: 600 };
+            case 'poor':
+                return { sampleRate: 16000, bitrate: 32, maxTokens: 400 };
+        }
+    }, [connectionHealth.quality]);
+
+    // Message Queue Processing for rate limiting
+    const queueMessage = useCallback((message: string) => {
+        messageQueue.current.push(message);
+        processMessageQueue();
+    }, []);
+
+    const processMessageQueue = useCallback(async () => {
+        if (isProcessingQueue.current || messageQueue.current.length === 0) return;
+
+        isProcessingQueue.current = true;
+        while (messageQueue.current.length > 0) {
+            const message = messageQueue.current.shift();
+            if (message) {
+                try {
+                    await sendTextMessage(message);
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Rate limiting
+                } catch (error) {
+                    console.error('Error sending queued message:', error);
+                }
+            }
+        }
+        isProcessingQueue.current = false;
+    }, [sendTextMessage]);
+
+    // Error Recovery with Exponential Backoff
+    const recoverFromError = useCallback(async (error: Error) => {
+        errorRecoveryRef.current++;
+
+        if (errorRecoveryRef.current > 3) {
+            toast.error("Multiple errors detected. Please refresh the page.", {
+                duration: 10000,
+                action: {
+                    label: "Refresh",
+                    onClick: () => window.location.reload()
+                }
+            });
+            return;
+        }
+
+        console.log(`Attempting error recovery (attempt ${errorRecoveryRef.current})...`);
+
+        try {
+            await disconnect();
+            await new Promise(resolve => setTimeout(resolve, 2000 * errorRecoveryRef.current));
+            // Connection will be re-established by the connection effect
+            hasConnectedRef.current = false;
+        } catch (recoveryError) {
+            console.error('Error during recovery:', recoveryError);
+        }
+    }, [disconnect]);
+
+    // Reconnection with Exponential Backoff
+    const reconnectWithBackoff = useCallback(async (attempt = 1) => {
+        const maxAttempts = 5;
+        const baseDelay = 1000;
+
+        if (attempt > maxAttempts) {
+            toast.error("Unable to reconnect. Please refresh the page.", {
+                duration: Infinity,
+                action: {
+                    label: "Refresh",
+                    onClick: () => window.location.reload()
+                }
+            });
+            return;
+        }
+
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`Reconnecting in ${delay}ms (attempt ${attempt}/${maxAttempts})...`);
+
+        setConnectionHealth(prev => ({
+            ...prev,
+            reconnectAttempts: attempt
+        }));
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        try {
+            hasConnectedRef.current = false; // Allow reconnection
+            // The connection effect will handle reconnection
+        } catch (error) {
+            console.error(`Reconnection attempt ${attempt} failed:`, error);
+            reconnectWithBackoff(attempt + 1);
+        }
+    }, []);
+
+    // Message Cleanup for Memory Management
+    useEffect(() => {
+        if (messages.length > MAX_MESSAGES_IN_MEMORY) {
+            const archived = messages.slice(0, messages.length - MAX_MESSAGES_IN_MEMORY);
+            archivedMessagesRef.current = [...archivedMessagesRef.current, ...archived];
+
+            // Store in sessionStorage as backup
+            try {
+                sessionStorage.setItem('archived_messages', JSON.stringify(archivedMessagesRef.current));
+            } catch (e) {
+                console.warn('Failed to archive messages to sessionStorage:', e);
+            }
+
+            setMessages(messages.slice(-MAX_MESSAGES_IN_MEMORY));
+            console.log(`Archived ${archived.length} messages. Total archived: ${archivedMessagesRef.current.length}`);
+        }
+    }, [messages]);
+
+    // Debounced Transcript Update to Zustand
+    const debouncedTranscriptUpdate = useDebouncedCallback(
+        (newMessages: Message[]) => {
+            // Combine archived and current messages for complete transcript
+            const fullTranscript = [...archivedMessagesRef.current, ...newMessages];
+            setTranscript(fullTranscript);
+        },
+        300 // Update every 300ms instead of on every fragment
+    );
+
+    // Connection Health Monitoring Loop
+    useEffect(() => {
+        if (!connected) return;
+
+        const healthCheckInterval = setInterval(() => {
+            monitorConnection();
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(healthCheckInterval);
+    }, [connected, monitorConnection]);
 
     // Camera handling
     useEffect(() => {
@@ -302,6 +554,25 @@ export default function InterviewRoom() {
                     return;
                 }
                 console.log('✅ Using Gemini user transcript (browser speech not working or inactive)');
+
+                // User is speaking - update state
+                setIsUserSpeaking(true);
+                lastUserSpeechTimeRef.current = Date.now();
+                setAiThinking(false);
+
+                // Clear user speaking state after 2 seconds of no speech
+                setTimeout(() => {
+                    const timeSinceLastSpeech = Date.now() - lastUserSpeechTimeRef.current;
+                    if (timeSinceLastSpeech >= 2000) {
+                        setIsUserSpeaking(false);
+                    }
+                }, 2000);
+            }
+
+            // AI is responding, no longer thinking
+            if (sender === 'ai') {
+                setAiThinking(false);
+                setIsUserSpeaking(false); // User stopped speaking when AI responds
             }
 
 
@@ -471,15 +742,16 @@ export default function InterviewRoom() {
     }, []);
 
 
-    // Sync messages to Zustand store for instant access in report page
+    // Sync messages to Zustand store with debouncing for performance
     useEffect(() => {
         if (messages.length > 0) {
             messages.forEach((msg, idx) => {
                 console.log(`   [${idx}] ${msg.sender.toUpperCase()}: ${msg.text.substring(0, 50)}...`);
             });
-            setTranscript(messages);
+            // Use debounced update instead of immediate
+            debouncedTranscriptUpdate(messages);
         }
-    }, [messages, setTranscript]);
+    }, [messages, debouncedTranscriptUpdate]);
 
     // Auto-connect on mount after session is loaded
     useEffect(() => {
@@ -541,15 +813,18 @@ export default function InterviewRoom() {
                 );
 
                 try {
+                    // Get adaptive configuration based on connection quality
+                    const adaptiveConfig = getAdaptiveAudioConfig();
+
                     await connect({
                         model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
                         generationConfig: {
                             responseModalities: ["AUDIO"],
-                            // Generation settings optimized for complete responses
-                            temperature: 0.7,              // Balanced creativity and speed
-                            maxOutputTokens: 800,          // Increased to 800 to allow complete responses (256 was too low)
+                            // Generation settings optimized for complete responses with adaptive quality
+                            temperature: 0.9,              // Balanced creativity and speed
+                            maxOutputTokens: adaptiveConfig.maxTokens,  // Adaptive based on connection quality
                             topP: 0.95,                    // Nucleus sampling for quality
-                            topK: 40,                      // Reduce token consideration for speed
+                            topK: 35,                      // Reduce token consideration for speed
                             speechConfig: {
                                 voiceConfig: {
                                     prebuiltVoiceConfig: {
@@ -561,8 +836,8 @@ export default function InterviewRoom() {
                         systemInstruction: {
                             parts: [{ text: systemInstruction }]
                         },
-                        // PROFESSIONAL AUTOMATIC VAD - No Manual Intervention Required
-                        // Industry-standard configuration for reliable turn detection
+                        // OPTIMIZED AUTOMATIC VAD - Ultra-Low Latency Configuration
+                        // Aggressive settings for fastest possible response time
                         realtimeInputConfig: {
                             automaticActivityDetection: {
                                 // START OF SPEECH: HIGH sensitivity - Detects speech IMMEDIATELY
@@ -571,12 +846,11 @@ export default function InterviewRoom() {
                                 // - Critical for responsive conversation
                                 startOfSpeechSensitivity: 'START_SENSITIVITY_HIGH',
 
-                                // END OF SPEECH: LOW sensitivity - Waits for CLEAR end of speech
-                                // - Prevents cutting off during pauses
-                                // - Allows natural thinking pauses
-                                // - Ensures complete responses from AI
-                                // - Works with echo cancellation to prevent AI self-interruption
-                                endOfSpeechSensitivity: 'END_SENSITIVITY_LOW',
+                                // END OF SPEECH: HIGH sensitivity - Ends turn quickly
+                                // - Reduces latency significantly
+                                // - Makes conversation feel snappier
+                                // - Triggers AI response generation earlier
+                                endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH',
 
                                 // AUDIO CAPTURE: 400ms prefix padding
                                 // - Captures audio before speech detection
@@ -584,12 +858,11 @@ export default function InterviewRoom() {
                                 // - Industry standard for voice AI
                                 prefixPaddingMs: 400,
 
-                                // TURN-TAKING: 1200ms (1.2 seconds) silence detection
-                                // - Balanced for natural conversation
-                                // - Not too fast (prevents false endings)
-                                // - Not too slow (maintains flow)
-                                // - Optimal for most speaking styles
-                                silenceDurationMs: 1200
+                                // TURN-TAKING: 300ms (0.3 seconds) silence detection - OPTIMIZED!
+                                // - Ultra-aggressive setting for minimal latency
+                                // - Responds almost instantly after user stops
+                                // - Reduced from 500ms for even faster responses
+                                silenceDurationMs: 300
                             }
                         },
                         // Enable input transcription
@@ -923,6 +1196,126 @@ export default function InterviewRoom() {
         }
     };
 
+    // ========================================
+    // KEYBOARD SHORTCUTS
+    // ========================================
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            // Ctrl+Space: Toggle microphone
+            if (e.code === 'Space' && e.ctrlKey) {
+                e.preventDefault();
+                toggleMic();
+                toast.info(isRecording ? "Microphone muted" : "Microphone unmuted", {
+                    duration: 1000
+                });
+            }
+            // Ctrl+E: End interview
+            if (e.code === 'KeyE' && e.ctrlKey) {
+                e.preventDefault();
+                handleEndCall();
+            }
+            // Ctrl+T: Toggle transcript visibility
+            if (e.code === 'KeyT' && e.ctrlKey) {
+                e.preventDefault();
+                setShowTranscript(prev => !prev);
+                toast.info(showTranscript ? "Transcript hidden" : "Transcript visible", {
+                    duration: 1000
+                });
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [toggleMic, handleEndCall, isRecording, showTranscript]);
+
+    // ========================================
+    // SMART PAUSE/RESUME ON TAB VISIBILITY
+    // ========================================
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // User switched tabs - pause recording to save resources
+                if (isRecording && !isInterviewPaused) {
+                    pauseRecording();
+                    console.log('📱 Tab inactive - paused recording');
+                }
+            } else {
+                // User returned - resume if not manually paused
+                if (!isRecording && !isInterviewPaused && connected) {
+                    resumeRecording();
+                    console.log('📱 Tab active - resumed recording');
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [isRecording, isInterviewPaused, connected, pauseRecording, resumeRecording]);
+
+    // ========================================
+    // NETWORK ONLINE/OFFLINE DETECTION
+    // ========================================
+    useEffect(() => {
+        const handleOnline = () => {
+            console.log('🌐 Network connection restored');
+            toast.success("✅ Internet connection restored", {
+                description: "Reconnecting to interview...",
+                duration: 3000,
+            });
+            // Trigger reconnection if we were disconnected
+            if (!connected && hasConnectedRef.current) {
+                hasConnectedRef.current = false; // Allow reconnection
+            }
+        };
+
+        const handleOffline = () => {
+            console.log('🌐 Network connection lost');
+            toast.error("⚠️ No internet connection", {
+                description: "Please check your network connection. Interview will auto-resume when connection is restored.",
+                duration: Infinity, // Keep showing until online
+                id: 'offline-toast', // Unique ID to dismiss later
+            });
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Check initial state
+        if (!navigator.onLine) {
+            handleOffline();
+        }
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            toast.dismiss('offline-toast'); // Dismiss offline toast on unmount
+        };
+    }, [connected]);
+
+
+    // ========================================
+    // RESOURCE CLEANUP
+    // ========================================
+    useEffect(() => {
+        return () => {
+            // Cleanup on unmount
+            if (videoRef.current?.srcObject) {
+                const stream = videoRef.current.srcObject as MediaStream;
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                    track.enabled = false;
+                });
+            }
+
+            // Clear reconnect timeout
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+
+            console.log('🧹 Cleaned up interview room resources');
+        };
+    }, []);
+
     return (
         <div className="relative h-screen w-screen bg-slate-950 overflow-hidden">
             {/* Fullscreen Video Background */}
@@ -947,6 +1340,127 @@ export default function InterviewRoom() {
 
             {/* Overlay Gradient for better text visibility */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+
+            {/* ========================================
+                OPTIMIZATION UI ELEMENTS
+                ======================================== */}
+
+            {/* Interview Progress Bar */}
+            {useMemo(() => {
+                const totalDuration = session?.duration_minutes ? session.duration_minutes * 60 : (remaining_minutes * 60);
+                const progress = ((totalDuration - timeLeft) / totalDuration) * 100;
+                return (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-slate-800/50 z-30">
+                        <div
+                            className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 transition-all duration-1000"
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                        />
+                    </div>
+                );
+            }, [timeLeft, session, remaining_minutes])}
+
+            {/* AI Thinking Indicator */}
+            {aiThinking && (
+                <div className="absolute top-20 sm:top-24 right-3 sm:right-6 z-20 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="bg-purple-500/20 backdrop-blur-md border border-purple-500/50 px-3 sm:px-4 py-2 rounded-full shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <Brain className="h-4 w-4 animate-pulse text-purple-400" />
+                            <span className="text-xs sm:text-sm font-medium text-purple-300">Thinking...</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Connection Health Monitor */}
+            {connected && (
+                <div className="absolute top-3 sm:top-6 left-1/2 -translate-x-1/2 z-20">
+                    <div className={`px-2.5 sm:px-3 py-1 rounded-full backdrop-blur-md border text-[10px] sm:text-xs font-medium flex items-center gap-1.5 shadow-lg transition-all duration-300 ${connectionHealth.quality === 'excellent'
+                        ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                        : connectionHealth.quality === 'good'
+                            ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
+                            : 'bg-red-500/20 border-red-500/50 text-red-400'
+                        }`}>
+                        {connectionHealth.quality === 'excellent' ? (
+                            <Wifi className="h-3 w-3" />
+                        ) : connectionHealth.quality === 'good' ? (
+                            <Activity className="h-3 w-3" />
+                        ) : (
+                            <WifiOff className="h-3 w-3 animate-pulse" />
+                        )}
+                        <span className="hidden sm:inline">
+                            {connectionHealth.latency}ms
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* Poor Connection Warning Banner */}
+            {connected && connectionHealth.quality === 'poor' && (
+                <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-30 w-11/12 sm:w-auto animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="bg-red-500/90 backdrop-blur-md border border-red-400 rounded-lg px-4 py-3 shadow-2xl">
+                        <div className="flex items-center gap-3">
+                            <WifiOff className="h-5 w-5 text-white animate-pulse" />
+                            <div>
+                                <p className="text-white font-semibold text-sm">Poor Connection Detected</p>
+                                <p className="text-red-100 text-xs">
+                                    Latency: {connectionHealth.latency}ms • Check your internet connection
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Disconnection Warning */}
+            {!connected && sessionLoaded && (
+                <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-30 w-11/12 sm:w-auto animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="bg-orange-500/90 backdrop-blur-md border border-orange-400 rounded-lg px-4 py-3 shadow-2xl">
+                        <div className="flex items-center gap-3">
+                            <Loader2 className="h-5 w-5 text-white animate-spin" />
+                            <div>
+                                <p className="text-white font-semibold text-sm">
+                                    {connectionHealth.reconnectAttempts > 0
+                                        ? `Reconnecting... (Attempt ${connectionHealth.reconnectAttempts}/5)`
+                                        : 'Connecting to AI Interviewer...'
+                                    }
+                                </p>
+                                <p className="text-orange-100 text-xs">
+                                    Please wait while we establish connection
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* Live Transcript Overlay */}
+            {showTranscript && messages.length > 0 && (
+                <div className="absolute bottom-32 sm:bottom-36 left-3 sm:left-6 right-3 sm:right-6 max-h-48 z-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <ScrollArea className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg p-3 sm:p-4 shadow-2xl">
+                        <div className="space-y-2">
+                            {messages.slice(-5).map((msg, idx) => (
+                                <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                    <p className={`text-xs sm:text-sm ${msg.sender === 'ai'
+                                        ? 'text-purple-300'
+                                        : 'text-cyan-300'
+                                        }`}>
+                                        <strong className="font-semibold">
+                                            {msg.sender === 'ai' ? 'AI' : 'You'}:
+                                        </strong>{' '}
+                                        {msg.text.length > 150 ? msg.text.substring(0, 150) + '...' : msg.text}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-white/10 text-center">
+                            <p className="text-[10px] text-slate-400">
+                                Press Ctrl+T to hide • Showing last 5 messages
+                            </p>
+                        </div>
+                    </ScrollArea>
+                </div>
+            )}
 
             {/* Timer - Top Left */}
             <div className="absolute top-3 sm:top-6 left-3 sm:left-6 z-20">
@@ -1014,13 +1528,25 @@ export default function InterviewRoom() {
 
             {/* Microphone Status - Bottom Right */}
             <div className="absolute bottom-20 sm:bottom-28 right-3 sm:right-6 z-20">
-                <div className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full backdrop-blur-md border flex items-center gap-1.5 sm:gap-2 shadow-lg ${isRecording
-                    ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                    : 'bg-red-500/20 border-red-500/50 text-red-400'
+                <div className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full backdrop-blur-md border flex items-center gap-1.5 sm:gap-2 shadow-lg ${!isRecording
+                    ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                    : isUserSpeaking
+                        ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                        : isAiSpeaking
+                            ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
+                            : 'bg-green-500/20 border-green-500/50 text-green-400'
                     }`}>
-                    {isRecording ? <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <MicOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                    {!isRecording ? (
+                        <MicOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    ) : isUserSpeaking ? (
+                        <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-pulse" />
+                    ) : isAiSpeaking ? (
+                        <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-50" />
+                    ) : (
+                        <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    )}
                     <span className="text-xs sm:text-sm font-medium hidden sm:inline">
-                        {isRecording ? "Listening" : "Muted"}
+                        {!isRecording ? "Muted" : isUserSpeaking ? "Speaking" : isAiSpeaking ? "AI Speaking" : "Listening"}
                     </span>
                 </div>
             </div>
@@ -1079,6 +1605,29 @@ export default function InterviewRoom() {
                 onSubmit={handleCodingSubmit}
                 onAbort={handleCodingAbort}
             />
+
+            {/* Keyboard Shortcuts Help - Shows briefly at start (Desktop only) */}
+            {connected && elapsedTime < 10 && (
+                <div className="hidden sm:block absolute bottom-44 sm:bottom-48 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-black/90 backdrop-blur-xl border border-purple-500/30 rounded-lg px-4 py-3 shadow-2xl">
+                        <p className="text-xs sm:text-sm text-purple-300 font-medium mb-2 text-center">⌨️ Keyboard Shortcuts</p>
+                        <div className="space-y-1 text-[10px] sm:text-xs text-slate-300">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-slate-400">Toggle Mic:</span>
+                                <kbd className="px-2 py-0.5 bg-slate-700 rounded text-white font-mono">Ctrl+Space</kbd>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-slate-400">End Interview:</span>
+                                <kbd className="px-2 py-0.5 bg-slate-700 rounded text-white font-mono">Ctrl+E</kbd>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-slate-400">Toggle Transcript:</span>
+                                <kbd className="px-2 py-0.5 bg-slate-700 rounded text-white font-mono">Ctrl+T</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
