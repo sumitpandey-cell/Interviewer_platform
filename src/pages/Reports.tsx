@@ -477,8 +477,8 @@ export default function Reports() {
         ) : (
           <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             {/* Filters Section */}
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-start lg:items-center">
                 <div className="flex items-center gap-2 mb-2 lg:mb-0">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">Filters:</span>
@@ -557,59 +557,59 @@ export default function Reports() {
             <div className="border-t border-border" />
 
             {/* Reports List Section */}
-            <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
-              <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
+            <div className="bg-card rounded-3xl p-4 sm:p-6 shadow-sm border border-border">
+              <h3 className="text-lg font-bold mb-4 sm:mb-6 text-foreground">All Interview Reports</h3>
 
               {/* Table View */}
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px]">
                   <thead>
                     <tr className="text-left border-b border-border">
-                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm pl-2 sm:pl-4">Role</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Date</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Type</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Duration</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Status</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
+                      <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm text-right pr-2 sm:pr-4">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredAndSortedSessions.map((session) => (
                       <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
-                        <td className="py-4 pl-4">
-                          <div className="flex items-center gap-3">
+                        <td className="py-3 sm:py-4 pl-2 sm:pl-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
                               {session.position.substring(0, 2).toUpperCase()}
                             </div>
                             <span className="font-medium text-foreground">{session.position}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm">
+                        <td className="py-3 sm:py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-foreground text-sm font-medium capitalize">
+                        <td className="py-3 sm:py-4 text-foreground text-sm font-medium capitalize">
                           {session.interview_type.replace('_', ' ')}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm">
+                        <td className="py-3 sm:py-4 text-muted-foreground text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-3 sm:py-4">
                           {getStatusBadge(session.status, session.score)}
                         </td>
-                        <td className="py-4">
+                        <td className="py-3 sm:py-4">
                           <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
                             (session.score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                             }`}>
                             {session.score !== null ? `${session.score}%` : '-'}
                           </span>
                         </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
+                        <td className="py-3 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
                             {renderStars(session.score)}
                             <div className="flex gap-1 ml-2 border-l pl-3 border-border">
                               <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
@@ -617,7 +617,7 @@ export default function Reports() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 text-right pr-4">
+                        <td className="py-3 sm:py-4 text-right pr-2 sm:pr-4">
                           {session.status === 'completed' && session.score !== null ? (
                             <Button
                               variant="outline"

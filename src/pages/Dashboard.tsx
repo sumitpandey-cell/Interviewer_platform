@@ -284,8 +284,8 @@ export default function Dashboard() {
         </div>
 
         {/* Interview List Section */}
-        <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-card rounded-3xl p-4 sm:p-6 shadow-sm border border-border">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-lg font-bold text-foreground">Recent Interviews</h3>
             <Button
               variant="ghost"
@@ -301,28 +301,28 @@ export default function Dashboard() {
             <table className="w-full min-w-[1000px]">
               <thead>
                 <tr className="text-left border-b border-border">
-                  <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm pl-2 sm:pl-4">Role</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Date</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Type</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Duration</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Status</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
+                  <th className="pb-3 sm:pb-4 font-medium text-muted-foreground text-sm text-right pr-2 sm:pr-4">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
                   [...Array(3)].map((_, i) => (
                     <tr key={i}>
-                      <td className="py-4 pl-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
-                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-32" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-4 pr-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
+                      <td className="py-3 sm:py-4 pl-2 sm:pl-4"><div className="flex items-center gap-2 sm:gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-3 sm:py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-3 sm:py-4 pr-2 sm:pr-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
                     </tr>
                   ))
                 ) : sessions?.length === 0 ? (
@@ -341,27 +341,27 @@ export default function Dashboard() {
                     .slice(0, 7)
                     .map((session) => (
                       <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
-                        <td className="py-4 pl-4">
-                          <div className="flex items-center gap-3">
+                        <td className="py-3 sm:py-4 pl-2 sm:pl-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
                               {(session.position || 'General').substring(0, 2).toUpperCase()}
                             </div>
                             <span className="font-medium text-foreground">{session.position || 'General Interview'}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm">
+                        <td className="py-3 sm:py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-foreground text-sm font-medium capitalize">
+                        <td className="py-3 sm:py-4 text-foreground text-sm font-medium capitalize">
                           {session.interview_type?.replace('_', ' ') || 'General'}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm">
+                        <td className="py-3 sm:py-4 text-muted-foreground text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-3 sm:py-4">
                           <Badge
                             variant="secondary"
                             className="font-normal px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -369,15 +369,15 @@ export default function Dashboard() {
                             Completed
                           </Badge>
                         </td>
-                        <td className="py-4">
+                        <td className="py-3 sm:py-4">
                           <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
                             (session.score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                             }`}>
                             {session.score}%
                           </span>
                         </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
+                        <td className="py-3 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
                             {renderStars(session.score)}
                             <div className="flex gap-1 ml-2 border-l pl-3 border-border">
                               <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
@@ -385,7 +385,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 text-right pr-4">
+                        <td className="py-3 sm:py-4 text-right pr-2 sm:pr-4">
                           <Button
                             variant="outline"
                             size="sm"

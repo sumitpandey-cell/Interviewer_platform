@@ -878,40 +878,40 @@ const Leaderboard = () => {
                         </DialogHeader>
 
                         {/* Share Card Preview */}
-                        <div id="share-card" className="relative w-full bg-slate-950 p-4 sm:p-8 overflow-hidden">
+                        <div id="share-card" className="relative w-full bg-slate-950 p-3 sm:p-6 overflow-hidden">
                             {/* Ambient Glows */}
                             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
                             <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
 
                             {/* Aura Logo Header */}
-                            <div className="relative z-10 flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                        <span className="text-white font-bold text-xl">A</span>
+                            <div className="relative z-10 flex items-center justify-between mb-4 sm:mb-8">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                        <span className="text-white font-bold text-lg sm:text-xl">A</span>
                                     </div>
                                     <div>
-                                        <h1 className="text-xl font-bold text-white tracking-tight">
+                                        <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                                             Aura
                                         </h1>
-                                        <p className="text-xs text-slate-400">Elevate Your Hiring</p>
+                                        <p className="text-[10px] sm:text-xs text-slate-400">Elevate Your Hiring</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="flex items-center gap-1.5 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                                        <Check className="h-3.5 w-3.5 text-emerald-500" />
-                                        <span className="text-xs font-semibold text-emerald-500">Verified Profile</span>
+                                    <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-500/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-emerald-500/20">
+                                        <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" />
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-500">Verified Profile</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Main Content Card */}
-                            <div className="relative z-10 bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-                                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                            <div className="relative z-10 bg-slate-900/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-white/10 shadow-2xl">
+                                <div className="flex flex-col md:flex-row gap-4 sm:gap-8 items-center md:items-start">
                                     {/* Left Column: Avatar */}
                                     <div className="flex flex-col items-center">
                                         <div className="relative group">
                                             <div className="absolute -inset-0.5 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full opacity-75 blur group-hover:opacity-100 transition duration-1000"></div>
-                                            <div className="relative w-32 h-32 rounded-full border-4 border-slate-900 overflow-hidden bg-slate-800">
+                                            <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-slate-900 overflow-hidden bg-slate-800">
                                                 <Avatar className="h-full w-full">
                                                     <AvatarImage
                                                         src={getAvatarUrl(
@@ -922,28 +922,28 @@ const Leaderboard = () => {
                                                         )}
                                                         className="object-cover"
                                                     />
-                                                    <AvatarFallback className="text-4xl font-bold bg-slate-800 text-slate-400">
+                                                    <AvatarFallback className="text-3xl sm:text-4xl font-bold bg-slate-800 text-slate-400">
                                                         {selectedUser?.fullName?.charAt(0) || "U"}
                                                     </AvatarFallback>
                                                 </Avatar>
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                                        <div className="mt-3 sm:mt-4 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] sm:text-xs font-bold shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                                             Global Rank #{selectedRank}
                                         </div>
                                     </div>
 
                                     {/* Right Column: Stats */}
                                     <div className="flex-1 w-full text-center md:text-left">
-                                        <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
                                             {selectedUser?.fullName || "Anonymous"}
                                         </h2>
-                                        <p className="text-slate-400 text-sm mb-6 font-medium">
+                                        <p className="text-slate-400 text-xs sm:text-sm mb-4 sm:mb-6 font-medium">
                                             Interview Candidate
                                         </p>
 
-                                        <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-6">
+                                        <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-4 sm:mb-6">
                                             <div>
                                                 <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Score</p>
                                                 <p className="text-3xl font-black text-white">
@@ -965,14 +965,14 @@ const Leaderboard = () => {
                                 </div>
 
                                 {/* Hire Recommendation Banner */}
-                                <div className="mt-6 bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 rounded-xl p-4 border border-emerald-500/20 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                            <Check className="h-5 w-5 text-emerald-400" />
+                                <div className="mt-4 sm:mt-6 bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-emerald-500/20 flex items-center justify-between">
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-medium text-emerald-400 mb-0.5">Hire Recommendation</p>
-                                            <p className="text-lg font-bold text-white">
+                                            <p className="text-[10px] sm:text-xs font-medium text-emerald-400 mb-0.5">Hire Recommendation</p>
+                                            <p className="text-sm sm:text-lg font-bold text-white">
                                                 {selectedUser?.bayesianScore && selectedUser.bayesianScore >= 80
                                                     ? "Highly Recommended"
                                                     : selectedUser?.bayesianScore && selectedUser.bayesianScore >= 60
@@ -984,15 +984,15 @@ const Leaderboard = () => {
                                 </div>
 
                                 {/* CTA Button */}
-                                <div className="mt-8 text-center">
-                                    <button className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-500/25 border border-indigo-400/20">
+                                <div className="mt-4 sm:mt-8 text-center">
+                                    <button className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all shadow-lg shadow-indigo-500/25 border border-indigo-400/20 text-sm sm:text-base">
                                         View Full Profile on Aura
                                     </button>
                                 </div>
                             </div>
 
                             {/* Footer */}
-                            <div className="mt-6 text-center">
+                            <div className="mt-4 sm:mt-6 text-center">
                                 <p className="text-xs font-medium text-slate-500">
                                     Verified by <span className="text-slate-400">Aura Platform</span>
                                 </p>
