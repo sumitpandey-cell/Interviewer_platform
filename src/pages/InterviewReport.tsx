@@ -566,67 +566,71 @@ export default function InterviewReport() {
                 {/* Header Section */}
                 <Card className="border-none shadow-sm bg-white dark:bg-slate-800">
                     <CardContent className="p-4 md:p-6 flex flex-col gap-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                                <div className="min-w-0 flex-1">
-                                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 truncate">{reportData.candidateName}</h1>
+                        {/* Mobile Layout: Name + Score on top row, Buttons below */}
+                        <div className="flex flex-col gap-6">
+                            <div className="flex items-start justify-between w-full gap-4">
+                                {/* Left Side: Name, Position, Badges */}
+                                <div className="flex flex-col gap-2 min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 truncate">{reportData.candidateName}</h1>
+                                        {sessionId && isCached.sessionDetail(sessionId) && (
+                                            <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
+                                        )}
+                                    </div>
                                     <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg truncate">{reportData.position}</p>
-                                </div>
-                                {sessionId && isCached.sessionDetail(sessionId) && (
-                                    <Badge variant="outline" className="text-xs px-1 flex-shrink-0">📦 Cached</Badge>
-                                )}
-                            </div>
 
-                            {/* Saving status badge (from zustand) */}
-                            <div className="flex-shrink-0">
-                                {isSaving ? (
-                                    <div className="text-sm px-3 py-1 rounded-full bg-yellow-50 text-yellow-800 font-medium whitespace-nowrap">Saving…</div>
-                                ) : saveError ? (
-                                    <div className="text-sm px-3 py-1 rounded-full bg-red-50 text-red-800 font-medium whitespace-nowrap">Save failed</div>
-                                ) : (
-                                    <div className="text-sm px-3 py-1 rounded-full bg-green-50 text-green-800 font-medium whitespace-nowrap">Saved</div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
-                            <div className="flex items-center gap-4">
-                                <div className="relative h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                                    {/* Simple Circular Progress Placeholder */}
-                                    <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                                        <path
-                                            className="text-slate-100"
-                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="3"
-                                        />
-                                        <path
-                                            className="text-primary"
-                                            strokeDasharray={`${reportData.overallScore}, 100`}
-                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="3"
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">{reportData.overallScore}%</span>
+                                    {/* Saving status badge */}
+                                    <div className="flex-shrink-0 mt-1">
+                                        {isSaving ? (
+                                            <div className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-800 font-medium w-fit">Saving…</div>
+                                        ) : saveError ? (
+                                            <div className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-800 font-medium w-fit">Save failed</div>
+                                        ) : (
+                                            <div className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-800 font-medium w-fit">Saved</div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Overall Match</div>
+
+                                {/* Right Side: Score Circle */}
+                                <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                                    <div className="relative h-16 w-16 md:h-20 md:w-20">
+                                        <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <path
+                                                className="text-slate-100"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="3"
+                                            />
+                                            <path
+                                                className="text-primary"
+                                                strokeDasharray={`${reportData.overallScore}, 100`}
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="3"
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">{reportData.overallScore}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 text-center">Overall Match</div>
+                                </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <Button onClick={downloadReport} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            {/* Bottom Row: Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
+                                <Button onClick={downloadReport} className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
                                     <Download className="mr-2 h-4 w-4" />
                                     Download Full Report
                                 </Button>
 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon">
-                                            <Trash2 className="h-4 w-4" />
+                                        <Button variant="destructive" className="w-full sm:w-auto">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete Report
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -667,12 +671,7 @@ export default function InterviewReport() {
                         >
                             Skills Analysis
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="video"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
-                        >
-                            Video Playback
-                        </TabsTrigger>
+
                         <TabsTrigger
                             value="transcript"
                             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-6 flex-shrink-0 whitespace-nowrap"
@@ -816,20 +815,7 @@ export default function InterviewReport() {
                                     </CardContent>
                                 </Card>
 
-                                {/* AI Recommendation */}
-                                <Card className="border-none shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className={`px-4 py-2 rounded-md text-sm font-bold ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
-                                        </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words">
-                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
-                                        </p>
-                                    </CardContent>
-                                </Card>
+
                             </div>
 
                         </div>
@@ -948,31 +934,11 @@ export default function InterviewReport() {
                                     </CardContent>
                                 </Card>
 
-                                {/* AI Recommendation */}
-                                <Card className="border-none shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
-                                            {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                                        </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
-                                        </p>
-                                    </CardContent>
-                                </Card>
+
                             </div>
                         </div>
                     </TabsContent>
-                    <TabsContent value="video">
-                        <Card>
-                            <CardContent className="p-6 text-center text-slate-500 dark:text-slate-400">
-                                Video playback content would go here.
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+
                     <TabsContent value="transcript" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Left Column (Transcript) */}
@@ -1087,20 +1053,7 @@ export default function InterviewReport() {
                                     </CardContent>
                                 </Card>
 
-                                <Card className="border-none shadow-sm">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">AI Recommendation</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className={`px-4 py-2 rounded-md text-sm font-bold flex items-center justify-between ${reportData.overallScore >= 70 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                            Verdict: {reportData.overallScore >= 70 ? 'Proceed' : 'Do Not Proceed'}
-                                            {reportData.overallScore >= 70 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                                        </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            Based on the overall match score of {reportData.overallScore}%, this candidate is {reportData.overallScore >= 70 ? 'recommended' : 'not recommended'} for the {reportData.position} role at this time.
-                                        </p>
-                                    </CardContent>
-                                </Card>
+
                             </div>
                         </div>
                     </TabsContent>

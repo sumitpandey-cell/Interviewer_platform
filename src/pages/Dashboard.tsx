@@ -188,7 +188,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-foreground mb-1">
               Good morning, {profile?.full_name?.split(' ')[0] || "James"}!
             </h1>
-            <p className="text-muted-foreground text-sm">Aura: Your AI Voice Interviewer.</p>
+            <p className="text-muted-foreground text-sm">Arjuna AI: Your AI Voice Interviewer.</p>
           </div>
 
           {/* Header Controls */}
@@ -202,7 +202,9 @@ export default function Dashboard() {
                     <AvatarImage src={getAvatarUrl(
                       profile?.avatar_url || user?.user_metadata?.avatar_url,
                       user?.id || 'user',
-                      'avataaars'
+                      'avataaars',
+                      null,
+                      user?.user_metadata?.gender
                     )} />
                     <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
                   </Avatar>
@@ -296,16 +298,16 @@ export default function Dashboard() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[1000px]">
               <thead>
                 <tr className="text-left border-b border-border">
                   <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden sm:table-cell">Date</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Type</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden lg:table-cell">Duration</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Status</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
                   <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
-                  <th className="pb-4 font-medium text-muted-foreground text-sm hidden xl:table-cell">Feedback</th>
+                  <th className="pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
                   <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                 </tr>
               </thead>
@@ -314,12 +316,12 @@ export default function Dashboard() {
                   [...Array(3)].map((_, i) => (
                     <tr key={i}>
                       <td className="py-4 pl-4"><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-4 w-32" /></div></td>
-                      <td className="py-4 hidden sm:table-cell"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-4 hidden md:table-cell"><Skeleton className="h-4 w-32" /></td>
-                      <td className="py-4 hidden lg:table-cell"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4 hidden md:table-cell"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-32" /></td>
                       <td className="py-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-4 hidden xl:table-cell"><Skeleton className="h-4 w-24" /></td>
+                      <td className="py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-4"><Skeleton className="h-4 w-24" /></td>
                       <td className="py-4 pr-4"><Skeleton className="h-8 w-20 ml-auto" /></td>
                     </tr>
                   ))
@@ -347,19 +349,19 @@ export default function Dashboard() {
                             <span className="font-medium text-foreground">{session.position || 'General Interview'}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden sm:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-foreground text-sm font-medium capitalize hidden md:table-cell">
+                        <td className="py-4 text-foreground text-sm font-medium capitalize">
                           {session.interview_type?.replace('_', ' ') || 'General'}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden lg:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4 hidden md:table-cell">
+                        <td className="py-4">
                           <Badge
                             variant="secondary"
                             className="font-normal px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -374,7 +376,7 @@ export default function Dashboard() {
                             {session.score}%
                           </span>
                         </td>
-                        <td className="py-4 hidden xl:table-cell">
+                        <td className="py-4">
                           <div className="flex items-center gap-3">
                             {renderStars(session.score)}
                             <div className="flex gap-1 ml-2 border-l pl-3 border-border">

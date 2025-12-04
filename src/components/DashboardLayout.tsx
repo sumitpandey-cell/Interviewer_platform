@@ -132,7 +132,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="flex min-h-screen bg-sidebar text-foreground font-sans">
+    <div className="flex h-screen bg-sidebar text-foreground font-sans overflow-hidden">
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
@@ -149,7 +149,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         ${sidebarCollapsed ? "lg:w-20" : "lg:w-72"}
         bg-sidebar text-sidebar-foreground border-r border-sidebar-border
-        flex flex-col
+        flex flex-col flex-shrink-0
       `}
       >
         {/* Logo Section */}
@@ -157,26 +157,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30 blur-xl rounded-full"></div>
                 <img
-                  src="/logo.png"
-                  alt="Aura"
-                  className="relative h-8 w-8 object-contain"
+                  src="/arjuna-logo.png"
+                  alt="Arjuna AI"
+                  className="relative h-10 w-10 object-contain drop-shadow-lg"
                 />
               </div>
               <span className="text-xl font-bold text-white tracking-tight">
-                Aura
+                Arjuna AI
               </span>
             </div>
           )}
 
           {sidebarCollapsed && (
             <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30 blur-xl rounded-full"></div>
               <img
-                src="/logo.png"
-                alt="Aura"
-                className="relative h-8 w-8 object-contain"
+                src="/arjuna-logo.png"
+                alt="Arjuna AI"
+                className="relative h-10 w-10 object-contain drop-shadow-lg"
               />
             </div>
           )}
@@ -296,7 +296,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </button>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background lg:rounded-l-[2rem] rounded-none overflow-hidden ml-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-background lg:rounded-l-[2rem] rounded-none overflow-hidden ml-0 h-screen">
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto bg-background pt-16 lg:pt-8">
           <div

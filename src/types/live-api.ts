@@ -2,6 +2,10 @@ export type LiveConfig = {
   model: string;
   generationConfig?: {
     responseModalities?: string | string[];
+    temperature?: number;
+    maxOutputTokens?: number;
+    topP?: number;
+    topK?: number;
     speechConfig?: {
       voiceConfig?: {
         prebuiltVoiceConfig?: {

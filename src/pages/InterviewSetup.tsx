@@ -224,9 +224,9 @@ export default function InterviewSetup() {
 
                         {/* Placeholder for Video Stream */}
                         {!isCameraOn && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 text-slate-400">
-                                <div className="h-24 w-24 rounded-full bg-slate-800/50 flex items-center justify-center mb-4 border border-slate-700 shadow-inner">
-                                    <VideoOff className="h-10 w-10 opacity-50" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 text-slate-400 pb-20">
+                                <div className="h-16 w-16 md:h-24 md:w-24 rounded-full bg-slate-800/50 flex items-center justify-center mb-4 border border-slate-700 shadow-inner">
+                                    <VideoOff className="h-8 w-8 md:h-10 md:w-10 opacity-50" />
                                 </div>
                                 <p className="text-lg font-medium">Camera is turned off</p>
                                 {cameraError && (
@@ -239,23 +239,23 @@ export default function InterviewSetup() {
                         <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-6 z-10">
                             <button
                                 onClick={toggleMic}
-                                className={`h-14 w-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 ${isMicOn
+                                className={`h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 ${isMicOn
                                     ? 'bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-600'
                                     : 'bg-red-500/90 hover:bg-red-600 text-white border border-red-400'
                                     }`}
                                 title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
                             >
-                                {isMicOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
+                                {isMicOn ? <Mic className="h-5 w-5 md:h-6 md:w-6" /> : <MicOff className="h-5 w-5 md:h-6 md:w-6" />}
                             </button>
                             <button
                                 onClick={toggleCamera}
-                                className={`h-14 w-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 ${isCameraOn
+                                className={`h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 ${isCameraOn
                                     ? 'bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-600'
                                     : 'bg-red-500/90 hover:bg-red-600 text-white border border-red-400'
                                     }`}
                                 title={isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
                             >
-                                {isCameraOn ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
+                                {isCameraOn ? <Video className="h-5 w-5 md:h-6 md:w-6" /> : <VideoOff className="h-5 w-5 md:h-6 md:w-6" />}
                             </button>
                         </div>
                     </div>
