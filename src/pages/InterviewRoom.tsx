@@ -44,10 +44,11 @@ const generateSystemInstruction = (
     session: SessionData | null,
     timeRemaining: number,
     companyQuestions?: any[],
-    performanceHistory?: PerformanceHistory
+    performanceHistory?: PerformanceHistory,
+    avatarName?: string
 ): string => {
     if (!session) {
-        return `You are a Senior Technical Interviewer. You are an intelligent AI assistant.
+        return `You are ${avatarName || 'Aura'}, a Senior Technical Interviewer. You are an intelligent AI assistant.
 
 For technical interviews, always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation").`;
     }
@@ -71,7 +72,10 @@ For technical interviews, always transcribe English technical terms in English s
         jobDescription: jobDescription
     });
 
-    const fullPrompt = `You are an intelligent AI assistant conducting a professional technical interview.
+    // Replace "Aura" with the selected avatar name in the prompt
+    const personalizedPrompt = basePrompt.replace(/You are Aura/g, `You are ${avatarName || 'Aura'}`);
+
+    const fullPrompt = `You are ${avatarName || 'Aura'}, an intelligent AI assistant conducting a professional technical interview.
 
 CRITICAL TRANSCRIPTION REQUIREMENTS:
 - Always transcribe English technical terms in English script regardless of accent (e.g., "chat app", "Socket.IO", "implementation")
@@ -80,7 +84,7 @@ CRITICAL TRANSCRIPTION REQUIREMENTS:
 - Maintain proper script for each language (English in Latin, Hindi in Devanagari, etc.)
 - SCRIPT CORRECTION RULE: If you receive input that is transliterated (e.g., Hindi meaning written in English script like "Main ghar ja raha hoon"), you MUST mentally convert it to its correct script (e.g., "मैं घर जा रहा हूँ") before processing. Treat the input as if it was written in the correct script.
 
-${basePrompt}`;
+${personalizedPrompt}`;
 
     console.log('🤖 FULL GENERATED SYSTEM PROMPT:');
     console.log('=====================================');
@@ -519,11 +523,21 @@ export default function InterviewRoom() {
                     console.log('📊 No previous interview history found - this is the candidate\'s first interview');
                 }
 
+                // Get selected avatar from session config
+                const selectedAvatarId = (session as any)?.config?.selectedAvatar;
+                const { getAvatarById, getDefaultAvatar } = await import('@/config/interviewer-avatars');
+                const selectedAvatar = selectedAvatarId ? getAvatarById(selectedAvatarId) : getDefaultAvatar();
+                const avatarName = selectedAvatar?.name || 'Aura';
+                const avatarVoice = selectedAvatar?.voice || 'Fenrir';
+
+                console.log(`🎭 Selected Avatar: ${avatarName} (Voice: ${avatarVoice})`);
+
                 const systemInstruction = await generateSystemInstruction(
                     session,
                     Math.floor(timeLeft / 60),
                     companyQuestions.length > 0 ? companyQuestions : undefined,
-                    performanceHistory
+                    performanceHistory,
+                    avatarName  // Pass avatar name to system instruction
                 );
 
                 try {
@@ -531,15 +545,15 @@ export default function InterviewRoom() {
                         model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
                         generationConfig: {
                             responseModalities: ["AUDIO"],
-                            // Optimize for faster response generation
-                            temperature: 0.9,              // Balanced creativity and speed
-                            maxOutputTokens: 256,          // Reduced to 256 for faster, more concise responses
+                            // Generation settings optimized for complete responses
+                            temperature: 0.7,              // Balanced creativity and speed
+                            maxOutputTokens: 800,          // Increased to 800 to allow complete responses (256 was too low)
                             topP: 0.95,                    // Nucleus sampling for quality
                             topK: 40,                      // Reduce token consideration for speed
                             speechConfig: {
                                 voiceConfig: {
                                     prebuiltVoiceConfig: {
-                                        voiceName: "Fenrir"
+                                        voiceName: avatarVoice
                                     },
                                 },
                             }
@@ -547,16 +561,39 @@ export default function InterviewRoom() {
                         systemInstruction: {
                             parts: [{ text: systemInstruction }]
                         },
-                        // Optimized VAD for faster response after long answers
+                        // PROFESSIONAL AUTOMATIC VAD - No Manual Intervention Required
+                        // Industry-standard configuration for reliable turn detection
                         realtimeInputConfig: {
                             automaticActivityDetection: {
-                                prefixPaddingMs: 100,      // Reduced for faster detection
-                                silenceDurationMs: 400     // Reduced from 800ms for faster response
+                                // START OF SPEECH: HIGH sensitivity - Detects speech IMMEDIATELY
+                                // - Picks up speech quickly, no delay
+                                // - Ensures AI hears you right away
+                                // - Critical for responsive conversation
+                                startOfSpeechSensitivity: 'START_SENSITIVITY_HIGH',
+
+                                // END OF SPEECH: LOW sensitivity - Waits for CLEAR end of speech
+                                // - Prevents cutting off during pauses
+                                // - Allows natural thinking pauses
+                                // - Ensures complete responses from AI
+                                // - Works with echo cancellation to prevent AI self-interruption
+                                endOfSpeechSensitivity: 'END_SENSITIVITY_LOW',
+
+                                // AUDIO CAPTURE: 400ms prefix padding
+                                // - Captures audio before speech detection
+                                // - Ensures first words aren't cut off
+                                // - Industry standard for voice AI
+                                prefixPaddingMs: 400,
+
+                                // TURN-TAKING: 1200ms (1.2 seconds) silence detection
+                                // - Balanced for natural conversation
+                                // - Not too fast (prevents false endings)
+                                // - Not too slow (maintains flow)
+                                // - Optimal for most speaking styles
+                                silenceDurationMs: 1200
                             }
                         },
                         // Enable input transcription
-                        inputAudioTranscription: {
-                        },
+                        inputAudioTranscription: {},
                         outputAudioTranscription: {},
                         onTranscriptFragment: handleTranscriptFragment
                     });

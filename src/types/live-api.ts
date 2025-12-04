@@ -23,7 +23,17 @@ export type LiveConfig = {
   // Configure Voice Activity Detection for background noise reduction
   realtimeInputConfig?: {
     automaticActivityDetection?: {
+      // Disable automatic detection (client sends activityStart/activityEnd manually)
+      disabled?: boolean;
+      // How sensitive to detect start of speech
+      // LOW = less sensitive (clearer speech required), HIGH = more sensitive (picks up subtle speech)
+      startOfSpeechSensitivity?: 'START_SENSITIVITY_LOW' | 'START_SENSITIVITY_HIGH';
+      // How sensitive to detect end of speech
+      // LOW = waits longer (good for natural pauses), HIGH = ends quickly (better for noisy environments)
+      endOfSpeechSensitivity?: 'END_SENSITIVITY_LOW' | 'END_SENSITIVITY_HIGH';
+      // Milliseconds of audio to capture before speech starts
       prefixPaddingMs?: number;
+      // Milliseconds of silence before considering speech ended
       silenceDurationMs?: number;
     };
   };

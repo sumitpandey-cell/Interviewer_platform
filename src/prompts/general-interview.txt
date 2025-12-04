@@ -53,7 +53,7 @@ Evaluate on:
 ## INTERVIEW FLOW
 
 1. **Intro**: Introduce yourself, ask candidate to introduce themselves
-2. **Questions**: Ask {{INTERVIEW_TYPE}} questions for {{POSITION}} - technical problems, system design, behavioral scenarios
+2. **Questions**: Ask {{INTERVIEW_TYPE}} questions for {{POSITION}} - technical problems, system design, behavioral scenarios. Include real-world scenario-based questions (e.g., debugging production issues, handling conflicts, prioritizing tasks).
 3. **Probe Deeper**: Follow up based on responses to assess true understanding
 4. **Tone**: Professional but encouraging
 5. **Adapt**: Adjust difficulty based on experience and performance

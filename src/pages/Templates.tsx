@@ -268,8 +268,8 @@ export default function Templates() {
 
       toast.success(`Starting ${template.title} interview...`);
 
-      // Navigate to interview setup page with the session ID
-      navigate(`/interview/${session.id}/setup`);
+      // Navigate to avatar selection page first
+      navigate(`/interview/${session.id}/avatar`);
 
     } catch (error: any) {
       console.error('Error starting interview:', error);
@@ -319,7 +319,7 @@ export default function Templates() {
       }
 
       toast.success(`Starting ${role} interview at ${company.name}...`);
-      navigate(`/interview/${session.id}/setup`);
+      navigate(`/interview/${session.id}/avatar`);
 
     } catch (error: any) {
       console.error('Error starting company interview:', error);

@@ -24,6 +24,7 @@ interface SessionConfig {
     jobDescription?: string;
     duration?: number;
     difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+    selectedAvatar?: string; // ID of the selected interviewer avatar
     companyInterviewConfig?: {
         companyTemplateId: string;
         companyName: string;
@@ -170,7 +171,6 @@ export default function InterviewSetup() {
         setTimeout(() => {
             setIsLoading(false);
             toast.success("Starting interview session...");
-            // Navigate to the actual interview page with language parameter
             navigate(`/interview/${sessionId}/active`);
             console.log("Starting interview for session:", sessionId);
         }, 1000);

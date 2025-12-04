@@ -11,6 +11,10 @@ export class AudioRecorder extends EventTarget {
                 audio: {
                     channelCount: 1,
                     sampleRate: this.sampleRate,
+                    // Enable browser-native echo cancellation to prevent feedback loop
+                    echoCancellation: true,      // Removes echo from speakers
+                    noiseSuppression: true,      // Reduces background noise
+                    autoGainControl: true,       // Normalizes volume levels
                 },
             });
 

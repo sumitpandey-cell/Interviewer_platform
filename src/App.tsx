@@ -13,6 +13,7 @@ import Templates from "./pages/Templates";
 import Reports from "./pages/Reports";
 import AdminNotifications from "./pages/AdminNotifications";
 import StartInterview from "./pages/StartInterview";
+import AvatarSelection from "./pages/AvatarSelection";
 import InterviewSetup from "./pages/InterviewSetup";
 import InterviewRoom from "./pages/InterviewRoom";
 import InterviewReport from "./pages/InterviewReport";
@@ -100,6 +101,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <StartInterview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/interview/:sessionId/avatar"
+                element={
+                  <ProtectedRoute>
+                    <AvatarSelection />
                   </ProtectedRoute>
                 }
               />

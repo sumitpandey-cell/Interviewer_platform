@@ -136,7 +136,7 @@ export default function StartInterview() {
 
             if (data && data.length > 0) {
                 toast.success("Interview session created!");
-                navigate(`/interview/${data[0].id}/setup`);
+                navigate(`/interview/${data[0].id}/avatar`);
             }
         } catch (error) {
             console.error("Error creating session:", error);

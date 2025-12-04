@@ -6,6 +6,7 @@ import { LiveConfig, LiveIncomingMessage, LiveOutgoingMessage } from '../types/l
 // Extend LiveConfig to support transcript callback
 export interface ExtendedLiveConfig extends LiveConfig {
     onTranscriptFragment?: (sender: 'ai' | 'user', text: string) => void;
+    onInterruption?: () => void; // Called when user interrupts AI (barge-in detection)
 }
 
 const HOST = 'generativelanguage.googleapis.com';
@@ -19,10 +20,12 @@ export function useLiveAPI(apiKey: string) {
     const audioRecorderRef = useRef<AudioRecorder | null>(null);
     const audioStreamerRef = useRef<AudioStreamer | null>(null);
     const transcriptCallbackRef = useRef<((sender: 'ai' | 'user', text: string) => void) | null>(null);
+    const interruptionCallbackRef = useRef<(() => void) | null>(null);
 
     const connect = useCallback(async (config: ExtendedLiveConfig) => {
-        // Store the transcript callback
+        // Store the transcript and interruption callbacks
         transcriptCallbackRef.current = config.onTranscriptFragment || null;
+        interruptionCallbackRef.current = config.onInterruption || null;
         if (!apiKey) {
             console.error("API Key is required");
             return;
@@ -110,8 +113,16 @@ export function useLiveAPI(apiKey: string) {
 
             if ('serverContent' in data) {
                 const { modelTurn, inputTranscription, outputTranscription, turnComplete, interrupted } = data.serverContent;
+
+                // Handle interruption (barge-in detection)
                 if (interrupted) {
-                    console.warn('🛑 Conversation interrupted - possible background noise or premature turn completion');
+                    console.warn('🛑 INTERRUPTION DETECTED - User barged in while AI was speaking');
+                    console.log('   This is normal behavior for natural conversation flow');
+
+                    // Notify the UI about the interruption
+                    if (interruptionCallbackRef.current) {
+                        interruptionCallbackRef.current();
+                    }
                 }
 
                 // Handle AI text responses - use callback for direct processing
