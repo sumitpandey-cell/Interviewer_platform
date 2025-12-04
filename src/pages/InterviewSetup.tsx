@@ -189,10 +189,8 @@ export default function InterviewSetup() {
             {/* Header */}
             <header className="h-16 border-b border-border/50 bg-card/50 backdrop-blur-md sticky top-0 z-50 flex items-center px-6 lg:px-12 justify-between">
                 <div className="flex items-center gap-2 text-xl font-bold text-foreground">
-                    <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                        <Brain className="h-6 w-6" />
-                    </div>
-                    AI Interview Agents
+                    <img src="/arjuna-logo.png" alt="Arjuna AI" className="h-8 w-8 object-contain" />
+                    Arjuna AI
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="mr-2 h-4 w-4" />
