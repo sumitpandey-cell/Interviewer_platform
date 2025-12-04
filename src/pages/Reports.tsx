@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles, Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles, Star, ThumbsUp, ThumbsDown, MoreHorizontal, Trash2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,6 +110,35 @@ export default function Reports() {
       setProfile(cachedProfile);
     }
   }, [cachedProfile, profile]);
+
+  // Delete interview function
+  const handleDeleteInterview = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!confirm('Are you sure you want to delete this interview? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('interview_sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      // Update local state
+      setSessions(sessions.filter(s => s.id !== sessionId));
+
+      // Show success message
+      const toast = await import('sonner');
+      toast.toast.success('Interview deleted successfully');
+    } catch (error) {
+      console.error('Error deleting interview:', error);
+      const toast = await import('sonner');
+      toast.toast.error('Failed to delete interview');
+    }
+  };
 
 
   // Filtered and sorted sessions - optimized to reduce re-calculations
@@ -577,7 +606,17 @@ export default function Reports() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredAndSortedSessions.map((session) => (
-                      <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
+                      <tr
+                        key={session.id}
+                        className="group hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (session.status === 'completed' && session.score !== null) {
+                            navigate(`/interview/${session.id}/report`);
+                          } else {
+                            navigate(`/interview/${session.id}/active`);
+                          }
+                        }}
+                      >
                         <td className="py-3 sm:py-4 pl-2 sm:pl-4">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
@@ -623,19 +662,45 @@ export default function Reports() {
                               variant="outline"
                               size="sm"
                               className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
-                              onClick={() => navigate(`/interview/${session.id}/report`)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/interview/${session.id}/report`);
+                              }}
                             >
                               Report
                             </Button>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
-                              onClick={() => navigate(`/interview/${session.id}/active`)}
-                            >
-                              Continue
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-full border-border hover:bg-accent hover:text-accent-foreground h-7 sm:h-9 w-7 sm:w-9 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/interview/${session.id}/active`);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Play className="mr-2 h-4 w-4" />
+                                  Continue
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => handleDeleteInterview(session.id, e)}
+                                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                         </td>
                       </tr>

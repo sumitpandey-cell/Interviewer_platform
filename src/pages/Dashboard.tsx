@@ -340,7 +340,11 @@ export default function Dashboard() {
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .slice(0, 7)
                     .map((session) => (
-                      <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
+                      <tr
+                        key={session.id}
+                        className="group hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/interview/${session.id}/report`)}
+                      >
                         <td className="py-3 sm:py-4 pl-2 sm:pl-4">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
@@ -390,7 +394,10 @@ export default function Dashboard() {
                             variant="outline"
                             size="sm"
                             className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
-                            onClick={() => navigate(`/interview/${session.id}/report`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/interview/${session.id}/report`);
+                            }}
                           >
                             Report
                           </Button>
