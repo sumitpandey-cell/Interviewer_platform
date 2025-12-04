@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { FileText, Download, MessageSquare, ExternalLink, Calendar, Clock, TrendingUp, Filter, SortAsc, SortDesc, Play, BarChart3, CheckCircle2, Target, Timer, Bell, Settings as SettingsIcon, LogOut, ArrowRight, Sparkles, Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useOptimizedQueries } from "@/hooks/use-optimized-queries";
 import { useAuth } from "@/contexts/AuthContext";
@@ -194,27 +194,43 @@ export default function Reports() {
     switch (status) {
       case 'completed':
         return score !== null ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
             Completed
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
             In Progress
           </Badge>
         );
       case 'in_progress':
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
             In Progress
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+          <Badge variant="secondary" className="font-normal px-3 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             {status}
           </Badge>
         );
     }
+  };
+
+  // Helper to render stars based on score
+  const renderStars = (score: number | null) => {
+    if (score === null) return <span className="text-muted-foreground">-</span>;
+    const stars = Math.round(score / 20); // 0-5 stars
+    return (
+      <div className="flex gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < stars ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+          />
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -255,62 +271,28 @@ export default function Reports() {
     <DashboardLayout>
       <div className="space-y-6 pb-8">
         {/* Header Section with Controls */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1">
-            <h2 className="mb-2 text-3xl font-bold text-foreground">Interview Reports</h2>
+            <h2 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+              Interview Reports
+              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+            </h2>
             <p className="text-muted-foreground text-sm">
               View insights and analysis from your completed interviews
             </p>
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2">
-            <NotificationBell />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex bg-card items-center gap-2 hover:bg-accent border border-border rounded-full px-2 py-1.5 transition-colors">
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src={getAvatarUrl(
-                      profile?.avatar_url || user?.user_metadata?.avatar_url,
-                      user?.id || 'user',
-                      'avataaars'
-                    )} />
-                    <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-foreground hidden sm:block">
-                    {profile?.full_name?.split(' ')[0] || "User"}
-                  </span>
-                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <SettingsIcon className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <ThemeToggle />
-          </div>
         </div>
 
         {/* Statistics Section */}
         {completedSessions.length > 0 && (
           <div className="bg-card rounded-2xl px-8 py-5 shadow-sm border border-border">
             <Tabs defaultValue="overall" className="w-full">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h3 className="text-lg font-bold text-foreground">Statistics</h3>
-                <TabsList className="grid w-[280px] grid-cols-2">
+                <TabsList className="grid w-full sm:w-[280px] grid-cols-2">
                   <TabsTrigger value="overall">Overall</TabsTrigger>
                   <TabsTrigger value="filtered">Filtered</TabsTrigger>
                 </TabsList>
@@ -496,22 +478,22 @@ export default function Reports() {
           <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm">
             {/* Filters Section */}
             <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                <div className="flex items-center gap-2 mb-2 lg:mb-0">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">Filters:</span>
                 </div>
 
-                <div className="flex flex-wrap gap-3 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 flex-1 w-full">
                   <Input
                     placeholder="Search by position or type..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full sm:w-64 bg-background"
+                    className="w-full lg:w-64 bg-background"
                   />
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-background">
+                    <SelectTrigger className="w-full lg:w-40 bg-background">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -522,7 +504,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={positionFilter} onValueChange={setPositionFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-background">
+                    <SelectTrigger className="w-full lg:w-40 bg-background">
                       <SelectValue placeholder="Position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -534,7 +516,7 @@ export default function Reports() {
                   </Select>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-48 bg-background">
+                    <SelectTrigger className="w-full lg:w-48 bg-background">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -575,19 +557,21 @@ export default function Reports() {
             <div className="border-t border-border" />
 
             {/* Reports List Section */}
-            <div className="bg-card rounded-3xl p-6 shadow-sm">
+            <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
               <h3 className="text-lg font-bold mb-6 text-foreground">All Interview Reports</h3>
 
+              {/* Table View */}
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[1000px]">
                   <thead>
                     <tr className="text-left border-b border-border">
-                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Position</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden sm:table-cell">Date</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Type</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden lg:table-cell">Duration</th>
-                      <th className="pb-4 font-medium text-muted-foreground text-sm hidden md:table-cell">Status</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm pl-4">Role</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Date</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Type</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Duration</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Status</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm">Score</th>
+                      <th className="pb-4 font-medium text-muted-foreground text-sm">Feedback</th>
                       <th className="pb-4 font-medium text-muted-foreground text-sm text-right pr-4">Action</th>
                     </tr>
                   </thead>
@@ -596,59 +580,61 @@ export default function Reports() {
                       <tr key={session.id} className="group hover:bg-muted/50 transition-colors">
                         <td className="py-4 pl-4">
                           <div className="flex items-center gap-3">
-                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-orange-100 text-orange-600 items-center justify-center">
+                            <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full font-medium bg-primary/10 text-primary items-center justify-center">
                               {session.position.substring(0, 2).toUpperCase()}
                             </div>
                             <span className="font-medium text-foreground">{session.position}</span>
                           </div>
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden sm:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           {new Date(session.created_at).toLocaleDateString()}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm capitalize hidden md:table-cell">
+                        <td className="py-4 text-foreground text-sm font-medium capitalize">
                           {session.interview_type.replace('_', ' ')}
                         </td>
-                        <td className="py-4 text-muted-foreground text-sm hidden lg:table-cell">
+                        <td className="py-4 text-muted-foreground text-sm">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{session.duration_minutes || 0}m</span>
                           </div>
                         </td>
-                        <td className="py-4 hidden md:table-cell">
+                        <td className="py-4">
                           {getStatusBadge(session.status, session.score)}
                         </td>
                         <td className="py-4">
-                          {session.score !== null ? (
-                            <span className={`text-lg font-bold ${session.score >= 80 ? 'text-green-600 dark:text-green-400' :
-                              session.score >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                              {session.score}%
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
+                          <span className={`text-lg font-bold ${(session.score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+                            (session.score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                            }`}>
+                            {session.score !== null ? `${session.score}%` : '-'}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            {renderStars(session.score)}
+                            <div className="flex gap-1 ml-2 border-l pl-3 border-border">
+                              <ThumbsUp className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <ThumbsDown className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
                         </td>
                         <td className="py-4 text-right pr-4">
                           {session.status === 'completed' && session.score !== null ? (
                             <Button
-                              asChild
                               variant="outline"
                               size="sm"
                               className="rounded-full border-border hover:bg-accent hover:text-accent-foreground px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                              onClick={() => navigate(`/interview/${session.id}/report`)}
                             >
-                              <Link to={`/interview/${session.id}/report`}>
-                                View Report
-                              </Link>
+                              Report
                             </Button>
                           ) : (
                             <Button
-                              asChild
+                              variant="outline"
                               size="sm"
                               className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 px-3 sm:px-6 text-xs sm:text-sm h-7 sm:h-9"
+                              onClick={() => navigate(`/interview/${session.id}/active`)}
                             >
-                              <Link to={`/interview/${session.id}/active`}>
-                                Continue
-                              </Link>
+                              Continue
                             </Button>
                           )}
                         </td>

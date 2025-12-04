@@ -157,26 +157,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30 blur-xl rounded-full"></div>
                 <img
-                  src="/logo.png"
-                  alt="Aura"
-                  className="relative h-8 w-8 object-contain"
+                  src="/arjuna-logo.png"
+                  alt="Arjuna AI"
+                  className="relative h-10 w-10 object-contain drop-shadow-lg"
                 />
               </div>
               <span className="text-xl font-bold text-white tracking-tight">
-                Aura
+                Arjuna AI
               </span>
             </div>
           )}
 
           {sidebarCollapsed && (
             <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-500/30 blur-xl rounded-full"></div>
               <img
-                src="/logo.png"
-                alt="Aura"
-                className="relative h-8 w-8 object-contain"
+                src="/arjuna-logo.png"
+                alt="Arjuna AI"
+                className="relative h-10 w-10 object-contain drop-shadow-lg"
               />
             </div>
           )}

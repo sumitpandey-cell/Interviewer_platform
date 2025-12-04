@@ -105,8 +105,8 @@ export default function InterviewRoom() {
 
     const { fetchSessionDetail, completeInterviewSession, fetchSessions, fetchStats, fetchRecentPerformanceMetrics } = useOptimizedQueries();
 
-    // Sanitize API Key
-    const cleanApiKey = API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '');
+    // Sanitize API Key - check if it exists first
+    const cleanApiKey = API_KEY ? API_KEY.replace(/[^a-zA-Z0-9_\-]/g, '') : '';
     const { connect, disconnect, startRecording, stopRecording, pauseRecording, resumeRecording, sendTextMessage, suspendAudioOutput, resumeAudioOutput, connected, isRecording, volume } = useLiveAPI(cleanApiKey);
     const { setFeedback, setTranscript, setSaving, setSaveError, addCodingChallenge, setCurrentCodingQuestion, currentCodingQuestion, clearFeedback } = useInterviewStore();
     // Track if browser speech recognition is working
@@ -886,9 +886,9 @@ export default function InterviewRoom() {
             {/* Fullscreen Video Background */}
             <div className="absolute inset-0">
                 {!isCameraOn ? (
-                    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-slate-900 to-slate-950">
-                        <div className="h-32 w-32 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700 mb-4">
-                            <User className="h-16 w-16 text-slate-500" />
+                    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-slate-900 to-slate-950 pb-20">
+                        <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700 mb-4">
+                            <User className="h-12 w-12 sm:h-16 sm:w-16 text-slate-500" />
                         </div>
                         <p className="text-lg font-medium text-slate-400">Camera is turned off</p>
                     </div>
@@ -907,45 +907,45 @@ export default function InterviewRoom() {
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
 
             {/* Timer - Top Left */}
-            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-20">
-                <div className={`bg-black/60 backdrop-blur-md border border-white/10 px-3 sm:px-4 py-2 rounded-full font-mono text-xs sm:text-sm font-medium tracking-wider flex items-center gap-2 shadow-lg ${getTimerColor()}`}>
-                    <div className={`h-2 w-2 rounded-full animate-pulse ${timeLeft < 60 ? 'bg-red-500' : 'bg-green-500'}`} />
+            <div className="absolute top-3 sm:top-6 left-3 sm:left-6 z-20">
+                <div className={`bg-black/60 backdrop-blur-md border border-white/10 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-mono text-[10px] sm:text-sm font-medium tracking-wider flex items-center gap-1.5 sm:gap-2 shadow-lg ${getTimerColor()}`}>
+                    <div className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full animate-pulse ${timeLeft < 60 ? 'bg-red-500' : 'bg-green-500'}`} />
                     {subscriptionType === 'paid' && remaining_minutes > 999999 ? formatTime(elapsedTime) : formatTime(timeLeft)}
                 </div>
             </div>
 
             {/* Aura AI Card - Top Right */}
-            <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20">
-                <Card className="bg-black/60 backdrop-blur-xl border-white/10 p-3 sm:p-4 rounded-2xl w-56 sm:w-64 shadow-2xl">
+            <div className="absolute top-3 sm:top-6 right-3 sm:right-6 z-20">
+                <Card className="bg-black/60 backdrop-blur-xl border-white/10 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl w-44 sm:w-64 shadow-2xl">
                     <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                         {/* Aura Avatar */}
-                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-lg">
+                        <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-lg">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/50 to-blue-600/50 animate-pulse" />
-                            <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white relative z-10" />
+                            <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 text-white relative z-10" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h3 className="text-white text-sm sm:text-base font-bold truncate bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                                Aura
+                            <h3 className="text-white text-xs sm:text-base font-bold truncate bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                                Arjuna AI
                             </h3>
-                            <p className="text-slate-400 text-[10px] sm:text-xs">
+                            <p className="text-slate-400 text-[9px] sm:text-xs truncate">
                                 {connected ? "AI Interviewer • Connected" : "Connecting..."}
                             </p>
                         </div>
                         {connected && (
-                            <div className="flex gap-1 flex-shrink-0">
-                                <div className="h-3 w-1 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <div className="h-3 w-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <div className="h-3 w-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="flex gap-0.5 sm:gap-1 flex-shrink-0">
+                                <div className="h-2 w-0.5 sm:h-3 sm:w-1 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="h-2 w-0.5 sm:h-3 sm:w-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="h-2 w-0.5 sm:h-3 sm:w-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                         )}
                     </div>
 
                     {/* Aura Speaking Visualizer */}
-                    <div className="h-12 sm:h-16 flex items-center justify-center gap-1">
+                    <div className="h-8 sm:h-16 flex items-center justify-center gap-0.5 sm:gap-1">
                         {[...Array(12)].map((_, i) => (
                             <div
                                 key={i}
-                                className={`w-1 sm:w-1.5 rounded-full transition-all duration-150 ease-in-out ${isAiSpeaking ? 'animate-pulse' : ''
+                                className={`w-0.5 sm:w-1.5 rounded-full transition-all duration-150 ease-in-out ${isAiSpeaking ? 'animate-pulse' : ''
                                     }`}
                                 style={{
                                     background: isAiSpeaking
@@ -961,21 +961,22 @@ export default function InterviewRoom() {
             </div>
 
             {/* User Label - Bottom Left */}
-            <div className="absolute bottom-24 sm:bottom-28 left-4 sm:left-6 z-20">
-                <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white px-3 py-2 rounded-full font-medium text-sm shadow-lg">
-                    <div className="flex items-center gap-2">
+            <div className="absolute bottom-20 sm:bottom-28 left-3 sm:left-6 z-20">
+                <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm shadow-lg">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <span>You</span>
+                        
                     </div>
                 </div>
             </div>
 
             {/* Microphone Status - Bottom Right */}
-            <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-6 z-20">
-                <div className={`px-3 sm:px-4 py-2 rounded-full backdrop-blur-md border flex items-center gap-2 shadow-lg ${isRecording
+            <div className="absolute bottom-20 sm:bottom-28 right-3 sm:right-6 z-20">
+                <div className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full backdrop-blur-md border flex items-center gap-1.5 sm:gap-2 shadow-lg ${isRecording
                     ? 'bg-green-500/20 border-green-500/50 text-green-400'
                     : 'bg-red-500/20 border-red-500/50 text-red-400'
                     }`}>
-                    {isRecording ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+                    {isRecording ? <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <MicOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                     <span className="text-xs sm:text-sm font-medium hidden sm:inline">
                         {isRecording ? "Listening" : "Muted"}
                     </span>

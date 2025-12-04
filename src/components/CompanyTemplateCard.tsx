@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CompanyTemplate } from "@/types/company-types";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 
 interface CompanyTemplateCardProps {
     template: CompanyTemplate;
@@ -13,100 +13,114 @@ interface CompanyTemplateCardProps {
 export function CompanyTemplateCard({ template, onSelect, isLoading }: CompanyTemplateCardProps) {
     const getDifficultyColor = (difficulty: string | null) => {
         switch (difficulty) {
-            case "Beginner": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-            case "Intermediate": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-            case "Advanced": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-            default: return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+            case "Beginner": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900";
+            case "Intermediate": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900";
+            case "Advanced": return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900";
+            default: return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700";
         }
     };
 
     return (
-        <Card className="flex flex-col h-full hover:shadow-lg transition-all bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
-            <CardContent className="p-8 flex flex-col h-full">
-                {/* Company Logo and Name */}
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900 dark:to-orange-800 flex items-center justify-center border border-orange-200 dark:border-orange-700 overflow-hidden">
-                        {template.logo_url ? (
-                            <img
-                                src={template.logo_url}
-                                alt={`${template.name} logo`}
-                                className="w-12 h-12 object-contain"
-                                onError={(e) => {
-                                    // Fallback to icon if image fails to load
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                            />
-                        ) : null}
-                        <Building2 className={`h-8 w-8 text-orange-600 dark:text-orange-400 ${template.logo_url ? 'hidden' : ''}`} />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {template.name}
-                        </h3>
-                        <div className="flex gap-2 items-center flex-wrap">
+        <Card className="group relative flex flex-col h-full overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            {/* Decorative gradient background at top */}
+            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-900/50 dark:to-transparent opacity-50 pointer-events-none" />
+
+            <CardContent className="p-6 flex flex-col h-full relative z-10">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-5">
+                    <div className="flex gap-4">
+                        {/* Logo */}
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-900 p-2 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                            {template.logo_url ? (
+                                <img
+                                    src={template.logo_url}
+                                    alt={`${template.name} logo`}
+                                    className="w-10 h-10 object-contain"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                />
+                            ) : null}
+                            <Building2 className={`h-7 w-7 text-slate-400 dark:text-slate-500 ${template.logo_url ? 'hidden' : ''}`} />
+                        </div>
+
+                        <div>
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 leading-tight mb-1 group-hover:text-primary transition-colors">
+                                {template.name}
+                            </h3>
                             {template.industry && (
-                                <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                <span className="inline-flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
                                     {template.industry}
-                                </Badge>
-                            )}
-                            {template.difficulty && (
-                                <Badge className={`text-xs whitespace-nowrap ${getDifficultyColor(template.difficulty)}`}>
-                                    {template.difficulty}
-                                </Badge>
+                                </span>
                             )}
                         </div>
                     </div>
+
+                    {template.difficulty && (
+                        <Badge variant="outline" className={`text-[10px] px-2 py-0.5 border ${getDifficultyColor(template.difficulty)}`}>
+                            {template.difficulty}
+                        </Badge>
+                    )}
                 </div>
 
                 {/* Description */}
-                <div className="space-y-2 text-sm mb-4 flex-1">
-                    {template.description && (
-                        <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
-                            {template.description}
-                        </p>
-                    )}
+                {template.description && (
+                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-6 leading-relaxed">
+                        {template.description}
+                    </p>
+                )}
 
-                    {/* Common Roles */}
+                {/* Roles */}
+                <div className="mt-auto">
                     {template.common_roles && template.common_roles.length > 0 && (
-                        <div className="mt-3">
-                            <span className="text-gray-500 dark:text-gray-500 font-normal text-xs">Common Roles:</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <>
+                            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider">
+                                Popular Roles
+                            </p>
+                            <div className="flex flex-wrap gap-2">
                                 {template.common_roles.slice(0, 3).map((role, index) => (
-                                    <span
+                                    <Badge
                                         key={index}
-                                        className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                        variant="secondary"
+                                        className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent dark:border-slate-800 font-normal"
                                     >
                                         {role}
-                                    </span>
+                                    </Badge>
                                 ))}
                                 {template.common_roles.length > 3 && (
-                                    <span className="text-xs px-2 py-0.5 text-gray-500 dark:text-gray-500">
-                                        +{template.common_roles.length - 3} more
+                                    <span className="text-xs px-1.5 py-0.5 text-slate-400 dark:text-slate-500 font-medium">
+                                        +{template.common_roles.length - 3}
                                     </span>
                                 )}
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
-                {/* Action Button */}
-                <div className="flex items-center justify-between gap-3 pt-2 mt-auto">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Real interview questions
-                    </span>
+                {/* Footer / Button */}
+                <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="font-medium">Verified Questions</span>
+                    </div>
+
                     <Button
-                        className="w-auto px-8 bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white rounded-xl py-3 font-medium transition-all hover:scale-[1.02]"
+                        size="sm"
+                        className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white/90 shadow-sm hover:shadow transition-all rounded-lg px-4"
                         onClick={() => onSelect(template)}
                         disabled={isLoading}
                     >
                         {isLoading ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />
                                 Loading...
                             </>
                         ) : (
-                            "Select"
+                            <>
+                                Select
+                                <ArrowRight className="h-3.5 w-3.5 ml-2 opacity-70" />
+                            </>
                         )}
                     </Button>
                 </div>
